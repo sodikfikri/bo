@@ -1,0 +1,170 @@
+<?php
+
+/**
+ * 
+ */
+class Thermorequest_model extends CI_Model
+{
+	
+	function __construct()
+	{
+		parent::__construct();
+	}
+  function calculateZKDateTime()
+  {
+    date_default_timezone_set('UTC');
+    $year = (integer) date('Y');
+    $mon  = (integer) date('m');
+    $day  = (integer) date('d');
+    $hour = (integer) date('H');
+    $min  = (integer) date('i');
+    $sec  = (integer) date('s');
+
+    $output = (($year - 2000) * 12 * 31 + (($mon - 1) * 31) + $day - 1) * (24 * 60 * 60) + ($hour * 60 + $min) * 60 + $sec;
+    return $output;
+  }
+  
+  function toDeviceTimeZone($zone){
+    $zone = str_replace("UTC","", $zone);
+    $zone = str_replace(":","", $zone);
+    return $zone;
+  }
+
+	function getRequest($deviceID,$appid,$SN,$device){
+    $sendDefaultConfig = $device->send_default_config;
+    
+		$this->load->model("device_model");
+		$output = "";
+		// send new user
+    if($sendDefaultConfig==1){
+      $this->load->model("cabang_model");
+      $zkDateTime = $this->calculateZKDateTime();
+
+      $machineTimeZone = $this->toDeviceTimeZone($device->cabang_utc);
+
+      $output = "C:SDC.".$deviceID.":SET OPTIONS DateTime=".$zkDateTime.",MachineTZ=".$machineTimeZone;
+      goto endProcess;
+    }
+
+    $this->load->model("command_model");
+    
+    $commandNeedExecute = $this->command_model->getCommandNeedExecute($device->device_SN);
+    if($commandNeedExecute!=false){
+      $output = $commandNeedExecute;
+      goto endProcess;
+    }
+    
+    $newData = $this->device_model->getNewEmployeeActiveDate($deviceID);
+
+    if($newData->num_rows()>0){
+      foreach ($newData->result() as $row) {
+        // add user
+        if($SN=="6209212200056"){
+          $c1 = "C:AU.".$row->employeeareacabang_id."|".$row->employee_id.":DATA UPDATE USERINFO PIN=".$row->employee_account_no."\tName=".$row->employee_nick_name."\tPri=".$row->employee_level."\tPasswd=".$row->employee_password."\tCard=".$row->employee_card."\tGrp=1\n";
+        }else{
+          $c1 = "C:AU.".$row->employeeareacabang_id."|".$row->employee_id.":DATA UPDATE USER Pin=".$row->employee_account_no."\tName=".$row->employee_nick_name."\tPrivilege=".$row->employee_level."\tPassword=".$row->employee_password."\tCardNo=".$row->employee_card."\tGroup=1\tStartTime=0\tEndTime=0\n".
+            "C:".$row->employeeareacabang_id.":DATA UPDATE userauthorize Pin=".$row->employee_account_no."\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1"."\n";
+                $output .= $c1;
+        }
+        
+      }
+    }else{
+      // update user
+      $updateData = $this->device_model->getNeedUpdateUser($deviceID);
+      if($updateData->num_rows()>0){
+        foreach ($updateData->result() as $rowUpdate) {
+          $c2 = "C:UU.".$rowUpdate->employeelocationdevice_id.":DATA UPDATE USER Pin=".$rowUpdate->employee_account_no."\tName=".$rowUpdate->employee_nick_name."\tPrivilege=".$rowUpdate->employee_level."\tPassword=".$rowUpdate->employee_password."\tCardNo=".$rowUpdate->employee_card."\tGroup=1\tStartTime=0\tEndTime=0\n".
+            "C:".$rowUpdate->employeelocationdevice_id.":DATA UPDATE userauthorize Pin=".$rowUpdate->employee_account_no."\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1"."\n";
+                	$output .= $c2;
+        }
+      }else{
+        // delete user
+        $deleteData = $this->device_model->getResignEmployee($deviceID);
+        if($deleteData->num_rows()>0){
+          foreach ($deleteData->result() as $row) {
+            $c3 = "C:DU.".$row->employeeareacabang_id."|".$row->device_id."|".$row->employee_id.":DATA DELETE user Pin=".$row->employee_account_no."\n";
+            $output .= $c3;
+          }
+        }else{
+          // insert template
+          $sqlTemplate = $this->device_model->getTemplateNeedUpdate($deviceID);
+
+          if($sqlTemplate->num_rows()>0){
+            $this->load->model("thermoattendance_model");
+            $arrTypeTemplate = $this->thermoattendance_model->getTemplateTypes();
+            foreach ($sqlTemplate->result() as $rowTemplate) {
+              if($rowTemplate->employeetemplate_jenis=="fingerprint"){
+                // add template fingerprint
+                $c4 = "C:AT.".$rowTemplate->employeelocationdevice_id."|".$rowTemplate->employeetemplate_id."|".(!empty($rowTemplate->counter) ? $rowTemplate->counter : "0").":DATA UPDATE templatev10 Pin=".$rowTemplate->employee_account_no."\tFingerID=".$rowTemplate->employeetemplate_index."\tValid=1\tTemplate=".$rowTemplate->employeetemplate_template."\n";
+              }else{
+                $biointID = $rowTemplate->employeetemplate_index;
+                if($rowTemplate->employeetemplate_jenis=="face"){
+                  $biointID = "0";
+                }
+                $templateTypeId = array_search($rowTemplate->employeetemplate_jenis, $arrTypeTemplate);
+                // deliver integrated template
+                $c4 = "C:AT.".$rowTemplate->employeelocationdevice_id."|".$rowTemplate->employeetemplate_id."|".(!empty($rowTemplate->counter) ? $rowTemplate->counter : "0").":DATA UPDATE biodata Pin=".$rowTemplate->employee_account_no."\tno=".$biointID."\tIndex=".$rowTemplate->employeetemplate_index."\tValid=1\tDuress=0\tType=".$templateTypeId."\tMajorVer=".$rowTemplate->major_version."\tMinorVer=".$rowTemplate->minor_version."\tFormat=".$rowTemplate->format."\tTmp=".$rowTemplate->employeetemplate_template."\n";
+              }
+
+              $output .= ($c4);
+            }
+          }else{
+            // distribusi mutasi out
+            load_model(["employeemutation_model"]);
+            $mutationOut = $this->employeemutation_model->getMutationOutToday($deviceID);
+
+            if($mutationOut->num_rows()>0){
+              foreach ($mutationOut->result() as $row) {
+                // mutation out
+                $c6 = "C:MO.".$row->employeemutation_id."|".$row->employeemutation_c_id.":DATA DELETE user Pin=".$row->employee_account_no."\n";
+                $output .= $c6;
+              }
+            }else{
+              // Distribusi mutasi in
+              $mutationIn = $this->employeemutation_model->getMutationInToday($deviceID);
+              if($mutationIn->num_rows()>0){
+                foreach ($mutationIn->result() as $row) {
+                  // mutation in
+                  $c5 = "C:MI.".$row->employeemutation_id."|".$row->employeemutation_c_id.":DATA UPDATE user Pin=".$row->employee_account_no."\tName=".$row->employee_nick_name."\tPrimary=0\tPassword=".$row->employee_password."\tCardNo=".$row->employee_card."\tGroup=1\n";
+                  $output .= $c5;
+                }
+              }else{
+                // update picture
+                load_model(["employeelocationdevice_model"]);
+                $sqlPicNeedUpdate = $this->employeelocationdevice_model->getPicNeedUpdate($deviceID,$appid);
+                if($sqlPicNeedUpdate->num_rows()>0){
+                  foreach ($sqlPicNeedUpdate->result() as $row) {
+                    $linkImage = FCPATH.'sys_upload\employeepic\\'.$row->image;
+                    // jika ada file
+                    if($row->image!=""){
+                      if(file_exists($linkImage)){
+                        // ambil file
+                        $decodedImage = file_get_contents($linkImage);
+                              
+                        // diencoded 
+                        $encodedImage  = base64_encode($decodedImage);
+                              
+                        // dikirim ke device
+                        $c8 = "C:UP.".$row->employeelocationdevice_id.":DATA UPDATE userpic pin=".$row->employee_account_no."\tsize=".strlen($row->picture)."\tcontent=".$encodedImage."\r\n";
+                        $output .= $c8;
+                      }
+                    }
+                  }
+                }else{
+                  $this->load->model("device_model");
+                  if($this->device_model->isNeedReboot($SN)==true){
+                    $c9 = "C:".$SN."122:CONTROL DEVICE 03000100";
+                    $output .= $c9;
+                    $this->device_model->setFinishReboot($SN);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    endProcess:
+    return $output;
+  }
+}

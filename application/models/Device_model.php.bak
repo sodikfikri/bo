@@ -1,0 +1,945 @@
+<?php
+
+/**
+ *
+ */
+class Device_model extends CI_Model
+{
+  var $tableName= "tbdevice";
+  var $tableId  = "device_id";
+  var $now;
+
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+  }
+
+  function getFirewallState(){
+    $filePath = FCPATH."application".DIRECTORY_SEPARATOR."config".DIRECTORY_SEPARATOR."base_config.json";
+    $myfile = fopen( $filePath , "r") or die("Unable to open file!");
+    $storageJson =  fread($myfile,filesize($filePath));
+    $arrConfig   = json_decode($storageJson);
+    return $arrConfig->use_firewall;
+  }
+
+  function insert($dataInsert){
+    $appid = $this->session->userdata("ses_appid");
+
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+      $dataInsert["appid"]              = $appid;
+      $dataInsert["device_user_add"]    = $userID;
+      $dataInsert["device_date_create"] = $this->now;
+
+      $res = $this->db->insert($this->tableName,$dataInsert);
+      if($res){
+        //
+        if(!empty($dataInsert['device_area_id'])){
+          $areaId = $dataInsert['device_area_id'];
+          $totalDevice = $this->countActiveDeviceByArea($areaId);
+          $this->load->model("area_model");
+          $this->area_model->setTotalDevice($totalDevice,$areaId);
+        }
+
+        if(!empty($dataInsert['device_cabang_id'])){
+          $cabangId = $dataInsert['device_cabang_id'];
+          $totalDevice = $this->countActiveDeviceByCabang($cabangId);
+          $this->load->model("cabang_model");
+          $this->cabang_model->setTotalDevice($totalDevice,$cabangId);
+        }
+        return true;
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
+  
+  function reset_send_default_config($device_id){
+    $this->db->where("device_id",$device_id);
+    $this->db->update($this->tableName,["send_default_config"=>"0"]);
+  }
+  
+  function update($dataUpdate,$id,$appid=""){
+
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      if($this->load->is_loaded('session')) {
+        $userID = !empty($this->session->userdata("ses_userid")) ? $this->session->userdata("ses_userid") : "";
+      }else{
+        $userID = "";
+      }
+      
+      if($userID!=""){
+        $dataUpdate["device_user_modif"]    = $userID;
+        $dataUpdate["device_date_modif"]    = $this->now;
+        $dataUpdate["device_jenis_modif"]   = "edit";
+      }
+      
+
+      $this->db->where("appid",$appid);
+      $this->db->where($this->tableId,$id);
+      $res = $this->db->update($this->tableName,$dataUpdate);
+      if($res && $userID!=""){
+        if(!empty($dataUpdate['device_area_id'])){
+          $areaId = $dataUpdate['device_area_id'];
+          $totalDevice = $this->countActiveDeviceByArea($areaId);
+          $this->load->model("area_model");
+          $this->area_model->setTotalDevice($totalDevice,$areaId);
+        }
+
+        if(!empty($dataUpdate['device_cabang_id'])){
+          $cabangId = $dataUpdate['device_cabang_id'];
+          $totalDevice = $this->countActiveDeviceByCabang($cabangId);
+          $this->load->model("cabang_model");
+          $this->cabang_model->setTotalDevice($totalDevice,$cabangId);
+        }
+        return true;
+      }else{
+        return true;
+      }
+    }else {
+      return false;
+    }
+  }
+
+
+  function update2($dataUpdate,$id){
+
+    $this->db->where($this->tableId,$id);
+    $res = $this->db->update($this->tableName,$dataUpdate);
+    return true;
+  }
+
+
+  function delete($id){
+    $appid = $this->session->userdata("ses_appid");
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+      // ambil data cabang
+      $dataDevice = $this->getById($id);
+      $areaID     = $dataDevice->device_area_id;
+      $cabangID   = $dataDevice->device_cabang_id;
+      //
+      $dataUpdate["device_user_modif"]    = $userID;
+      $dataUpdate["device_date_modif"]    = $this->now;
+      $dataUpdate["device_jenis_modif"]   = "delete";
+      $dataUpdate["is_del"]               = "1";
+
+      $this->db->where("appid",$appid);
+      $this->db->where($this->tableId,$id);
+      $res = $this->db->update($this->tableName,$dataUpdate);
+      if($res){
+        if(!empty($areaID)){
+          $totalArea = $this->countActiveDeviceByArea($areaID);
+          $this->load->model("area_model");
+          $this->area_model->setTotalDevice($totalArea,$areaID);
+        }
+        if(!empty($cabangID)){
+          $totalCabang = $this->countActiveDeviceByCabang($cabangID);
+          $this->load->model("cabang_model");
+          $this->cabang_model->setTotalDevice($totalCabang,$cabangID);
+        }
+        return true;
+      }else{
+        return false;
+      }
+      return $res;
+    }else {
+      return false;
+    }
+  }
+
+  function countActiveDeviceByArea($areaId){
+    $appid = $this->session->userdata("ses_appid");
+    if(!empty($appid)){
+      $this->db->select("count(device_id) as total");
+      $this->db->where("appid",$appid);
+      $this->db->where("is_del !=","1");
+      $this->db->where("device_area_id",$areaId);
+
+      $sql = $this->db->get($this->tableName);
+      return $sql->row()->total;
+    }else {
+      return false;
+    }
+  }
+
+  function countActiveDeviceByCabang($cabangId){
+    $appid = $this->session->userdata("ses_appid");
+    if(!empty($appid)){
+      $this->db->select("count(device_id) as total");
+      $this->db->where("appid",$appid);
+      $this->db->where("is_del !=","1");
+      $this->db->where("device_cabang_id",$cabangId);
+
+      $sql = $this->db->get($this->tableName);
+      return $sql->row()->total;
+    }else {
+      return false;
+    }
+  }
+
+  function getById($id,$appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $this->db->where("appid",$appid);
+      $this->db->where($this->tableId,$id);
+      $this->db->where("is_del !=","1");
+      $sql = $this->db->get($this->tableName);
+      if ($sql->num_rows()>0) {
+        return $sql->row();
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
+  
+  function getById2($id){
+    $this->db->where("appid",$appid);
+    $this->db->where($this->tableId,$id);
+    $this->db->where("is_del !=","1");
+    $sql = $this->db->get($this->tableName);
+    if ($sql->num_rows()>0) {
+      return $sql->row();
+    }else{
+      return false;
+    }
+  }
+
+  function getAll($appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $this->db->select("tbdevice.*");
+      $this->db->select("tbcabang.cabang_name");
+
+      $this->db->from("tbdevice");
+      $this->db->join("tbcabang","tbcabang.cabang_id = tbdevice.device_cabang_id");
+
+      $this->db->where("tbcabang.is_del !=","1");
+      $this->db->where("tbdevice.appid",$appid);
+      $this->db->where("tbdevice.is_del !=","1");
+      $sql = $this->db->get();
+      return $sql->result();
+    }else {
+      return false;
+    }
+  }
+  function countAll($appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $this->db->select("tbdevice.device_id");
+
+      $this->db->where("tbdevice.appid",$appid);
+      $this->db->where("tbdevice.is_del !=","1");
+      $sql = $this->db->get("tbdevice");
+      return $sql->num_rows();
+    }else {
+      return 0;
+    }
+  }
+
+  function renewDeviceLicense($activeAddons,$appid="",$sessSubscription){
+	if(!empty($activeAddons["machinelicense"])){
+		$deviceLicense = $activeAddons["machinelicense"];
+	} elseif(!empty($activeAddons["machinelicenseflash"])) {
+		$deviceLicense = $activeAddons["machinelicenseflash"];
+	} else {
+		foreach ($sessSubscription as $rows) {
+			$deviceLicense += $activeAddons[$rows];
+		}	
+	}
+    //$deviceLicense = !empty($activeAddons['machinelicense']) ? $activeAddons['machinelicense'] : 0;
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    $totalLicenseUsed = $this->getLicenseUsed($appid);
+    if($totalLicenseUsed<=$deviceLicense){
+      // jika device terpasang masih kurang dari lisense
+      // tidak ada action
+    }else{
+      // jika melebihi lisensi hitung berapa yang harus dinonaktifkan
+      $mustInactiveDevice = $totalLicenseUsed - $deviceLicense;
+      if(!empty($appid)){
+        // ambil device yang aktif
+        $this->db->select("tbdevice.device_id");
+        $this->db->where("tbdevice.device_license","active");
+
+        // batasi sesuai jumlah yang harus dinonaktifkan
+        $this->db->limit($mustInactiveDevice);
+        $sql = $this->getAll($appid);
+
+        foreach ($sql as $row) {
+          // notaktifkan mesin mesin aktif yang terpilih, untuk menyesuaikan jumlah lisensi yang dibeli
+          $this->changeLicenseTo("notactive",$row->device_id,$appid);
+        }
+      }
+    }
+  }
+
+  function changeLicenseTo($changeTo,$deviceID,$appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $dataUpdate = [
+        "device_license" => $changeTo
+      ];
+      $this->db->where("appid",$appid);
+      $this->db->where("device_id",$deviceID);
+      $res = $this->db->update($this->tableName,$dataUpdate);
+      return $res;
+    }else{
+      return false;
+    }
+  }
+  function getLicenseUsed($appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $this->db->select("device_id");
+      $this->db->where("appid",$appid);
+      $this->db->where("is_del !=","1");
+      $this->db->where("device_license","active");
+      $res = $this->db->get($this->tableName);
+      if($res->num_rows()>0){
+        return $res->num_rows();
+      }else{
+        return 0;
+      }
+    }else{
+      return false;
+    }
+  }
+
+  function checkMachineExist($SN)
+  {
+    $this->db->select("tbdevice.device_id");
+    $this->db->select("tbdevice.appid");
+    $this->db->select("tbdevice.device_SN");
+    $this->db->select("tbdevice.device_id");
+    $this->db->select("tbdevice.device_area_id");
+    $this->db->select("tbdevice.device_cabang_id");
+    $this->db->select("tbdevice.alg_version");
+    $this->db->select("tbdevice.response_code");
+    $this->db->select("tbdevice.send_default_config");
+    $this->db->select("tbcabang.cabang_utc");
+
+
+    $this->db->from("tbdevice");
+    $this->db->join("tbcabang","tbcabang.cabang_id = tbdevice.device_cabang_id");
+
+    $this->db->where("tbdevice.device_SN",$SN);
+    $this->db->where("tbdevice.device_license","active");
+
+    $this->db->where("tbdevice.is_del !=","1");
+
+    $sql = $this->db->get();
+    if($sql->num_rows()>0){
+      $dataDevice = $sql->row();
+      $dataUpdate = [
+        "device_last_communication" => $this->now
+      ];
+      $this->db->where("device_SN",$SN);
+      $res = $this->db->update($this->tableName,$dataUpdate);
+      if($res){
+				return $dataDevice;
+      }else{
+				return false;
+      }
+    }else {
+      return false;
+    }
+  }
+
+  // pengecekan pintu firewall kebuka atau ketutup
+  function checkMachineAvailable($SN)
+  {
+
+    $now = date("Y-m-d");
+    $this->db->select("tbdevice.device_id");
+    $this->db->select("tbdevice.appid");
+    $this->db->select("tbdevice.device_SN");
+    $this->db->select("tbdevice.device_id");
+    $this->db->select("tbdevice.device_area_id");
+    $this->db->select("tbdevice.device_cabang_id");
+    $this->db->select("tbdevice.alg_version");
+    $this->db->select("tbdevice.response_code");
+    $this->db->select("tbdevice.send_default_config");
+    $this->db->select("tbcabang.cabang_utc");
+
+
+    $this->db->from("tbdevice");
+    $this->db->join("tbcabang","tbcabang.cabang_id = tbdevice.device_cabang_id");
+
+    $this->db->where("tbdevice.device_SN",$SN);
+    $this->db->where("tbdevice.device_license","active");
+
+    $this->db->where("tbdevice.is_del !=","1");
+
+    $sql = $this->db->get();
+    if($sql->num_rows()>0){
+      $dataDevice = $sql->row();
+      $dataUpdate = [
+        "device_last_communication" => $this->now
+      ];
+      $this->db->where("device_license","active");
+      $this->db->where("is_del !=","1");
+      $this->db->where("device_SN",$SN);
+      $res = $this->db->update($this->tableName,$dataUpdate);
+      // update connect status
+      if($res){
+        $this->db->where("device_id",$dataDevice->device_id);
+        $this->db->where("status","open");
+        $this->db->where("duedate <=",$now);
+        $sqlCekFirewall = $this->db->get("tbfirewall");
+        // cek opengate
+        if($sqlCekFirewall->num_rows()==0){
+          return false;
+        }else{
+          $firewallID = $sqlCekFirewall->row()->firewall_id;
+          // add firewall counter
+          //$this->db->query("update tbfirewall set request_counter = request_counter + 1 where firewall_id = '$firewallID'");
+          return [
+            "deviceData" => $dataDevice,
+            "gateKey"    => $firewallID
+          ];
+        }
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
+
+  function getNewEmployeeActiveDate($deviceID){
+    $today = date('Y-m-d H-i-s');
+    $this->db->select("tbdevice.device_name");
+    $this->db->select("tbemployee.employee_id");
+    $this->db->select("tbemployee.employee_account_no");
+    $this->db->select("tbemployee.employee_nick_name");
+    $this->db->select("tbemployee.employee_password");
+    $this->db->select("tbemployee.employee_card");
+    $this->db->select("tbemployee.employee_level");
+    $this->db->select("tbemployeeareacabang.employeeareacabang_id");
+    $this->db->select("tbdevice.device_id");
+
+    $this->db->from("tbemployeeareacabang");
+    $this->db->join("tbemployee","tbemployee.employee_id = tbemployeeareacabang.employeeareacabang_employee_id","left");
+    $this->db->join("tbdevice","tbdevice.device_area_id = tbemployeeareacabang.employee_area_id and tbdevice.device_cabang_id = tbemployeeareacabang.employee_cabang_id","left");
+    $this->db->where("tbemployee.is_del","0");
+    $this->db->where("tbemployeeareacabang.employeeareacabang_effdt <=", $today);
+    $this->db->where_not_in("tbdevice.device_id","select device_id from tbemployeelocationdevice where tbemployeelocationdevice.employeeareacabang_id = tbemployeeareacabang.employeeareacabang_id",false);
+    $this->db->where("tbdevice.device_id",$deviceID);
+    $this->db->where("tbemployeeareacabang.status !=","archived");
+
+    $this->db->where("tbemployee.resign_confirmed","no");
+    $this->db->limit(10);
+    // jika sudah resign nggak mungkin di tulis lagi
+    $result_sql = $this->db->get();
+    //echo $this->db->last_query();
+    return $result_sql;
+  }
+
+  function getResignEmployee($deviceID){
+    $this->db->select("C.employee_id");
+    $this->db->select("B.employee_account_no");
+    $this->db->select("B.employee_nick_name");
+
+    $this->db->select("A.employeeareacabang_id");
+    $this->db->select("C.device_id");
+
+    $this->db->from("tbemployeeareacabang A");
+
+    $this->db->join("tbemployee B","B.employee_id = A.employeeareacabang_employee_id","inner");
+    $this->db->join("tbemployeelocationdevice C","C.employeeareacabang_id = A.employeeareacabang_id","inner");
+    $this->db->group_start();
+    $this->db->where("B.employee_resign_date <= ",date("Y-m-d 00:00:00"));
+    $this->db->where("B.employee_resign_date is not null ",null,false);
+    $this->db->group_end();
+    $this->db->where("C.device_id",$deviceID);
+    $this->db->where('B.is_del !=','1');
+    $result_sql = $this->db->get();
+    return $result_sql;
+  }
+
+  function getNeedUpdateUser($deviceID){
+    $this->db->select(
+      [
+        "tbemployee.employee_account_no",
+        "tbemployee.employee_nick_name",
+        "tbemployee.employee_password",
+        "tbemployee.employee_card",
+        "tbemployee.employee_level",
+        "tbemployeelocationdevice.employeelocationdevice_id"
+      ]
+    );
+
+    $this->db->from("tbemployeelocationdevice");
+    $this->db->join("tbemployeeareacabang","tbemployeeareacabang.employeeareacabang_id = tbemployeelocationdevice.employeeareacabang_id","inner");
+    $this->db->join("tbemployee","tbemployee.employee_id = tbemployeeareacabang.employeeareacabang_employee_id","inner");
+    $this->db->where("tbemployeelocationdevice.need_update","yes");
+    $this->db->where("tbemployeelocationdevice.device_id",$deviceID);
+    $this->db->where("tbemployee.is_del !=","1");
+    $this->db->where("tbemployee.resign_confirmed","no");
+    $sqlResult = $this->db->get();
+
+    return $sqlResult;
+  }
+
+  function getTemplateNeedUpdate($deviceID){
+    $sql = $this->db->query("SELECT
+            b.employee_account_no,
+            a.employeeareacabang_id,
+            a.device_id,
+            c.employeetemplate_jenis,
+            c.employeetemplate_index,
+            c.employeetemplate_template,
+            c.employeetemplate_id,
+            c.major_version,
+            c.minor_version,
+            c.format,
+            a.employeelocationdevice_id,
+            ( SELECT d.push_count
+                FROM tbemployeelocationdevicetemplate d
+                where d.employeelocationdevice_id = a.employeelocationdevice_id
+                and d.employeetemplate_id = c.employeetemplate_id
+            ) as counter
+            FROM tbemployeelocationdevice a
+            INNER JOIN
+            tbemployee b
+            ON b.employee_id = a.employee_id
+            INNER JOIN tbemployeetemplate c
+            ON c.employeetemplate_employee_id = a.employee_id
+            left join tbemployeelocationdevicetemplate e
+            on e.employeelocationdevice_id = a.employeelocationdevice_id
+                and e.employeetemplate_id = c.employeetemplate_id
+            WHERE
+            a.device_id = '$deviceID'
+            AND b.employee_is_active = '1'
+            and (e.push_count < 1 or e.push_count is null)
+            order by counter desc limit 6");
+            //(tbemployeelocationdevice.employeelocationdevice_id, tbemployeetemplate.employeetemplate_id) NOT IN
+            //( SELECT tbemployeelocationdevicetemplate.employeelocationdevice_id, tbemployeelocationdevicetemplate.employeetemplate_id
+            //    FROM tbemployeelocationdevicetemplate
+            //)
+
+    return $sql;
+  }
+
+  function getAllByAppId($appid){
+    $this->db->select([
+      "A.*",
+      "B.area_name",
+      "C.cabang_name"
+    ]);
+
+    $this->db->from("tbdevice A");
+    $this->db->join("tbarea B","B.area_id = A.device_area_id","inner");
+    $this->db->join("tbcabang C","C.cabang_id = A.device_cabang_id","inner");
+    $this->db->where("A.appid",$appid);
+    $this->db->where("A.is_del","0");
+    $this->db->where("C.is_del","0");
+    $sql = $this->db->get();
+    return $sql;
+  }
+
+  function update_batch($data){
+    $result = $this->db->update_batch($this->tableName,$data,$this->tableId);
+    return $result;
+  }
+
+  /* Mengambil semua data, termasuk data yang sudah dihapus
+   *
+  */
+  function getWholeByAppId($appid){
+    $this->db->select([
+      "A.*",
+      "B.area_name",
+      "C.cabang_name"
+    ]);
+
+    $this->db->from("tbdevice A");
+    $this->db->join("tbarea B","B.area_id = A.device_area_id","left");
+    $this->db->join("tbcabang C","C.cabang_id = A.device_cabang_id","left");
+    $this->db->where("A.appid",$appid);
+    $sql = $this->db->get();
+    return $sql;
+  }
+
+  function isCodeExists($code,$device_id,$appid){
+    $this->db->where("appid",$appid);
+    $this->db->where("device_code",$code);
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()>0){
+      $data = $sql->row();
+      if($data->device_id==$device_id){
+        return false;
+      }else{
+        return true;
+      }
+    }else{
+      return false;
+    }
+  }
+  /*
+  pengecekan SN lintas APPID
+  tidak mengecek yang terhapus
+  */
+  function isSNExists($SN,$device_id){
+    $this->db->where("is_del","0");
+    $this->db->where("device_SN",$SN);
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()>0){
+      $data = $sql->row();
+      if($data->device_id==$device_id){
+        return false;
+      }else{
+        return true;
+      }
+    }else{
+      return false;
+    }
+  }
+
+  function getDeviceCode($appid){
+    $this->db->select("device_code");
+    $this->db->where("appid",$appid);
+    $sql = $this->db->get($this->tableName);
+    $result = [];
+    foreach ($sql->result() as $row) {
+      $result[] = createIdentification($row->device_code);
+    }
+    return $result;
+  }
+
+  function saveIgnoreDuplicate($dataInsert,$checker=""){
+    $this->db->select("device_id");
+    $where = $dataInsert;
+
+    if(!empty($dataInsert["device_code"])){
+      unset($where["device_code"]);
+      $where[" REPLACE(LOWER(device_code), ' ', '') ="] = createIdentification($dataInsert["device_code"]);
+    }
+
+    unset($where["device_user_add"]);
+    unset($where["device_date_create"]);
+
+    $sqlCheck = $this->db->get_where($this->tableName,$where);
+    if($sqlCheck->num_rows()>0){
+      $rows = $sqlCheck->row();
+      $deviceID     = $rows->device_id;
+      $insertStatus = "skipped";
+    }else{
+      if(!in_array($dataInsert['device_code'],$checker)){
+        $insert_query = $this->db->insert_string($this->tableName, $dataInsert);
+        $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
+        $this->db->query($insert_query);
+        $deviceID   = $this->db->insert_id();
+        $insertStatus = "inserted";
+      }else{
+        $insertStatus = "duplicated_code";
+        $deviceID   = "";
+      }
+    }
+
+    $output = [
+      "device_id" => $deviceID,
+      "insertStatus"  => $insertStatus
+    ];
+    return $output;
+  }
+
+  function getRegisteredSN(){
+    $this->db->select("device_SN");
+    $this->db->where("is_del","0");
+    $sql = $this->db->get($this->tableName);
+    $output = [];
+    foreach ($sql->result() as $row) {
+      $output[] = createIdentification($row->device_SN);
+    }
+    return $output;
+  }
+
+  function getAllDeviceList(){
+    $this->db->select("
+      A.device_id,
+      A.device_SN,
+      A.device_name,
+      A.device_last_communication,
+      A.device_license,
+      A.alg_version,
+      A.response_code,
+      B.company_name,
+      B.is_real,
+      E.code_name
+    ");
+    $this->db->from("tbdevice A");
+    $this->db->join("iasubscription B","B.appid = A.appid");
+    $this->db->join("tbcabang C","C.cabang_id = A.device_cabang_id");
+    $this->db->join("tbarea D","D.area_id = A.device_area_id");
+    $this->db->join("device_responsecode E","E.id = A.response_code");
+
+    $this->db->where("A.is_del","0");
+    $this->db->where("C.is_del","0");
+    $this->db->where("D.is_del","0");
+    $this->db->order_by("B.company_name","ASC");
+    
+    $sql = $this->db->get();
+
+    return $sql;
+  }
+
+  function suspendDevice($deviceID){
+    $sql    = "
+                update tbdevice set device_SN = CONCAT(device_SN,'|suspend')
+                where device_id = '$deviceID'
+              ";
+    $result = $this->db->query($sql);
+    return $result;
+  }
+
+  function unlockSuspendDevice($deviceID){
+    $this->db->where("device_id",$deviceID);
+    $sqlCek = $this->db->get($this->tableName);
+    
+    if($sqlCek->num_rows()){
+      $data   = $sqlCek->row();
+      $lastSN = explode("|", $data->device_SN)[0];
+      
+      $checkUsed = $this->isUsedSN($lastSN);
+
+      if ($checkUsed==true) {
+        return false;
+      }else{
+        $sql    = "
+                update tbdevice set device_SN = '$lastSN'
+                where device_id = '$deviceID'
+              ";
+        $result = $this->db->query($sql);
+        return true;
+      }
+      
+    }
+  }
+  
+  function isUsedSN($SN){
+    $this->db->where("device_SN",$SN);
+    $this->db->where("is_del",0);
+    $sql = $this->db->get($this->tableName);
+
+    if($sql->num_rows()>0){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
+  function getResponseCode(){
+    $sql = $this->db->get("device_responsecode");
+    return $sql;
+  }
+
+  function setReboot($status,$area,$cabang,$appid){
+    $dataUpdate = [
+      "reboot" => $status
+    ];
+    $this->db->where([
+      "appid"             => $appid,
+      "device_area_id"    => $area,
+      "device_cabang_id"  => $cabang
+    ]);
+
+    $result = $this->db->update($this->tableName,$dataUpdate);
+    return $result;
+  }
+
+  function isNeedReboot($SN){
+    $this->db->where("reboot","yes");
+    $this->db->where("device_SN",$SN);
+
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()>0){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
+  function setFinishReboot($SN){
+    $dataUpdate = [
+      "reboot" => "no"
+    ];
+    $this->db->where("device_SN",$SN);
+    $result = $this->db->update($this->tableName,$dataUpdate);
+    return $result;
+  }
+
+  function setReloadSetting($status,$area,$cabang,$appid){
+    $dataUpdate = [
+      "reload_setting" => $status
+    ];
+    $this->db->where([
+      "appid"             => $appid,
+      "device_area_id"    => $area,
+      "device_cabang_id"  => $cabang
+    ]);
+
+    $result = $this->db->update($this->tableName,$dataUpdate);
+    return $result;
+  }
+
+  function isNeedReloadSetting($SN){
+    $this->db->where("reload_setting","yes");
+    $this->db->where("device_SN",$SN);
+
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()>0){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
+  function setFinishReloadSetting($SN){
+    $dataUpdate = [
+      "reload_setting" => "no"
+    ];
+    $this->db->where("device_SN",$SN);
+    $result = $this->db->update($this->tableName,$dataUpdate);
+    return $result;
+  }
+  function getByLocation($areaId,$cabangId,$appid){
+    $this->db->where("appid",$appid);
+    $this->db->where("device_area_id",$areaId);
+    $this->db->where("device_cabang_id",$cabangId);
+    $this->db->where("is_del","0");
+    return $this->db->get($this->tableName);
+  }
+  function getAllRelevanceDevice(){
+    $this->db->select("device_id");
+    $this->db->not_like("device_SN","suspend");
+    $this->db->where("is_del","0");
+    $this->db->where("device_license","active");
+    return $this->db->get($this->tableName);
+  }
+
+  function markLastActive($SN){
+    $dataUpdate = [
+      "device_last_communication" => $this->now
+    ];
+    $this->db->where("device_SN",$SN);
+    return $this->db->update($this->tableName,$dataUpdate);
+  }
+
+  function getByAppid($appid,$fields=null){
+    if($fields!=null){
+      foreach($fields as $field){
+        $this->db->select($field);
+      }
+    }
+    $this->db->where("appid",$appid);
+    $this->db->where("device_license","active");
+    $this->db->not_like("device_SN","suspend");
+    $sql = $this->db->get($this->tableName);
+    return $sql;
+  }
+
+  public function isCommandExist($appid)
+  {
+    $this->load->model("firewall_model");
+    $sql = $this->getByAppid($appid,["device_id", "alg_version","appid","device_SN"]);
+    if($sql->num_rows()>0){
+      foreach ($sql->result() as $row) {
+        $isOpen  = $this->firewall_model->isOpen($row->device_id);
+        $result = $this->isCommandExistPerDevice($row);
+        if($result==true && $isOpen==false){
+          return true;
+          exit;
+        }
+      }
+    }else{
+      return false;
+    }
+  }
+
+  private function isCommandExistPerDevice($dataDevice){
+    
+    
+    if($dataDevice->alg_version==""){
+      return true;
+    }else{
+      // send new user
+      $newData = $this->getNewEmployeeActiveDate($dataDevice->device_id);
+      if($newData->num_rows()>0){
+        return true;
+      }else{
+        // update user
+        $updateData = $this->getNeedUpdateUser($dataDevice->device_id);
+        if($updateData->num_rows()>0){
+          return true;
+        }else{
+          // delete user
+          $deleteData = $this->getResignEmployee($dataDevice->device_id);
+          if($deleteData->num_rows()>0){
+            return true;
+          }else{
+            // insert template
+            $sqlTemplate = $this->getTemplateNeedUpdate($dataDevice->device_id);
+            if($sqlTemplate->num_rows()>0){
+              return true;
+            }else{
+              // distribusi mutasi out
+              load_model(["employeemutation_model"]);
+              $mutationOut = $this->employeemutation_model->getMutationOutToday($dataDevice->device_id);
+              if($mutationOut->num_rows()>0){
+                return true;
+              }else{
+                // Distribusi mutasi in
+                $mutationIn = $this->employeemutation_model->getMutationInToday($dataDevice->device_id);
+                if($mutationIn->num_rows()>0){
+                  return true;
+                }else{
+                  // update picture
+                  load_model(["employeelocationdevice_model"]);
+                  $sqlPicNeedUpdate = $this->employeelocationdevice_model->getPicNeedUpdate($dataDevice->device_id,$dataDevice->appid);
+
+                  if($sqlPicNeedUpdate->num_rows()>0){
+                    return true;
+                  }else{
+                    if($this->isNeedReboot($dataDevice->device_SN)==true){
+                      return true;
+                    }else{
+                      return false;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

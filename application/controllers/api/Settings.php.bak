@@ -1,0 +1,74 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+require APPPATH . 'libraries/REST_Controller.php';
+/**
+ *
+ */
+class Settings extends REST_Controller
+{
+  var $now;
+  var $apikey = "3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+	$this->load->model("subscription_model");
+  }
+
+  function index_post(){
+    // get appid
+    $appid = !empty($_POST["app_id"]) ? $_POST["app_id"]  : "";
+    // get key
+    $key   = !empty($_POST["key"])   ? $_POST["key"]    : "";
+
+    if(!empty($appid) && !empty($key)){
+	  $dataSetting = $this->subscription_model->getByAppId($appid);
+      if($key==$this->apikey && $dataSetting!=false){
+        $arrSetting = [];
+		$checkin = '0';
+		$breakin = '0';
+		$breakout = '0';
+		$checkout = '0';
+		$leave = '0';
+		$accessPres = explode("|", $dataSetting->access_presence);
+		if (!empty($dataSetting->access_presence) && in_array(1, $accessPres)){$checkin = '1';}
+		if (!empty($dataSetting->access_presence) && in_array(2, $accessPres)){$breakin = '1';}
+		if (!empty($dataSetting->access_presence) && in_array(3, $accessPres)){$breakout = '1';}
+		if (!empty($dataSetting->access_presence) && in_array(4, $accessPres)){$checkout = '1';}
+		if (!empty(dataSetting) && in_array(5, $accessPres)){$leave = '1';}
+        $arrSetting[] = [
+          "setting_periodpresence_start" => $dataSetting->date_start_period,
+          "setting_periodpresence_end"   => $dataSetting->date_end_period,
+          "setting_cutoff"   => $dataSetting->date_end_period,
+          "setting_access_checkin"   => $checkin,
+          "setting_access_breakin"   => $breakin,
+          "setting_access_breakout"   => $breakout,
+          "setting_access_checkout"   => $checkout,
+          "setting_access_leave"   => $leave
+        ];
+		$arrOutput = [
+          'success' 	=> "ok",
+          'error_code' 	=> "200",
+          'message' 	=> "",
+          'data' 		=> $arrSetting
+        ];
+
+      }else{
+		$arrOutput = [
+           'success' 		=> "",
+           'error_code' 	=> "500",
+           'message' 		=> "Appid or Key is not valid",
+           'data' 			=> ""
+         ];
+      }
+    }else{
+		$arrOutput = [
+		  'success' 	=> "",
+		  'error_code' 	=> "500",
+		  'message' 	=> "Appid and Key must fill",
+		  'data' 		=> ""
+		];
+    }
+    echo output_api($arrOutput,"json");;
+  }
+}

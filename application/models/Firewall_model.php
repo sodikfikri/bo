@@ -1,0 +1,161 @@
+<?php 
+/**
+ * 
+ */
+class Firewall_model extends CI_Model
+{
+	var $tableName = "tbfirewall";
+	var $tableId = "";
+	var $tolleranceValue = 5;
+	function __construct()
+	{
+		parent::__construct();
+	}
+
+	function openGate($employeeID,$date=null){
+		$this->db->select("tbdevice.device_id");
+		$this->db->from("tbemployeeareacabang");
+		$this->db->join("tbdevice","tbdevice.device_area_id = tbemployeeareacabang.employee_area_id and tbdevice.device_cabang_id = tbemployeeareacabang.employee_cabang_id","inner");
+		$this->db->where("tbemployeeareacabang.employeeareacabang_employee_id",$employeeID);
+		$sql = $this->db->get();
+		if($date==null){
+			$date = date("Y-m-d");
+		}
+		foreach ($sql->result() as $row) {
+			$this->setSchedule($row->device_id,$date);
+		}
+	}
+	
+	function openAllDevice(){
+		$this->load->model("device_model");
+		$sql = $this->device_model->getAllRelevanceDevice();
+		foreach ($sql->result() as $row) {
+			$this->setSchedule($row->device_id,date("Y-m-d"));
+		}
+	}
+
+	function evaluate($gateID){
+		$this->db->where("firewall_id",$gateID);
+		$sql  = $this->db->get($this->tableName);
+		$data = $sql->row();
+		$currentCounter = $data->request_counter;
+		
+		if($currentCounter<$this->tolleranceValue){
+			$counter = $currentCounter + 1;
+			$dataUpdate = [
+				"request_counter" => $counter
+			];
+
+		}else{
+			$dataUpdate = [
+				"status" => "close"
+			];
+		}
+
+		$this->db->where("firewall_id",$gateID);
+		return $this->db->update($this->tableName,$dataUpdate);
+	}
+
+	function setSchedule($deviceId,$date){
+		$data = [
+			"device_id" => $deviceId,
+			"duedate" => $date,
+			"status" => "open",
+			"request_counter" => "0" 
+		]; 
+		$this->db->where("device_id",$deviceId);
+		$this->db->where("duedate",$date);
+		$sqlCek = $this->db->get($this->tableName);
+		if($sqlCek->num_rows()== 0){
+			return $this->db->insert($this->tableName,$data);
+		}else{
+			unset($data["device_id"]);
+			unset($data["duedate"]);
+			$this->db->where("device_id",$deviceId);
+			$this->db->where("duedate",$date);
+			return $this->db->update($this->tableName,$data);
+		}
+	}
+
+	function closeSchedule($deviceId,$date){
+		$this->db->where("device_id",$deviceId);
+		$this->db->where("duedate",$date);
+		return $this->db->update($this->tableName,[
+			"status" => "close"
+		]);
+	}
+
+	function getCounter($deviceId,$date){
+		$this->db->select("request_counter");
+		$this->db->where("device_id",$deviceId);
+		$this->db->where("duedate",$date);
+		//$this->db->get()
+	}
+	function openByAppid($appid){
+		$dateNow = date("Y-m-d");
+		$this->load->model("device_model");
+		$devices = $this->device_model->getByAppid($appid,["device_id"]);
+		foreach($devices->result() as $device){
+			$data = [
+				"device_id" => $device->device_id,
+				"duedate" => $dateNow,
+				"status" => "open",
+				"request_counter" => "0" 
+			]; 
+			$this->db->where("device_id",$device->device_id);
+			$this->db->where("duedate",$dateNow);
+			$sqlCek = $this->db->get($this->tableName);
+			if($sqlCek->num_rows()== 0){
+				$this->db->insert($this->tableName,$data);
+			}else{
+
+				$id = $sqlCek->row()->firewall_id;
+				$this->db->where("firewall_id",$id);
+				$result = $this->db->update($this->tableName,["status"=>"open","request_counter"=>"0"]);
+				
+				//return $result;
+			}
+		}
+		return true;
+	}
+	
+	function openFirewallByDeviceid(){
+		$dateNow = date("Y-m-d");
+		$this->load->model("device_model");
+		$listDevice = array('298','299','300','301');
+		foreach($listDevice as $device){
+			$data = [
+				"device_id" => $device,
+				"duedate" => $dateNow,
+				"status" => "open",
+				"request_counter" => "0" 
+			]; 
+			$this->db->where("device_id",$device);
+			$this->db->where("duedate",$dateNow);
+			$sqlCek = $this->db->get($this->tableName);
+			if($sqlCek->num_rows()== 0){
+				$this->db->insert($this->tableName,$data);
+			}else{
+
+				$id = $sqlCek->row()->firewall_id;
+				$this->db->where("firewall_id",$id);
+				$result = $this->db->update($this->tableName,["status"=>"open","request_counter"=>"0"]);
+			}
+		}
+		return true;
+	}
+
+	function isOpen($deviceId){
+		$now = date("Y-m-d");
+		$this->db->select("firewall_id");
+		$this->db->where("device_id",$deviceId);
+		$this->db->where("status","open");
+		$this->db->where("DATE(duedate) <=",$now);
+		$sql = $this->db->get($this->tableName);
+		if($sql->num_rows()>0){
+			return true;
+		}else{
+			return false;
+		}
+	}
+}

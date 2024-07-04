@@ -1,0 +1,11 @@
+<?php
+date_default_timezone_set('Asia/Jakarta');
+$dbhost = 'localhost';
+$dbuser = 'root';
+$dbpass = '';
+$dbname_primary = 'inact_maindb';
+$conn_model = mysqli_connect($dbhost,$dbuser,"",$dbname_primary);
+if ($conn_model->connect_error) {
+	die('Please contact our Customer Support, InAct cannot communicate with Database');
+}
+?>

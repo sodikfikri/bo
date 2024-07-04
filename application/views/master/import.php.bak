@@ -1,0 +1,448 @@
+<style>
+.info-title{
+  text-align: center;
+  font-size: 20pt;
+}
+#error-list{
+  border: 1px solid #9b0000;
+  padding: 10px;
+}
+. text-bold{
+  font-weight: bold;
+}
+</style>
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    Import
+  </h1>
+</section>
+<!-- Main content -->
+<section class="content">
+<!-- Info boxes -->
+<?= !empty($addonsAlert) ? $addonsAlert : '' ?>
+<div class="row">
+  <div class="col-md-12">
+    <div class="nav-tabs-custom">
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#tab_area" data-toggle="tab">Area</a></li>
+      <li><a href="#tab_branch" data-toggle="tab">Branch</a></li>
+      <li><a href="#tab_employee" data-toggle="tab">Employee</a></li>
+      <li><a href="#tab_device" data-toggle="tab">Device</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active" id="tab_area">
+        <span style="font-size: 16px;font-weight:700">IMPORT AREA</span>
+        <form class="" id="import-area" enctype="multipart/form-data" action="" method="post">
+          <ol style="line-height:300%;">
+            <li>
+              <?= $this->gtrans->line("Use the Excel template file that we provide") ?>
+              <br>
+              <a href="<?= base_url("sys_upload/template-import-master-area.xls") ?>" class="download-button" ><?= $this->gtrans->line("Download Template Excel") ?></a>
+            </li>
+            <li>
+              <?= $this->gtrans->line("Enter your Area data into the excel template file, make sure it is in the right format, and save it") ?>.
+            </li>
+            <li>
+              <?= $this->gtrans->line("Select the excel template that has been filled in") ?>.
+              <span class="text-red text-bold">(File type .xls, maximum size 2 MiB)</span>
+              <br>
+              <div class="form-group">
+                <input required class="download-button" type="file" accept=".xls" id="file-area" name="file">
+              </div>
+              <div class="col-md-12">
+                <div class="progress-bar" id="area-progress" style="width:0%"><span id="area-progress-text">0%</span></div>
+              </div>
+
+            </li>
+            <li>
+              <?= $this->gtrans->line("Press the import button below") ?>.
+              <br>
+              <button type="submit" class="btn btn-primary"><?= $this->gtrans->line("Start Import") ?></button>
+            </li>
+          </ol>
+        </form>
+      </div>
+      <!-- /.tab-pane -->
+      <div class="tab-pane" id="tab_branch">
+
+        <span style="font-size: 16px;font-weight:700">IMPORT BRANCH</span>
+        <form class="" id="import-branch" enctype="multipart/form-data" action="" method="post">
+          <ol style="line-height:300%;">
+            <li>
+              <?= $this->gtrans->line("Use the Excel template file that we provide") ?>
+              <br>
+              <a href="<?= base_url("sys_upload/template-import-master-cabang.xls") ?>" class="download-button" ><?= $this->gtrans->line("Download Template Excel") ?></a>
+            </li>
+            <li>
+              <?= $this->gtrans->line("Enter your Branch data into the excel template file, make sure it is in the right format, and save it") ?>.
+            </li>
+            <li>
+              <?= $this->gtrans->line("Select the excel template that has been filled in") ?>.
+              <span class="text-red text-bold">(File type .xls, maximum size 2 MiB)</span>
+              <br>
+              <div class="form-group">
+                <input required class="download-button" type="file" accept=".xls" id="file-branch" name="file">
+              </div>
+              <div class="col-md-12">
+                <div class="progress-bar" id="branch-progress" style="width:0%"><span id="branch-progress-text">0%</span></div>
+              </div>
+            </li>
+            <li>
+              <?= $this->gtrans->line("Press the import button below") ?>.
+              <br>
+              <button type="submit" class="btn btn-primary"><?= $this->gtrans->line("Start Import") ?></button>
+            </li>
+          </ol>
+        </form>
+      </div>
+      <!-- /.tab-pane -->
+      <div class="tab-pane" id="tab_employee">
+        <span style="font-size: 16px;font-weight:700">IMPORT EMPLOYEE</span>
+        <form class="" id="import-employee" enctype="multipart/form-data" action="" method="post">
+          <ol style="line-height:300%;">
+            <li>
+              <?= $this->gtrans->line("Use the Excel template file that we provide") ?>
+              <br>
+			  <?php 
+			  $appid = $this->session->userdata("ses_appid"); 
+			  if($appid=='IA01M6858F20210906256' OR $appid=='IA01M82337F20230627732'){ 
+				?><a href="<?= base_url("sys_upload/template-import-master-karyawan-bkd.xls") ?>" class="download-button" ><?= $this->gtrans->line("Download Template Excel BKD") ?></a><?php
+			  }else{ 
+				?><a href="<?= base_url("sys_upload/template-import-master-karyawan-new.xls") ?>" class="download-button" ><?= $this->gtrans->line("Download Template Excel") ?></a><?php
+			  } ?>
+              
+            </li>
+            <li>
+              <?= $this->gtrans->line("Enter your Employee data into the excel template file, make sure it is in the right format, and save it") ?>.
+            </li>
+            <li>
+              <?= $this->gtrans->line("Select the excel template that has been filled in") ?>. <span class="text-red text-bold">(File type .xls, maximum size 2 MiB)</span>
+              <br>
+              <div class="form-group">
+                <input class="download-button" required type="file" accept=".xls" id="file-employee" name="file">
+              </div>
+              <div class="col-md-12">
+                <div class="progress-bar" id="employee-progress" style="width:0%"><span id="employee-progress-text">0%</span></div>
+              </div>
+            </li>
+            <!--
+            <li>
+
+              Change update if you just want to update existing employee
+              <div>
+                <input onchange="$('#type-import').val($(this).val())" checked type="radio" name="import-type" value="insert"> Insert
+                &nbsp;
+                &nbsp;
+                <input onchange="$('#type-import').val($(this).val())" type="radio" name="import-type" value="update"> Update
+
+                <input id="type-import" value="insert" type="hidden" name="type-import" >
+              </div>
+            </li>-->
+            <li>
+              <?= $this->gtrans->line("Press the import button below") ?>.
+              <br>
+              <button type="submit" class="btn btn-primary"><?= $this->gtrans->line("Start Import") ?></button>
+            </li>
+          </ol>
+        </form>
+      </div>
+      <div class="tab-pane" id="tab_device">
+        <span style="font-size: 16px;font-weight:700">IMPORT DEVICE</span>
+        <form class="" id="import-device" enctype="multipart/form-data" action="" method="post">
+          <ol style="line-height:300%;">
+            <li>
+              <?= $this->gtrans->line("Use the Excel template file that we provide") ?>
+              <br>
+              <a href="<?= base_url("sys_upload/template-import-master-device.xls") ?>" class="download-button" ><?= $this->gtrans->line("Download Template Excel") ?></a>
+            </li>
+            <li>
+              <?= $this->gtrans->line("Enter your Device data into the excel template file, make sure it is in the right format, and save it") ?>.
+            </li>
+            <li>
+              <?= $this->gtrans->line("Select the excel template that has been filled in") ?>. <span class="text-red text-bold">(File type .xls, maximum size 2 MiB)</span>
+              <br>
+              <div class="form-group">
+                <input class="download-button" required type="file" accept=".xls" id="file-device" name="file">
+              </div>
+              <div class="col-md-12">
+                <div class="progress-bar" id="device-progress" style="width:0%"><span id="device-progress-text">0%</span></div>
+              </div>
+
+            </li>
+            <li>
+              <?= $this->gtrans->line("Press the import button below") ?>.
+              <br>
+              <button type="submit" class="btn btn-primary"><?= $this->gtrans->line("Start Import") ?></button>
+            </li>
+          </ol>
+        </form>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-msg">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="text-blue info-title"><i class="fa fa-info"></i> <?= $this->gtrans->line("Import Result") ?></div>
+        <div class="row" style="margin-top:50px">
+          <div class="col-md-3 text-blue text-center" style="font-size:18pt">
+            <i class="fa fa-dot-circle-o"></i><br><span class="text-skipped"></span> Skipped
+          </div>
+          <div class="col-md-3 text-green text-center" style="font-size:18pt">
+            <i class="fa  fa-check-circle-o"></i><br><span class="text-inserted"></span> Inserted
+          </div>
+          <div class="col-md-3 text-yellow text-center" style="font-size:18pt">
+            <i class="fa  fa-refresh"></i><br><span class="text-updated"></span> Updated
+          </div>
+          <div class="col-md-3 text-red text-center" style="font-size:18pt">
+            <i class="fa  fa-close"></i><br><span class="text-error"></span> Error
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="col-md-12">
+            <div id="error-list"></div>
+          </div>
+        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default pull-left" data-dismiss="modal"><?= $this->gtrans->line("Close") ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<script type="text/javascript">
+var url = "<?= base_url() ?>";
+$('#import-area').submit(function(e){
+  e.preventDefault();
+  $("#area-progress").css("width","0%");
+  $("#area-progress-text").html("0%");
+  $.ajax({
+    url:url +'import-area', //URL submit
+    type:"post",
+    data:new FormData(this),
+    processData:false,
+    contentType:false,
+    beforeSend : function(){
+      $("#area-progress").css("width","10%");
+      $("#area-progress-text").html("10%");
+    },
+    cache:false,
+    //async:false,
+    success: function(data){
+      var result = jQuery.parseJSON(data);
+      var res  = arraylength(result.error);
+
+      if(result.file_error==""){
+        for (var i = 0; i <= 100; i++) {
+          $("#area-progress").css("width",i+"%");
+          $("#area-progress-text").html(i+"%");
+
+          if(i==100){
+            if(res==0){
+              $("#file-area").val("");
+            }
+            var strError = '';
+            result.error.forEach(function(row){
+              strError += '<p class="text-red"> '+row+'</p>';
+            });
+            $(".text-skipped").html(result.skipped);
+            $(".text-inserted").html(result.inserted);
+            $(".text-error").html(res);
+            $("#error-list").html(strError);
+            $("#modal-msg").modal('show');
+          }
+        }
+      }else{
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: result.file_error //,
+          //footer: ''
+        });
+        $("#area-progress").css("width","0%");
+        $("#area-progress-text").html("0%");
+      }
+    }
+  });
+});
+
+$('#import-branch').submit(function(e){
+  e.preventDefault();
+  $("#branch-progress").css("width","0%");
+  $("#branch-progress-text").html("0%");
+
+  $.ajax({
+    url:url +'import-branch', //URL submit
+    type:"post",
+    data:new FormData(this),
+    processData:false,
+    contentType:false,
+    beforeSend : function(){
+      $("#branch-progress").css("width","10%");
+      $("#branch-progress-text").html("10%");
+    },
+    cache:false,
+    //async:false,
+    success: function(data){
+      var result = jQuery.parseJSON(data);
+      var error  = arraylength(result.error);
+      if(result.file_error==""){
+        for (var i = 0; i <= 100; i++) {
+          $("#branch-progress").css("width",i+"%");
+          $("#branch-progress-text").html(i+"%");
+          if(i==100){
+            if(error==0){
+              $("#file-branch").val("");
+            }
+            var strError = '';
+            result.error.forEach(function(row){
+              strError += '<p class="text-red"> '+row+'</p>';
+            });
+            $(".text-skipped").html(result.skipped);
+            $(".text-inserted").html(result.inserted);
+            $(".text-error").html(error);
+            $("#error-list").html(strError);
+            $("#modal-msg").modal('show');
+          }
+        }
+      }else{
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: result.file_error //,
+          //footer: ''
+        });
+        $("#branch-progress").css("width","0%");
+        $("#branch-progress-text").html("0%");
+      }
+    }
+  });
+});
+
+$('#import-employee').submit(function(e){
+  e.preventDefault();
+  $("#employee-progress").css("width","0%");
+  $("#employee-progress-text").html("0%");
+
+  $.ajax({
+    url:url +'import-employee-intrax', //URL submit
+    type:"post",
+    data:new FormData(this),
+    processData:false,
+    contentType:false,
+    beforeSend : function(){
+      $("#employee-progress").css("width","10%");
+      $("#employee-progress-text").html("10%");
+    },
+    cache:false,
+    //async:false,
+    success: function(data){
+      var result = jQuery.parseJSON(data);
+      var error  = arraylength(result.error);
+      if(result.file_error==""){
+        for (var i = 0; i <= 100; i++) {
+          $("#employee-progress").css("width",i+"%");
+          $("#employee-progress-text").html(i+"%");
+          if(i==100){
+            if(error==0){
+              $("#file-employee").val("");
+            }
+            var strError = '';
+            result.error.forEach(function(row){
+              strError += '<p class="text-red"> '+row+'</p>';
+            });
+
+            $(".text-skipped").html(result.skipped);
+            $(".text-inserted").html(result.inserted);
+            $(".text-updated").html(result.updated);
+            $(".text-error").html(error);
+            $("#error-list").html(strError);
+            $("#modal-msg").modal('show');
+          }
+        }
+      }else{
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: result.file_error //,
+          //footer: ''
+        });
+        $("#employee-progress").css("width","0%");
+        $("#employee-progress-text").html("0%");
+      }
+    }
+  });
+});
+
+$('#import-device').submit(function(e){
+  e.preventDefault();
+  $("#device-progress").css("width","0%");
+  $("#device-progress-text").html("0%");
+  $.ajax({
+    url:url + 'import-device',
+    type:"post",
+    data:new FormData(this),
+    processData:false,
+    contentType:false,
+    beforeSend : function(){
+      $("#device-progress").css("width","10%");
+      $("#device-progress-text").html("10%");
+    },
+    cache:false,
+    //async:false,
+
+    success: function(data){
+      var result = jQuery.parseJSON(data);
+      var error  = arraylength(result.error);
+      if(result.file_error==""){
+        for (var i = 0; i <= 100; i++) {
+          $("#device-progress").css("width",i+"%");
+          $("#device-progress-text").html(i+"%");
+          if(i==100){
+            if(error==0){
+              $("#file-device").val("");
+            }
+            var strError = '';
+            result.error.forEach(function(row){
+              strError += '<p class="text-red"> '+row+'</p>';
+            });
+            $(".text-skipped").html(result.skipped);
+            $(".text-inserted").html(result.inserted);
+            $(".text-error").html(error);
+            $("#error-list").html(strError);
+            $("#modal-msg").modal('show');
+          }
+        }
+      }else{
+        Swal.fire({
+          type: 'error',
+          title: 'Oops...',
+          text: result.file_error //,
+          //footer: ''
+        });
+        $("#device-progress").css("width","0%");
+        $("#device-progress-text").html("0%");
+      }
+    },
+    complete : function(){
+
+    }
+  });
+});
+$('#modal-msg').on('hidden.bs.modal', function () {
+  $("#device-progress").css("width","0%");
+  $("#device-progress-text").html("0%");
+
+  $("#employee-progress").css("width","0%");
+  $("#employee-progress-text").html("0%");
+
+  $("#branch-progress").css("width","0%");
+  $("#branch-progress-text").html("0%");
+
+  $("#area-progress").css("width","0%");
+  $("#area-progress-text").html("0%");
+})
+</script>

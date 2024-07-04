@@ -1,0 +1,774 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+require APPPATH . 'libraries/REST_Controller.php';
+
+class Employee extends REST_Controller
+{
+  var $now;
+  var $apikey = "IAdev-apikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
+
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+  }
+  
+  function checkEmail_post(){
+    $apikey = !empty($this->input->post("apikey"))? $this->input->post("apikey"): "";
+	$flag  = !empty($this->input->post("flag")) ? $this->input->post("flag") : "";
+	$email  = !empty($this->input->post("email")) ? $this->input->post("email") : "";
+	$company_id  = !empty($this->input->post("company_id")) ? $this->input->post("company_id") : "";
+	$arrData = [];
+	$arrLocation = [];
+	load_model([
+	"employee_model",
+	"cabang_model",
+	"subscription_model",
+	"employeeareacabang_model"
+	]);
+    if($apikey!=""){
+		if($apikey==$this->apikey){
+			if ($flag==0) {
+				if($company_id!=""){
+					$sqlGetAppid = $this->subscription_model->getAppId($company_id);
+					$checkEmailExist = $this->employee_model->checkEmailExist($email,$sqlGetAppid->appid);
+					if($checkEmailExist==false){
+						$key = "423a1aa70eca39af";
+						$iv = "506e6fb150550765";
+						$data = "Password123";
+						$ciphertext = openssl_encrypt($data, "aes-128-cbc", $key, 0, $iv);
+						$arrOutput = [
+						 'result'				=> true,
+						 'message' 				=> "Please check your email for a verification pin",
+						 'pin'	 				=> $ciphertext,
+						 'activation' 			=> false,
+						 'registration' 		=> true,
+						 'data' 				=> $arrData,
+						 'location' 			=> $arrLocation,
+						 'absence_with_location'=> true,
+						 'license_url'			=> "https://licenses.genesysindonesia.co.id/api/",
+						 'license_token'		=> "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiNjkzNTQwOWYzMWIyNDFlNDIyZjYyMjExOTVlMTlhNTNmZmQ3MzJlYjVhOGYxNzM2ZGRhZTEyNzZhMjU1YWM2NTBmNzkxZWYyMWM0NmYyN2YiLCJpYXQiOjE2NTgzODkyNjAsIm5iZiI6MTY1ODM4OTI2MCwiZXhwIjoxNjg5OTI1MjYwLCJzdWIiOiI4Iiwic2NvcGVzIjpbXX0.VgO9GK9tFSuu7hHpabE1DWm3RFkA0NfL-Q92EBRz_h1lZZAJH65Qtq7p1_HlPyt3TYE9FncVFsDjV1LUsAIMzNquJMcQYNQ-pYfj3irFTqp0LCAEOcrc1c7Pm5J2YUHPOGOQGeRB3_SZzUpejHcWICKhXMQMIRK1Ss3hOyXXnv4sH4B7uujUsd0_99q6gz4ufySzmbChBelzl0PrcXbHiRHAiQKfcsfowvrU1pe2mYgTUnkjdKyRXIy-XJ5mL7NQ4Bq3ZPZROPQpS9YT0TLfSRxiocfqutXmYgx4jwjl0jh7fqF7fM8Y4VcKSKRCBL-Pqg-bK-tPzLBK4kOrh-6Ngnp3WJoL0pUKLgbGEeVysU9Ehu__REvJCamdM5aipt6ym1B0hZxfHji4DoP0jHVG8Xxp6nn0vMqUi3gdZp-hY1JawJusqtj3KEeejfLfB-oKlZKqNXmXGNWagDeNLh9HTM2ry4PTGMKAFXVvQcafmE2OEovDQvzuB2npbO3cDPvyf3nMPgzMiDcE79051R8ojFkf82SypYzMcMunhCiBhd-2zmZ7w5NVYuG3bgvd76qBh6lG8hV1aMV5Jz_F14rxIfsKzRz4-y9sO2xtRivXIIstsV5xU6Pr3gjl__3cN-2KRFx0hnMhmYICPxOBApdfOuqj2G5ZJ3kNGUk9RESoMCs"
+					   ];
+					} else {
+						$arrOutput = [
+						 'result'				=> false,
+						 'message' 				=> "Email have already been used",
+						 'activation' 			=> false,
+						 'registration' 		=> false,
+						 'data' 				=> $arrData,
+						 'location' 			=> $arrLocation,
+						 'absence_with_location'=> true
+					   ];
+					}					
+				} else {
+				   $arrOutput = [
+					 'result'		=> false,
+					 'message' 		=> "company_id not defined"
+				   ];
+				}
+			} elseif($flag==1){
+				if($company_id!=""){
+					$sqlGetAppid = $this->subscription_model->getAppId($company_id);
+					$checkEmailExist = $this->employee_model->checkEmailExist($email,$sqlGetAppid->appid);
+					if($checkEmailExist==true){
+						$key = "423a1aa70eca39af";
+						$iv = "506e6fb150550765";
+						$data = "Password123";
+						$ciphertext = openssl_encrypt($data, "aes-128-cbc", $key, 0, $iv);
+						$arrOutput = [
+						 'result'				=> true,
+						 'message' 				=> "Please check your email for a verification pin",
+						 'permission' 			=> false,
+						 'pin' 					=> $ciphertext,
+						 'data' 				=> $arrData,
+						 'location' 			=> $arrLocation,
+						 'absence_with_location'=> true,
+						 'license_url'			=> "https://licenses.genesysindonesia.co.id/api/",
+						 'license_token'		=> "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiNjkzNTQwOWYzMWIyNDFlNDIyZjYyMjExOTVlMTlhNTNmZmQ3MzJlYjVhOGYxNzM2ZGRhZTEyNzZhMjU1YWM2NTBmNzkxZWYyMWM0NmYyN2YiLCJpYXQiOjE2NTgzODkyNjAsIm5iZiI6MTY1ODM4OTI2MCwiZXhwIjoxNjg5OTI1MjYwLCJzdWIiOiI4Iiwic2NvcGVzIjpbXX0.VgO9GK9tFSuu7hHpabE1DWm3RFkA0NfL-Q92EBRz_h1lZZAJH65Qtq7p1_HlPyt3TYE9FncVFsDjV1LUsAIMzNquJMcQYNQ-pYfj3irFTqp0LCAEOcrc1c7Pm5J2YUHPOGOQGeRB3_SZzUpejHcWICKhXMQMIRK1Ss3hOyXXnv4sH4B7uujUsd0_99q6gz4ufySzmbChBelzl0PrcXbHiRHAiQKfcsfowvrU1pe2mYgTUnkjdKyRXIy-XJ5mL7NQ4Bq3ZPZROPQpS9YT0TLfSRxiocfqutXmYgx4jwjl0jh7fqF7fM8Y4VcKSKRCBL-Pqg-bK-tPzLBK4kOrh-6Ngnp3WJoL0pUKLgbGEeVysU9Ehu__REvJCamdM5aipt6ym1B0hZxfHji4DoP0jHVG8Xxp6nn0vMqUi3gdZp-hY1JawJusqtj3KEeejfLfB-oKlZKqNXmXGNWagDeNLh9HTM2ry4PTGMKAFXVvQcafmE2OEovDQvzuB2npbO3cDPvyf3nMPgzMiDcE79051R8ojFkf82SypYzMcMunhCiBhd-2zmZ7w5NVYuG3bgvd76qBh6lG8hV1aMV5Jz_F14rxIfsKzRz4-y9sO2xtRivXIIstsV5xU6Pr3gjl__3cN-2KRFx0hnMhmYICPxOBApdfOuqj2G5ZJ3kNGUk9RESoMCs"
+						];
+					} else {
+						$arrOutput = [
+						 'result'				=> false,
+						 'message' 				=> "Login Failed, Please Register First."
+						];
+					}
+				} else {
+				   $arrOutput = [
+					'result'	=> false,
+					'message' 	=> "company_id not defined"
+				   ];
+				}
+			} else{
+			  $arrOutput = [
+				'result'	=> false,
+				'message' 	=> "flag is not valid"
+			  ];
+			}
+		}else{
+			$arrOutput = [
+			  'result'		=> false,
+			  'message' 	=> "apikey is not valid"
+			];
+		}
+    }else{
+      $arrOutput = [
+		'result'		=> false,
+		'message' 		=> "apikey is not defined"
+      ];
+    }
+	header("Content-Type:application/json");
+    echo json_encode($arrOutput);
+  }
+  
+  function resetPassword_post(){
+    $apikey = !empty($this->input->post("apikey"))? $this->input->post("apikey"): "";
+	$employee_id  = !empty($this->input->post("employee_id")) ? $this->input->post("employee_id") : "";
+	load_model([
+	"employee_model",
+	"cabang_model",
+	"subscription_model",
+	"employeeareacabang_model"
+	]);
+    if($apikey!=""){
+		if($apikey==$this->apikey){
+			if($employee_id!=""){
+				$resultPasswordPin = $this->employee_model->resetPasswordPin($employee_id);
+				if($resultPasswordPin!=false){
+					$arrOutput = [
+					 'result'				=> true,
+					 'message' 				=> "Success reset to default password. Please check your email"
+				   ];
+				} else {
+					$arrOutput = [
+					 'result'				=> false,
+					 'message' 				=> "Error when resetting password"
+				   ];
+				}					
+			} else {
+			   $arrOutput = [
+				'result'		=> false,
+				'message' 		=> "employee_id not defined"
+			   ];
+			}
+		}else{
+			$arrOutput = [
+			  'result'		=> false,
+			  'message'		=> "apikey is not valid"
+			];
+		}
+    }else{
+      $arrOutput = [
+		'result'		=> false,
+		'message'		=> "apikey is not defined"
+      ];
+    }
+	header("Content-Type:application/json");
+    echo json_encode($arrOutput);
+  }
+  
+  function checkLogin_post(){
+    $apikey = !empty($this->input->post("apikey"))? $this->input->post("apikey"): "";
+	$checklog_id2  = !empty($this->input->post("checklog_id2")) ? $this->input->post("checklog_id2") : "";
+	$email  = !empty($this->input->post("email")) ? $this->input->post("email") : "";
+	$company_id  = !empty($this->input->post("company_id")) ? $this->input->post("company_id") : "";
+	$employee_device  = !empty($this->input->post("employee_device")) ? $this->input->post("employee_device") : "";
+	$password  = !empty($this->input->post("password")) ? $this->input->post("password") : "";
+	$version  = !empty($this->input->post("version")) ? $this->input->post("version") : "";
+	$source_id  = !empty($this->input->post("source_id")) ? $this->input->post("source_id") : "";
+	$arrLocation = [];
+	$arrEmpLocation = [];
+	load_model([
+	"employee_model",
+	"cabang_model",
+	"subscription_model",
+	"employeeareacabang_model"
+	]);
+	$sqlGetAppid = $this->subscription_model->getAppId($company_id);
+	$appid = $sqlGetAppid->appid;
+    if($apikey!=""){
+		if($apikey==$this->apikey){
+			if($email!=""){
+				$dataEmployee = $this->employee_model->getByEmail($email,$appid);
+				if($dataEmployee){
+					$key = "423a1aa70eca39af";
+					$iv = "506e6fb150550765";
+					$data = $dataEmployee->intrax_pin;
+					$ciphertext = openssl_encrypt($data, "aes-128-cbc", $key, 0, $iv);
+					if($password==$ciphertext){
+					  $id = $dataEmployee->employee_id;
+					  $dataLocation = $this->employeeareacabang_model->getEmployeeLocation($id);
+					  if($dataLocation){
+						foreach ($dataLocation as $row) {
+						  $arrLocation[] = [
+							"machine_id"			=> $row->cabang_code,
+							"toleransi_radius"		=> $row->employeeareacabang_radius,
+							"lat"					=> $row->latitude,
+							"long"					=> $row->longitude,
+							"alamat_lengkap"		=> $row->cabang_address
+						  ];
+						}
+					  }
+					  
+					  if($dataEmployee->employee_license=="active"){ $license=1; } else { $license=0; }
+						
+					  $dataEmployee = [
+						"department_name"			=> null,
+						"position_name"				=> null,
+						"employee_id"				=> $id,
+						"employee_name"				=> $dataEmployee->employee_full_name,
+						"employee_ktp_no"			=> null,
+						"employee_ktp_address"      => $dataEmployee->address,
+						"employee_domicile_address" => $dataEmployee->address,
+						"employee_birth_place"     	=> null,
+						"employee_email"    		=> $dataEmployee->email,
+						"employee_marital_status" 	=> null,
+						"employee_password" 		=> $ciphertext,
+						"employee_active_status"    => $dataEmployee->employee_license,
+						"checklog_id2"   			=> $checklog_id2,
+						"employee_birth_date"		=> $dataEmployee->birthday,
+						"employee_photo"			=> null
+					  ];
+					  
+					  $menu_1 = [
+						"component_name"			=> "Location",
+						"component_id"				=> 1,
+						"value"						=> true
+					  ];
+					  
+					  $menu_2 = [
+						"component_name"			=> "Document",
+						"component_id"				=> 2,
+						"value"						=> true
+					  ];
+					  
+					  $menu_3 = [
+						"component_name"			=> "Essay",
+						"component_id"				=> 3,
+						"value"						=> true
+					  ];
+					  
+					  $arrOutput = [
+						 'result'					=> true,
+						 'location' 				=> $arrLocation,
+						 'employeeLocation' 		=> $arrEmpLocation,
+						 'message' 					=> "Login Success",
+						 'data' 					=> $dataEmployee,
+						 'pic' 						=> true,
+						 'kpi' 						=> true,
+						 'slip' 					=> true,
+						 'menu_1' 					=> $menu_1,
+						 'menu_2' 					=> $menu_2,
+						 'menu_3' 					=> $menu_3,
+						 'permission' 				=> true,
+						 'absence_with_location' 	=> 0,
+						 'license_url' 				=> "https://licenses.genesysindonesia.co.id/api/",
+						 'license_token' 			=> "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiNjkzNTQwOWYzMWIyNDFlNDIyZjYyMjExOTVlMTlhNTNmZmQ3MzJlYjVhOGYxNzM2ZGRhZTEyNzZhMjU1YWM2NTBmNzkxZWYyMWM0NmYyN2YiLCJpYXQiOjE2NTgzODkyNjAsIm5iZiI6MTY1ODM4OTI2MCwiZXhwIjoxNjg5OTI1MjYwLCJzdWIiOiI4Iiwic2NvcGVzIjpbXX0.VgO9GK9tFSuu7hHpabE1DWm3RFkA0NfL-Q92EBRz_h1lZZAJH65Qtq7p1_HlPyt3TYE9FncVFsDjV1LUsAIMzNquJMcQYNQ-pYfj3irFTqp0LCAEOcrc1c7Pm5J2YUHPOGOQGeRB3_SZzUpejHcWICKhXMQMIRK1Ss3hOyXXnv4sH4B7uujUsd0_99q6gz4ufySzmbChBelzl0PrcXbHiRHAiQKfcsfowvrU1pe2mYgTUnkjdKyRXIy-XJ5mL7NQ4Bq3ZPZROPQpS9YT0TLfSRxiocfqutXmYgx4jwjl0jh7fqF7fM8Y4VcKSKRCBL-Pqg-bK-tPzLBK4kOrh-6Ngnp3WJoL0pUKLgbGEeVysU9Ehu__REvJCamdM5aipt6ym1B0hZxfHji4DoP0jHVG8Xxp6nn0vMqUi3gdZp-hY1JawJusqtj3KEeejfLfB-oKlZKqNXmXGNWagDeNLh9HTM2ry4PTGMKAFXVvQcafmE2OEovDQvzuB2npbO3cDPvyf3nMPgzMiDcE79051R8ojFkf82SypYzMcMunhCiBhd-2zmZ7w5NVYuG3bgvd76qBh6lG8hV1aMV5Jz_F14rxIfsKzRz4-y9sO2xtRivXIIstsV5xU6Pr3gjl__3cN-2KRFx0hnMhmYICPxOBApdfOuqj2G5ZJ3kNGUk9RESoMCs",
+						 'offline_attendance' 		=> true,
+						 'checklog_id_include' 		=> false,
+						 'source_id' 				=> $company_id,
+						 'warehouse_id' 			=> $company_id
+					   ];
+					} else {
+						$arrOutput = [
+						 'result'				=> false,
+						 'message' 				=> "wrong password"
+						];
+					}
+				} else {
+				   $arrOutput = [
+					 'result'				=> false,
+					 'message' 				=> "user not found"
+				   ];
+				}
+			} else {
+			   $arrOutput = [
+			     'result'				=> false,
+				 'message' 				=> "email not defined"
+			   ];
+			}
+		}else{
+			$arrOutput = [
+			  'result'				=> false,
+			  'message' 			=> "apikey is not valid"
+			];
+		}
+    }else{
+      $arrOutput = [
+		'result'			=> false,
+		'message' 			=> "apikey is not defined"
+      ];
+    }
+	header("Content-Type:application/json");
+    echo json_encode($arrOutput);
+  }
+
+  function getActive_post(){
+    load_model([
+      "area_model",
+      "cabang_model",
+      "employee_model"
+    ]);
+    $apikey = !empty($this->input->post("apikey"))? $this->input->post("apikey"): "";
+
+    if($apikey!=""){
+      if($apikey==$this->apikey){
+        $appid  = !empty($this->input->post("appid")) ? $this->input->post("appid") : "";
+        $employee_account_no  = !empty($this->input->post("account_no")) ? $this->input->post("account_no") : "";
+        if ($appid!="") {
+
+          load_model([
+            "area_model",
+            "cabang_model",
+            "subscription_model",
+            "employeeareacabang_model"
+          ]);
+          $company = $this->subscription_model->getByAppId($appid);
+
+          if($company!=false){
+            $sqlArea = $this->area_model->getAll($appid);
+
+            $locations = [];
+            foreach ($sqlArea as $rowArea) {
+              $this->db->where("cabang_area_id",$rowArea->area_id);
+              $sqlBranch = $this->cabang_model->getAll($appid);
+              $branchs   = [];
+              foreach ($sqlBranch as $rowBranch) {
+                $sqlEmployee = $this->employeeareacabang_model->getEmployeeByLocation($rowArea->area_id,$rowBranch->cabang_id,$appid,$employee_account_no);
+                $arrEmployee = [];
+
+                foreach ($sqlEmployee->result() as $rowEmployee) {
+				  $pin = '0';
+				  $finger = '0';
+				  $face = '0';
+				  $pic = '0';
+				  $methodPres = explode("|", $rowEmployee->presence_method);
+				  if (!empty($rowEmployee->presence_method) && in_array(1, $methodPres)){$pin = '1';}
+				  if (!empty($rowEmployee->presence_method) && in_array(2, $methodPres)){$finger = '1';}
+				  if (!empty($rowEmployee->presence_method) && in_array(3, $methodPres)){$face = '1';}
+				  if (!empty($rowEmployee->presence_method) && in_array(4, $methodPres)){$pic = '1';}
+                  $arrEmployee[] = [
+                    "employee_code" => $rowEmployee->employee_account_no,
+                    "employee_name" => $rowEmployee->employee_full_name,
+                    "employee_nickname" => $rowEmployee->employee_nick_name,
+                    "employee_address" => $rowEmployee->address,
+                    "employee_email" => $rowEmployee->email,
+                    "employee_phonenumber" => $rowEmployee->phone_number,
+                    "employee_pin" => $rowEmployee->intrax_pin,
+                    "employee_joindate" => $rowEmployee->employee_join_date,
+                    "employee_presencemethod_pin" => $pin,
+                    "employee_presencemethod_finger" => $finger,
+                    "employee_presencemethod_face" => $face,
+                    "employee_presencemethod_picture" => $pic,
+                    "employee_presencemode" => $rowEmployee->presence_mode,
+                  ];
+                }
+
+                $branchs[] = [
+                  "branch_code" => $rowBranch->cabang_code,
+                  "branch_name" => $rowBranch->cabang_name,
+                  "employee"    => $arrEmployee
+                ];
+              }
+
+              $locations[] = [
+                "area_code" => $rowArea->area_code,
+                "area_name" => $rowArea->area_name,
+                "branchs"   => $branchs
+              ];
+            }
+            $result  = [
+              "appid" => $appid,
+              "company_name" => $company->company_name,
+              "locations" => $locations
+            ];
+            $arrOutput = [
+              'success' 		=> "ok",
+              'error_code' 	=> "200",
+              'message' 		=> "",
+              'data' 			  => $result
+            ];
+          }else{
+            $arrOutput = [
+              'success' 		=> "",
+              'error_code' 	=> "500",
+              'message' 		=> "appid not found",
+              'data' 			  => ""
+            ];
+          }
+
+        }else{
+          $arrOutput = [
+            'success' 		=> "",
+            'error_code' 	=> "500",
+            'message' 		=> "appid not defined",
+            'data' 			  => ""
+          ];
+        }
+      }else{
+        $arrOutput = [
+          'success' 		=> "",
+          'error_code' 	=> "401",
+          'message' 		=> "apikey is not valid",
+          'data' 			  => ""
+        ];
+      }
+    }else{
+      $arrOutput = [
+        'success' 		=> "",
+        'error_code' 	=> "401",
+        'message' 		=> "apikey is not defined",
+        'data' 			  => ""
+      ];
+    }
+    echo output_api($arrOutput,"json");
+  }
+
+  function getNotActive_post(){
+    load_model([
+      "area_model",
+      "cabang_model",
+      "employee_model"
+    ]);
+    $apikey = !empty($this->input->post("apikey"))? $this->input->post("apikey"): "";
+
+    if($apikey!=""){
+      if($apikey==$this->apikey){
+        $appid  = !empty($this->input->post("appid")) ? $this->input->post("appid") : "";
+        if ($appid!="") {
+
+          load_model([
+            "subscription_model",
+            "employee_model"
+          ]);
+          $company = $this->subscription_model->getByAppId($appid);
+
+          if($company!=false){
+            $sqlEmployee = $this->employee_model->getResignEmployee($appid);
+            $resign      = [];
+            foreach ($sqlEmployee->result() as $row) {
+              $resign[] = [
+                "employee_code" => $row->employee_account_no,
+                "employee_name" => $row->employee_full_name,
+                "employee_nickname" => $row->employee_nick_name,
+                "employee_joindate" => $row->employee_join_date,
+                "employee_resigndate" => $row->employee_resign_date,
+              ];
+            }
+            $result  = [
+              "appid" => $appid,
+              "company_name" => $company->company_name,
+              "resign" => $resign
+            ];
+            $arrOutput = [
+              'success' 		=> "ok",
+              'error_code' 	=> "200",
+              'message' 		=> "",
+              'data' 			  => $result
+            ];
+          }else{
+            $arrOutput = [
+              'success' 		=> "",
+              'error_code' 	=> "500",
+              'message' 		=> "appid not found",
+              'data' 			  => ""
+            ];
+          }
+
+        }else{
+          $arrOutput = [
+            'success' 		=> "",
+            'error_code' 	=> "500",
+            'message' 		=> "appid not defined",
+            'data' 			  => ""
+          ];
+        }
+      }else{
+        $arrOutput = [
+          'success' 		=> "",
+          'error_code' 	=> "401",
+          'message' 		=> "apikey is not valid",
+          'data' 			  => ""
+        ];
+      }
+    }else{
+      $arrOutput = [
+        'success' 		=> "",
+        'error_code' 	=> "401",
+        'message' 		=> "apikey is not defined",
+        'data' 			  => ""
+      ];
+    }
+    echo output_api($arrOutput,"json");
+  }
+
+  function pushEmployee_post(){
+    $apikey = !empty($this->input->post("apikey")) ? $this->input->post("apikey") : "";
+
+    if($apikey!=""){
+      if($apikey==$this->apikey){
+        $appid  = !empty($this->input->post("appid")) ? $this->input->post("appid") : "";
+        if ($appid!="") {
+
+          load_model([
+            "subscription_model",
+            "employee_model",
+            "device_model",
+            "employeeareacabang_model"
+          ]);
+          $company = $this->subscription_model->getByAppId($appid);
+
+          if($company!=false){
+            /* Base process */
+            $employee_account_no = !empty($this->input->post("employee_account")) ? $this->input->post("employee_account") : "";
+            $employee_name       = !empty($this->input->post("name")) ? $this->input->post("name") : "";
+            $employee_status     = !empty($this->input->post("status")) ? $this->input->post("status") : "0";
+            $password            = !empty($this->input->post("password")) ? $this->input->post("password") : "";
+            $card                = !empty($this->input->post("card")) ? $this->input->post("card") : "" ;
+
+            $deviceSN            = !empty($this->input->post("SN")) ? $this->input->post("SN") : "" ;
+            if($employee_account_no!="" && $employee_name!="" && $deviceSN!=""){
+              // cek SN exist
+              $device = $this->device_model->checkMachineExist($deviceSN);
+              if($device!=false){
+                $area  = $device->device_area_id;
+                $branch= $device->device_cabang_id;
+
+                $employeeExist = $this->employee_model->isAccountExist($employee_account_no,$appid);
+                if($employeeExist==false){
+                  $dataInsert    = [
+                    "appid" => $appid,
+                    "employee_account_no" => $employee_account_no,
+                    "employee_full_name"  => $employee_name,
+                    "employee_nick_name"  => $employee_name,
+                    "employee_password"   => $password,
+                    "employee_card"       => $card,
+                    "employee_level"      => $employee_status,
+                    "employee_user_add"   => "0",
+                    "employee_join_date"  => $this->now
+                  ];
+
+                  $this->db->trans_start();
+                  $employee_id = $this->employee_model->insert($dataInsert,$appid);
+                  $penempatanEmployee = [
+                      "appid"                           => $appid,
+                      "employeeareacabang_employee_id"  => $employee_id,
+                      "employee_area_id"                => $area,
+                      "employee_cabang_id"              => $branch,
+                      "employeeareacabang_effdt"        => $this->now,
+                      "employeeareacabang_user_add"     => "0",
+                      "status"                          => "pending"
+                  ];
+                  $this->employeeareacabang_model->insert($penempatanEmployee,$appid);
+                  
+                  $this->db->trans_complete();
+
+                  if ($this->db->trans_status()!==false) {
+                    // tempatkan karyawan pada cabang aktif sesuai dengan serial number device
+                    $arrOutput = [
+                      'success'     => "ok",
+                      'error_code'  => "200",
+                      'message'     => "",
+                      'data'        => ""
+                    ];
+                  }else{
+                    $arrOutput = [
+                      'success'     => "",
+                      'error_code'  => "500",
+                      'message'     => "Internal Server Error!",
+                      'data'        => ""
+                    ];                  
+                  }
+
+                }else{
+                  $arrOutput = [
+                    'success'     => "",
+                    'error_code'  => "500",
+                    'message'     => "Duplicate account no on server!",
+                    'data'        => ""
+                  ];
+                }
+
+              }else{
+                $arrOutput = [
+                  'success'     => "",
+                  'error_code'  => "500",
+                  'message'     => "Device not found or license not active!",
+                  'data'        => ""
+                ];  
+              }
+
+            }else{
+              $arrOutput = [
+                'success'     => "",
+                'error_code'  => "500",
+                'message'     => "\"employee_account\" or \"name\" or \"SN\" was not set!",
+                'data'        => ""
+              ];  
+            }
+            
+            
+
+          }else{
+            $arrOutput = [
+              'success'     => "",
+              'error_code'  => "500",
+              'message'     => "appid not found",
+              'data'        => ""
+            ];
+          }
+
+        }else{
+          $arrOutput = [
+            'success'     => "",
+            'error_code'  => "500",
+            'message'     => "appid not defined",
+            'data'        => ""
+          ];
+        }
+      }else{
+        $arrOutput = [
+          'success'     => "",
+          'error_code'  => "401",
+          'message'     => "apikey is not valid",
+          'data'        => ""
+        ];
+      }
+    }else{
+      $arrOutput = [
+        'success'     => "",
+        'error_code'  => "401",
+        'message'     => "apikey is not defined",
+        'data'        => ""
+      ];
+    }
+    echo output_api($arrOutput,"json");
+  }
+
+  function pushTemplate_post(){
+    $apikey = !empty($this->input->post("apikey")) ? $this->input->post("apikey") : "";
+
+    if($apikey!=""){
+      if($apikey==$this->apikey){
+        $appid  = !empty($this->input->post("appid")) ? $this->input->post("appid") : "";
+        if ($appid!="") {
+
+          load_model([
+            "employeetemplate_model",
+            "employee_model",
+            "subscription_model"
+          ]);
+          $company = $this->subscription_model->getByAppId($appid);
+
+          if($company!=false){
+            /* Base Process */
+            $account_no = !empty($this->input->post("account_no")) ? $this->input->post("account_no") : "";
+            $index      = !empty($this->input->post("index")) ? $this->input->post("index") : "";
+            $type       = !empty($this->input->post("type")) ? $this->input->post("type") : "";
+            $template   = !empty($this->input->post("template")) ? $this->input->post("template") : "";
+            
+            if($account_no!="" && $index!="" && $type!="" && $template !=""){
+              $exist = $this->employee_model->isAccountExist($account_no,$appid);
+              if($exist!=false){
+                $employee_id = $exist->employee_id;
+
+                if($type=="fingerprint"){
+                  $dataInsert = [
+                    "appid" => $appid,
+                    "employeetemplate_employee_id"  => $employee_id,
+                    "employeetemplate_template"     => $template,
+                    "employeetemplate_index"        => $index,
+                    "employeetemplate_jenis"        => "fingerprint",
+                    "need_update"                   => "yes"
+                  ];
+                  $this->employeetemplate_model->replace($dataInsert);
+                
+                }elseif ($type=="face") {
+                  /*
+                  $tempateLen = strlen($template);
+                  $pieceLen   = round($tempateLen /12);
+
+                  $arrPiece = [];
+
+                  for($i=0;$i<12;$i++){
+                    
+                    if($i<11){
+                      $arrPiece[] = substr($template,($i*$pieceLen),$pieceLen); 
+                    }else{
+                      $arrPiece[] = substr($template,($i*$pieceLen));
+                    }
+                  }
+                  */
+
+                  $dataInsert = [
+                    "appid" => $appid,
+                    "employeetemplate_employee_id"  => $employee_id,
+                    "employeetemplate_template"     => $template,
+                    "employeetemplate_index"        => $index,
+                    "employeetemplate_jenis"        => "face",
+                    "need_update"                   => "yes"
+                  ];
+                  
+                  $this->db->trans_start();
+                  $this->employeetemplate_model->clearTemplate($employee_id, "face", $appid);
+                  $this->employeetemplate_model->replace($dataInsert);
+                  $this->db->trans_complete();
+                }
+
+                $arrOutput = [
+                  'success'     => "ok",
+                  'error_code'  => "200",
+                  'message'     => "",
+                  'data'        => ""
+                ];
+              }else{
+                $arrOutput = [
+                  'success'     => "",
+                  'error_code'  => "500",
+                  'message'     => "Pin not exist!",
+                  'data'        => ""
+                ];    
+              }
+            }else{
+              $arrOutput = [
+                'success'     => "",
+                'error_code'  => "500",
+                'message'     => "Empty required field!",
+                'data'        => ""
+              ]; 
+            }
+          }else{
+            $arrOutput = [
+              'success'     => "",
+              'error_code'  => "500",
+              'message'     => "appid not found",
+              'data'        => ""
+            ];
+          }
+
+        }else{
+          $arrOutput = [
+            'success'     => "",
+            'error_code'  => "500",
+            'message'     => "appid not defined",
+            'data'        => ""
+          ];
+        }
+      }else{
+        $arrOutput = [
+          'success'     => "",
+          'error_code'  => "401",
+          'message'     => "apikey is not valid",
+          'data'        => ""
+        ];
+      }
+    }else{
+      $arrOutput = [
+        'success'     => "",
+        'error_code'  => "401",
+        'message'     => "apikey is not defined",
+        'data'        => ""
+      ];
+    }
+    echo output_api($arrOutput,"json");
+  }
+}

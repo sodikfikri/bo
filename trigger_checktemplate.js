@@ -1,0 +1,38 @@
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+var stillProcess = 0;
+var getvalue = "This nilai";
+//var endpoinLock  = false;
+
+//inisialisasi jam eksekusi antrian
+let isProses;
+//end inisialisasi jam eksekusi antrian
+
+console.log("Service Check Template");
+setInterval(function(){
+    let currentD = new Date();
+    let tahun = currentD.getFullYear();
+    let bulan = currentD.getMonth();
+    let tanggal = currentD.getDate();
+    let jam = currentD.getHours();
+    let menit = currentD.getMinutes();
+    let detik = currentD.getSeconds();
+    stillProcess = 1;
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    data = "";
+    xhr.open("GET", "https://inact.interactiveholic.net/bo/checktemplate/cektemplate.php");
+    xhr.send(data);
+
+    xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            getvalue = this.responseText;
+        }
+    };
+
+    //process.stdout.write(tahun+'-'+bulan+'-'+tanggal+', '+jam+':'+menit+':'+detik);
+    //process.stdout.write('==============='+getvalue);
+    //process.stdout.cursorTo(0);
+    console.log(getvalue)
+    
+}, 300000);

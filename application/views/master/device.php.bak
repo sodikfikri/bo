@@ -1,0 +1,461 @@
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    <?= $this->gtrans->line("Master Device") ?>
+  </h1>
+</section>
+<!-- Main content -->
+<section class="content">
+<!-- Info boxes -->
+<?= !empty($addonsAlert) ? $addonsAlert : '' ?>
+<div class="row">
+  <div class="col-md-12">
+    <div class="box box-inact">
+      <!-- /.box-header -->
+      <div class="box-body">
+        <div class="row">
+          <div class="col-md-12">
+            <?= !empty($notif) ? $notif : "" ?>
+            <?= '<button type="button" class="btn btn-primary" data-toggle="modal" onclick="addNew()"><i class="fa fa-pencil"></i> '.$this->gtrans->line('New Device').'</button>' ?>
+            <?= '<button type="button" onclick="openCommunication()" class="btn btn-success"><i class="fa fa-door-open"></i> '.$this->gtrans->line('Open Communication').'</button>' ?>
+            <div class="pull-right col-md-6">
+              <div class="row">
+                <div class="col-md-6">
+                  <select onchange="loadTableDevice()" name="sArea" id="sArea" class="form-control">
+                    <option value="" ><?= $this->gtrans->line("Area") ?></option>
+                    <?php
+                      foreach ($dataArea as $row) {
+                        echo '<option value="'.$row->area_id.'">'.ucfirst($row->area_name).'</option>';
+                      }
+                    ?>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <select onchange="loadTableDevice()" name="sCabang" id="sCabang" class="form-control">
+                    <option value="" ><?= $this->gtrans->line("Branch") ?></option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div id="table-device" style="margin-top:25px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<div class="modal fade" id="frmDevice">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><div id="frm-text"></div></h4>
+        </div>
+        <?= form_open("save-device",["id"=>"form-validation","class"=>"form-horizontal"]); ?>
+        <input type="hidden" name="reboot" id="reboot">
+        <div class="modal-body">
+          <input type="hidden" name="id" id="id">
+          <div class="form-group">
+            <label for="area" class="col-sm-3 control-label"><?= $this->gtrans->line("Name Area") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <?= $cmbArea ?>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="branchname" class="col-sm-3 control-label"><?= $this->gtrans->line("Branch Name") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <select data-validation-engine="validate[required]" name="branchname" id="branchname" class="form-control">
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="serialnumber" class="col-sm-3 control-label"><?= $this->gtrans->line("Serial Number") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input name="serialnumber" onchange="checkExists('serialnumber','msg-sn','check-device-sn-exists','<?= $this->gtrans->line("SN machine are used by another device") ?>','<?= $this->gtrans->line("SN Code Is Available") ?>',$('#id').val())" type="text" data-validation-engine="validate[required,custom[onlyLetterNumber],maxSize[100]]" class="form-control" id="serialnumber" >
+              <div id="msg-sn"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="devicecode" class="col-sm-3 control-label"><?= $this->gtrans->line("Code") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input name="devicecode" onchange="checkExists('devicecode','msg-code','check-device-code-exists','<?= $this->gtrans->line("Code was used by deleted or existing data") ?>','<?= $this->gtrans->line("Device Code Is Available") ?>',$('#id').val())" type="text" data-validation-engine="validate[required,custom[onlyLetterNumberSemiSpesial],maxSize[50]]" class="form-control" id="devicecode" >
+              <div id="msg-code"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="devicename" class="col-sm-3 control-label"><?= $this->gtrans->line("Device Name") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input name="devicename" type="text" data-validation-engine="validate[required,custom[onlyLetterNumberSemiSpesial],maxSize[100]]" class="form-control" id="devicename" >
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="internetprotocol" class="col-sm-3 control-label"><?= $this->gtrans->line("IP Address") ?></label>
+            <div class="col-sm-9">
+              <input name="internetprotocol" data-validation-engine="validate[custom[ipv4],maxSize[20]]" type="text"  class="form-control" id="internetprotocol" >
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="response-version" class="col-sm-3 control-label"><?= $this->gtrans->line("Response Version") ?></label>
+            <div class="col-sm-9">
+              <select name="response-version" id="response-version" class="form-control" >
+                <option value="2" />Version 2.0 (F5000, F7000, X1800, F8000, dll)
+                <option value="3" />Version 3.0 (FM5, dll)
+                <option value="4" />Version 4.0 (F4500, F2000, dll)
+                <option value="5" />Version 5.0 (F2000, dll)
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <p class="text-muted well well-sm no-shadow">
+            Version 2 <?= $this->gtrans->line("Support for most ADMS InterActive machines in addition to temperature gauges") ?>
+            Version 3 <?= $this->gtrans->line("Only support for temperature measuring machines") ?>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger pull-left" data-dismiss="modal"><i class="fa fa-long-arrow-left"></i> <?= $this->gtrans->line("Cancel") ?></button>
+          <button type="submit" class="btn btn-primary"><div id="txtBtnSave"></div></button>
+        </div>
+        <?= form_close() ?>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+  <!-- /.modal-dialog -->
+  </div>
+
+  <div class="modal fade" id="frmGetLog">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><?= $this->gtrans->line("Pull Attendance From  Device") ?></h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="text" id="reservation" class="form-control" placeholder="Periode" value="<?= date("m/d/Y",strtotime(date("Y-m-d")." -10 days")).' - '.date("m/d/Y") ?>">
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-primary" name="btn-set-pull-attendance" id="btn-set-pull-attendance"><?= $this->gtrans->line("Pull Attendance") ?></button>
+          </div>
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+  <!-- /.modal-dialog -->
+  </div>
+
+
+<script type="text/javascript">
+  var url = "<?= base_url() ?>";
+  var existingDeviceBranch = '';
+  var tempDeviceSN = "";
+  var tempDeviceID = "";
+  stat = 0;
+  jQuery("#form-validation").validationEngine('attach', {
+    onValidationComplete: function(form, status){
+      if(status==true){
+        stat = stat + 1;
+        if(stat%2==0){
+          
+          if(existingDeviceBranch!=$("#branchname").val()){
+            Swal.fire({
+              title: 'Reboot Device?',
+              text: "This action will reboot device!",
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Yes, Reboot!'
+            }).then((result) => {
+              $("#reboot").val("yes");
+              if(result.value==true){
+                var formdata = $('#form-validation').serialize();
+                $.ajax({
+                  method : "POST",
+                  url    : url + "save-device",
+                  data   : formdata,
+                  success: function (){
+                    location.reload();
+                  }
+                });
+              }
+            });
+          }else{
+            $("#reboot").val("");
+            var formdata = $('#form-validation').serialize();
+            $.ajax({
+              method : "POST",
+              url    : url + "save-device",
+              data   : formdata,
+              success: function (){
+                location.reload();
+              }
+            });
+          }
+          
+        }
+        return false;
+      }
+    }
+  });
+
+  function loadBranch(area,selectedBranch=''){
+    $("#branchname").html("");
+    $.ajax({
+      method : 'POST',
+      url    : url + "load-cabang",
+      data   : {area,area},
+      success: function(res){
+        $("#branchname").html('<option value=""></option>');
+
+        var arrObj = jQuery.parseJSON(res);
+        arrObj.branchs.forEach(function(row,index){
+
+          var selected = '';
+          if(selectedBranch==row.id){
+            selected = 'selected';
+          }
+          
+
+          $("#branchname").append('<option '+selected+' value="'+row.id+'" >'+row.name+'</option>');
+        });
+      }
+    });
+  }
+
+  function loadsBranch(area,selectedBranch=''){
+    $("#sCabang").html("");
+    $.ajax({
+      method : 'POST',
+      url    : url + "load-cabang",
+      data   : {area,area},
+      success: function(res){
+        $("#sCabang").append('<option value=""><?= $this->gtrans->line("Branch") ?></option>');
+        var arrObj = jQuery.parseJSON(res);
+        arrObj.branchs.forEach(function(row,index){
+          if(selectedBranch!=''){
+            var selected = 'selected';
+          }else{
+            var selected = '';
+          }
+          $("#sCabang").append('<option '+selected+' value="'+row.id+'" >'+row.name+'</option>');
+        });
+      }
+    });
+  }
+
+  $(document).ready(function(){
+    $("#area").change(function(){
+      var area = $(this).val();
+      loadBranch(area);
+    });
+    $("#sArea").change(function(){
+      var sArea = $(this).val();
+      loadsBranch(sArea);
+    });
+    $("#btn-set-pull-attendance").click(function(){
+      let periode = $("#reservation").val();
+      $.ajax({
+        method : "POST",
+        url : url + "master/device/setCmdPullAttendance",
+        data : {periode:periode,encDeviceSN:tempDeviceSN,tempDeviceID:tempDeviceID},
+        success : function(result){
+          if(result!="error"){
+            Swal.fire({
+              position: 'center',
+              icon: 'success',
+              type: 'success',
+              title: 'Your request is processed!',
+              showConfirmButton: false,
+              timer: 1500
+            });
+          }
+        }
+      });
+    });
+  });
+
+  function addNew(){
+    $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line("Save") ?>');
+    $("#frm-text").html('<?= $this->gtrans->line("Add New Device") ?>');
+    $("#id").val("");
+    $("#area").val("");
+    $("#branchname").val("");
+    $("#serialnumber").val("");
+    $("#devicecode").val("");
+    $("#devicename").val("");
+    $("#internetprotocol").val("");
+
+    $("#msg-sn").html("");
+    $("#msg-code").html("");
+
+    $("#frmDevice").modal('show');
+  }
+
+  function edit(id,area,cabang,sn,code,name,ip,response){
+    $("#msg-sn").html("");
+    $("#msg-code").html("");
+
+    $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line("Save Changes") ?>');
+    $("#frm-text").html('<?= $this->gtrans->line("Edit Device") ?>');
+    $("#id").val(id);
+
+    var deArea   = atob(area);
+    var deBranch = atob(cabang);
+    existingDeviceBranch = deBranch;
+    $("#area").val(deArea);
+
+    loadBranch(deArea,deBranch);
+
+    $("#serialnumber").val(atob(sn));
+    $("#devicecode").val(atob(code));
+    $("#devicename").val(atob(name));
+    $("#internetprotocol").val(atob(ip));
+    $("#response-version").val(atob(response));
+    $("#frmDevice").modal('show');
+    
+
+  }
+
+  function loadTableDevice(){
+    var sArea   = $("#sArea").val();
+    var sCabang = $("#sCabang").val();
+    $.ajax({
+      type : "POST",
+      url  : url + "load-table-device",
+      data : {sArea:sArea,sCabang:sCabang},
+      success : function(res){
+        var obj = jQuery.parseJSON(res);
+        $("#table-device").html(obj);
+      }
+    });
+  }
+  loadTableDevice();
+
+  function switchLicense(checkedStatus,deviceID){
+    if(checkedStatus==true){
+      var status = 'active';
+      $.ajax({
+        method : "POST",
+        url    : url + "device-switch-license",
+        data   : {device:deviceID,status:status},
+        success: function(res){
+          if(res=="failed"){
+            alert('<?= $this->gtrans->line("You have no device slot") ?>!');
+            $('#toggleSwitch'+deviceID).click();
+          }
+        }
+      });
+    }else{
+      //var status = 'inactive';
+      Swal.fire({
+        title: '<?= $this->gtrans->line("Are you sure") ?>?',
+        text: "<?= $this->gtrans->line("The device will not active") ?>!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '<?= $this->gtrans->line("Yes, delete it") ?>!'
+      }).then((result) => {
+        if (result.value) {
+          var status = 'inactive';
+
+          $.ajax({
+            method : "POST",
+            url    : url + "device-switch-license",
+            data   : {device:deviceID,status:status},
+            success: function(res){
+              if(res=="failed"){
+                alert('<?= $this->gtrans->line("You have no device slot") ?>!');
+                $('#toggleSwitch'+deviceID).click();
+              }
+            }
+          });
+        }else{
+          $("#licenseSwitcher"+deviceID).attr("checked",true);
+        }
+      })
+    }
+
+  }
+  function checkSNExist(){
+    var serialnumber = $("#serialnumber").val();
+    $.ajax({
+      method : "POST",
+      url    : url + "device-check-sn-exists",
+      data   : {sn:serialnumber},
+      success: function(res){
+
+      }
+    });
+  }
+  function delDevice(iddevice){
+    $.ajax({
+      method : "post",
+      url    : url + "check-device-is-used",
+      data   : {deviceID:iddevice},
+      success: function(res){
+        if(res=="no"){
+          Swal.fire({
+            title: '<?= $this->gtrans->line("Are you sure") ?>?',
+            text: "<?= $this->gtrans->line("You won't be able to revert this") ?>!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '<?= $this->gtrans->line("Yes, delete it") ?>!'
+          }).then((result) => {
+            if (result.value) {
+              window.open(url + 'delete-device/' + iddevice,'_self');
+            }
+          });
+        }else{
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: '<?= $this->gtrans->line("The device has been used") ?>!'
+            //footer: '<a href>Why do I have this issue?</a>'
+          })
+        }
+      }
+    });
+  }
+  $('#reservation').daterangepicker({
+    "maxSpan": {
+          "days": 10
+      },
+      "maxDate": moment()
+  });
+  
+  function showGetLogPanel(deviceSN,deviceID){
+    tempDeviceSN = deviceSN;
+    tempDeviceID = deviceID;
+    $("#frmGetLog").modal("show");
+  }
+
+  function openCommunication(){
+    $("#loader").fadeIn(1);
+    $.ajax({
+      method : "GET",
+      url    : url + "master/device/openFirewall",
+      success: function(res){
+        if(res=="ok"){
+          Swal.fire({
+              position: 'center',
+              icon: 'success',
+              type: 'success',
+              title: 'Your request is processed!',
+              showConfirmButton: false,
+              timer: 1500
+            });
+          $("#loader").fadeOut(1);
+        }
+      }
+    });
+  }
+
+  $("#datatable").DataTable();
+</script>

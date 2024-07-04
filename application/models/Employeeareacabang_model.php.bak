@@ -1,0 +1,599 @@
+<?php
+/**
+ *
+ */
+class Employeeareacabang_model extends CI_Model
+{
+  var $tableName= "tbemployeeareacabang";
+  var $tableId  = "employeeareacabang_id";
+  var $now;
+
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+  }
+
+  function insert($dataInsert,$inputAppid=null){
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      /*
+      if(!empty($this->session->userdata("ses_userid"))){
+        $userID = $this->session->userdata("ses_userid");
+        $dataInsert['employeeareacabang_user_add']    = $userID;
+      }
+      */
+      
+      $dataInsert['appid'] = $appid;
+      $dataInsert['employeeareacabang_date_create'] = $this->now;
+
+      $this->db->insert($this->tableName,$dataInsert);
+      $insertID = $this->db->insert_id();
+      /*
+      if(!empty($dataInsert['employee_area_id'])){
+        $areaID     = $dataInsert['employee_area_id'];
+        $employeeID = $dataInsert['employeeareacabang_employee_id'];
+        $this->load->model("area_model");
+        $totalEmployeeArea = $this->countActiveEmployeeByArea($areaID,$appid);
+        $this->area_model->setTotalEmployee($totalEmployeeArea,$areaID);
+      }
+
+      if(!empty($dataInsert['employee_cabang_id'])){
+        $cabangID   = $dataInsert['employee_cabang_id'];
+        $employeeID = $dataInsert['employeeareacabang_employee_id'];
+        $this->load->model("cabang_model");
+        $totalEmployeeCabang = $this->countActiveEmployeeByCabang($cabangID,$appid);
+        $this->cabang_model->setTotalEmployee($totalEmployeeCabang,$cabangID);
+      }
+      */
+      return $insertID;
+    }else{
+      return false;
+    }
+  }
+
+  /*
+  Record yang bisa dihapus hanya yang statusnya pending saja
+  untuk yang sudah active tidak bisa diremove, hanya bisa diarchivekan sebagai histori
+  */
+  function deleteAreaCabang($employee,$inputAppid=null){
+    $this->load->model("area_model");
+    $this->load->model("cabang_model");
+
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      $this->db->select("tbemployeeareacabang.*");
+      $this->db->select("tbdevice.device_id");
+
+      $this->db->where("tbemployeeareacabang.appid",$appid);
+      $this->db->where("tbemployeeareacabang.employeeareacabang_employee_id",$employee);
+      $this->db->where("tbemployeeareacabang.status","pending");
+      $this->db->from($this->tableName);
+      $this->db->join("tbdevice","tbdevice.device_area_id = tbemployeeareacabang.employee_area_id and tbdevice.device_cabang_id = tbemployeeareacabang.employee_cabang_id","left");
+      $sqlEmployeAreaSel = $this->db->get();
+      
+      if($sqlEmployeAreaSel->num_rows()>0){
+        // $this->load->model("firewall_model");
+        // // open the device firewall
+        // foreach ($sqlEmployeAreaSel->result() as $rowDevice) {
+        //   $this->firewall_model->setSchedule($rowDevice->device_id,date("Y-m-d"));
+        // }
+        // finish open firewall
+
+        $this->db->where("appid",$appid);
+        $this->db->where("employeeareacabang_employee_id",$employee);
+        $this->db->where("status","pending");
+        $res = $this->db->delete($this->tableName);
+        if($res){
+          /*
+          foreach ($sqlEmployeAreaSel->result() as $row) {
+            $areaID     = $row->employee_area_id;
+            $totalEmployeeArea = $this->countActiveEmployeeByArea($areaID,$appid);
+            $this->area_model->setTotalEmployee($totalEmployeeArea,$areaID);
+
+            //
+            $cabangID   = $row->employee_cabang_id;
+            $totalEmployeeCabang = $this->countActiveEmployeeByCabang($cabangID,$appid);
+            $this->cabang_model->setTotalEmployee($totalEmployeeCabang,$cabangID);
+          }
+          */
+          return true;
+        }else{
+          return false;
+        }
+      }
+    }else{
+      return false;
+    }
+  }
+  
+  function setPendingAll($arrEmployeeID){
+    $dataUpdate = [
+      "status" => 'pending'
+    ];
+
+	$this->db->where_in('employeeareacabang_employee_id', $arrEmployeeID);
+    $res = $this->db->update($this->tableName,$dataUpdate);
+    return $res;
+  }
+
+  function deleteById($id){
+    $this->db->where($this->tableId,$id);
+    $res = $this->db->delete($this->tableName);
+    return $res;
+  }
+
+  function setArchive($employeeID,$inputAppid=null){
+    $this->load->model("area_model");
+    $this->load->model("cabang_model");
+    
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      // ambil datanya dulu
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$employeeID);
+      $this->db->where("status !=","archived");
+      $sql = $this->db->get($this->tableName);
+      //jika status pending maka data akan dihapus
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$employeeID);
+      $this->db->where("status ","pending");
+      $this->db->delete($this->tableName);
+      //jika data aktif data di set archive
+      $dataUpdate = [
+        "status" => "archived"
+      ];
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$employeeID);
+      $this->db->where("status ","active");
+      $this->db->update($this->tableName,$dataUpdate);
+      // hitung ulang di tabel area dan cabang
+      if($sql->num_rows()>0){
+        /*
+        foreach ($sql->result() as $row) {
+          $area   = $row->employee_area_id;
+          $totalEmployeeArea = $this->countActiveEmployeeByArea($area,$appid);
+          $this->area_model->setTotalEmployee($totalEmployeeArea,$area);
+
+          $cabang = $row->employee_cabang_id;
+          $totalEmployeeCabang = $this->countActiveEmployeeByCabang($cabang,$appid);
+          $this->cabang_model->setTotalEmployee($totalEmployeeCabang,$cabang);
+        }
+        */
+      }
+    }
+  }
+  function setAreaCabangAuto($cabangID,$areaID,$inputAppid=null){
+    
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      // ambil datanya dulu
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$employeeID);
+      $this->db->where("status !=","archived");
+      $sql = $this->db->get($this->tableName);
+      //jika status pending maka data akan dihapus
+      $this->db->where("appid",$appid);
+      $dataUpdate = [
+        "status" => "archived"
+      ];
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$employeeID);
+      $this->db->where("status ","active");
+      $this->db->update($this->tableName,$dataUpdate);
+    }
+  }
+  function getPendingLocation($empId,$inputAppid=null){
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$empId);
+      $this->db->where("status","pending");
+      $sql = $this->db->get($this->tableName);
+      if($sql->num_rows()>0){
+        return $sql->result();
+      }else{
+        return false;
+      }
+    }else{
+      return false;
+    }
+  }
+
+  function countActiveEmployeeByArea($areaID,$inputAppid=null){
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      $this->db->select("tbemployee.employee_id");
+      $this->db->from("tbemployeeareacabang");
+      $this->db->join("tbemployee","tbemployee.employee_id = tbemployeeareacabang.employeeareacabang_employee_id");
+
+      $this->db->where("tbemployeeareacabang.appid",$appid);
+      $this->db->where("tbemployeeareacabang.employee_area_id",$areaID);
+      $this->db->where("tbemployeeareacabang.status !=","archived");
+      $this->db->where("tbemployee.is_del !=","1");
+      $this->db->group_by("tbemployeeareacabang.employeeareacabang_employee_id");
+
+      $sql = $this->db->get();
+      return $sql->num_rows();
+    }else {
+      return false;
+    }
+  }
+
+  function countActiveEmployeeByCabang($cabangID,$inputAppid=null){
+    if($inputAppid==null){
+      $appid = !empty($this->session->userdata("ses_appid")) ? $this->session->userdata("ses_appid") : "";
+    }else{
+      $appid = $inputAppid;
+    }
+
+    if(!empty($appid)){
+      $this->db->select("tbemployee.employee_id");
+
+      $this->db->from("tbemployeeareacabang");
+      $this->db->join("tbemployee","tbemployee.employee_id = tbemployeeareacabang.employeeareacabang_employee_id");
+
+      $this->db->where("tbemployeeareacabang.appid",$appid);
+      $this->db->where("tbemployeeareacabang.employee_cabang_id",$cabangID);
+      $this->db->where("tbemployeeareacabang.status !=","archived");
+      $this->db->group_by("tbemployeeareacabang.employeeareacabang_employee_id");
+      $sql = $this->db->get();
+      return $sql->num_rows();
+    }else {
+      return false;
+    }
+  }
+
+  function setActiveEmployeeLocation($dataUpdate){
+    $this->load->model("employee_model");
+    $this->db->update_batch($this->tableName,$dataUpdate,"employeeareacabang_id");
+    foreach ($dataUpdate as $row) {
+      $employeeID = $row['employeeareacabang_employee_id'];
+      $this->employee_model->activateEmployee($employeeID);
+    }
+  }
+
+  function setArchiveEmployeeLocation($dataUpdate){
+    $this->db->update_batch($this->tableName,$dataUpdate,"employeeareacabang_id");
+  }
+
+  function countAreaPendingResign($areaID,$appid){
+    $this->db->select("tbemployee.employee_id");
+    $this->db->from("tbemployeeareacabang");
+    $this->db->join("tbemployee","tbemployee.employee_id = tbemployeeareacabang.employeeareacabang_employee_id","inner");
+    $this->db->join("tbemployeeresign","tbemployeeresign.employeeresign_employee_id = tbemployee.employee_id","inner");
+
+    $this->db->where("tbemployeeresign.employeeresign_status_resign","pending");
+    $this->db->where("tbemployeeareacabang.status","active");
+    $this->db->where("tbemployeeareacabang.appid",$appid);
+    $this->db->where("tbemployeeareacabang.employee_area_id",$areaID);
+
+    $sql = $this->db->get();
+    return $sql->num_rows();
+  }
+
+  function countCabangPendingResign($cabangID,$appid){
+    $this->db->select("tbemployee.employee_id");
+    $this->db->from("tbemployeeareacabang");
+    $this->db->join("tbemployee","tbemployee.employee_id = tbemployeeareacabang.employeeareacabang_employee_id","inner");
+    $this->db->join("tbemployeeresign","tbemployeeresign.employeeresign_employee_id = tbemployee.employee_id","inner");
+
+    $this->db->where("tbemployeeresign.employeeresign_status_resign","pending");
+    $this->db->where("tbemployeeareacabang.status","active");
+    $this->db->where("tbemployeeareacabang.appid",$appid);
+    $this->db->where("tbemployeeareacabang.employee_cabang_id",$cabangID);
+
+    $sql = $this->db->get();
+    return $sql->num_rows();
+  }
+
+  function getListActiveEmployeeLocation($empId,$appid){
+    $this->db->where("appid",$appid);
+    $this->db->where("employeeareacabang_employee_id",$empId);
+    $sql = $this->db->get($this->tableName);
+    $arrArea = [];
+    $arrCabang = [];
+    foreach ($sql->result() as $row) {
+
+      if(!in_array($row->employee_area_id,$arrArea)){
+        array_push($arrArea,$row->employee_area_id);
+      }
+      if(!in_array($row->employee_cabang_id,$arrCabang)){
+        array_push($arrCabang,$row->employee_cabang_id);
+      }
+    }
+    $output = [
+      "area" => $arrArea,
+      "cabang" => $arrCabang
+    ];
+    return $output;
+  }
+
+  function getEmployeeLocation($employeeID){
+	$this->db->select([
+      "B.area_name",
+      "C.cabang_name",
+      "C.cabang_id",
+      "C.cabang_code",
+      "C.cabang_address",
+      "C.longitude",
+      "C.latitude",
+      "A.employeeareacabang_id",
+      "A.employeeareacabang_radius",
+      "A.status"
+    ]);
+
+    $this->db->from("tbemployeeareacabang A");
+    $this->db->join("tbarea B","B.area_id = A.employee_area_id");
+    $this->db->join("tbcabang C","C.cabang_id = A.employee_cabang_id");
+    $this->db->where("A.employeeareacabang_employee_id",$employeeID);
+    $this->db->where("A.status !=","archived");
+    $sql = $this->db->get();
+    if($sql->num_rows()>0){
+        return $sql->result();
+      }else{
+        return false;
+      }
+  }
+
+  function setDateArchive($employeeID,$dateArchive,$appid){
+    $this->load->model("area_model");
+    $this->load->model("cabang_model");
+    if(!empty($appid)){
+      // open firewall
+      $this->load->model("firewall_model");
+      $this->db->distinct();
+      $this->db->select("tbdevice.device_id");
+      $this->db->where("tbemployeeareacabang.appid",$appid);
+      $this->db->where("tbemployeeareacabang.employeeareacabang_employee_id",$employeeID);
+      $this->db->where("tbemployeeareacabang.status ","active");
+      $this->db->from("tbemployeeareacabang");
+      $this->db->join("tbdevice","tbdevice.device_area_id = tbemployeeareacabang.employee_area_id and tbdevice.device_cabang_id = tbemployeeareacabang.employee_cabang_id");
+      $sqlDevice = $this->db->get();
+      foreach ($sqlDevice->result() as $rowDevice) {
+        $this->firewall_model->setSchedule($rowDevice->device_id,$dateArchive);
+      }
+
+      //=======
+      //jika data aktif data di set archive
+      $dataUpdate = [
+        "employeeareacabang_datearchive" => $dateArchive
+      ];
+
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_employee_id",$employeeID);
+      $this->db->where("status ","active");
+      $res = $this->db->update($this->tableName,$dataUpdate);
+      return $res;
+    }
+  }
+
+  function setDateArchiveById($locationID,$dateArchive,$appid){
+    $dataUpdate = [
+      "employeeareacabang_datearchive" => $dateArchive
+    ];
+
+    $this->db->where("appid",$appid);
+    $this->db->where("employeeareacabang_id",$locationID);
+    $res = $this->db->update($this->tableName,$dataUpdate);
+    return $res;
+  }
+
+  function deleteDateArchiveById($locationID,$appid){
+
+    $this->db->set('employeeareacabang_datearchive', 'NULL', false);
+    $this->db->where("appid",$appid);
+    $this->db->where("employeeareacabang_id",$locationID);
+    $res = $this->db->update($this->tableName);
+    return $res;
+  }
+
+  function setArchiveById($locationID){
+    $data = [
+      "status" => "archived"
+    ];
+    $this->db->where("employeeareacabang_id",$locationID);
+    $res = $this->db->update($this->tableName,$data);
+    return $res;
+  }
+
+  function countActiveLocation($employeeID){
+    $this->db->select($this->tableId);
+    $this->db->where("employeeareacabang_employee_id",$employeeID);
+    $this->db->where("status",'active');
+    $sql = $this->db->get($this->tableName);
+    return $sql->num_rows();
+  }
+
+  function getById($locationID,$appid=null){
+    if($appid==null){
+      $appid = $this->session->userdata("ses_appid");
+    }
+    if(!empty($appid)){
+      $this->db->where("appid",$appid);
+      $this->db->where("employeeareacabang_id",$locationID);
+      $sql = $this->db->get($this->tableName);
+      if($sql->num_rows()>0){
+        return $sql->row();
+      }else{
+        return false;
+      }
+    }else{
+      return false;
+    }
+  }
+
+  function getLocationName($employeeid,$appid){
+    $this->db->select([
+      "B.area_id",
+      "B.area_name",
+      "C.cabang_name",
+      "C.cabang_id",
+      "A.employeeareacabang_id",
+      "A.status",
+      "A.employeeareacabang_radius"
+    ]);
+
+    $this->db->from("tbemployeeareacabang A");
+    $this->db->join("tbarea B","B.area_id = A.employee_area_id");
+    $this->db->join("tbcabang C","C.cabang_id = A.employee_cabang_id");
+    $this->db->where("A.employeeareacabang_employee_id",$employeeid);
+    $this->db->where("A.appid",$appid);
+    $this->db->where("A.status !=","archived");
+    $sql = $this->db->get();
+    return $sql->result();
+  }
+
+  function getActiveLocationByEmployee($employee_id){
+    $this->db->select([
+      "B.area_name",
+      "C.cabang_name",
+      "E.device_name",
+      "E.device_SN",
+      "E.device_last_communication",
+      "(
+        select count(F.employeelocationdevicetemplate_id) as total from
+        tbemployeelocationdevicetemplate F
+        inner join tbemployeetemplate G on G.employeetemplate_id = F.employeetemplate_id
+        where
+        F.employeelocationdevice_id = D.employeelocationdevice_id
+        and
+        G.employeetemplate_jenis = 'fingerprint'
+      ) as total_fingerprint",
+      "(
+        select count(F.employeelocationdevicetemplate_id) as total from
+        tbemployeelocationdevicetemplate F
+        inner join tbemployeetemplate G on G.employeetemplate_id = F.employeetemplate_id
+        where
+        F.employeelocationdevice_id = D.employeelocationdevice_id
+        and
+        G.employeetemplate_jenis = 'face'
+      ) as total_face",
+    ]);
+    $this->db->from("tbemployeeareacabang A");
+    $this->db->join("tbarea B","B.area_id = A.employee_area_id");
+    $this->db->join("tbcabang C","C.cabang_id = A.employee_cabang_id");
+    $this->db->join("tbemployeelocationdevice D","D.employeeareacabang_id = A.employeeareacabang_id");
+    $this->db->join("tbdevice E","E.device_id = D.device_id");
+
+    $this->db->where("A.status","active");
+    $this->db->where("A.employeeareacabang_employee_id",$employee_id);
+    $sql = $this->db->get();
+    return $sql;
+  }
+
+  function getEmployeeByLocation($area,$branch,$appid,$employee_account_no){
+    $this->db->select("B.*");
+    $this->db->from("tbemployeeareacabang A");
+    $this->db->join("tbemployee B","B.employee_id = A.employeeareacabang_employee_id");
+	if($employee_account_no!=""){
+		$this->db->where("B.employee_account_no",$employee_account_no);
+	}
+    $this->db->where("A.employee_area_id",$area);
+    $this->db->where("A.employee_cabang_id",$branch);
+    $this->db->where("A.appid",$appid);
+    $this->db->where("B.appid",$appid);
+
+    $this->db->where("B.is_del","0");
+
+    $this->db->where("B.resign_confirmed","no");
+
+    $this->db->group_start();
+    $this->db->where("A.status","pending");
+    $this->db->or_where("A.status","active");
+    $this->db->group_end();
+
+    $sql = $this->db->get();
+    return $sql;
+  }
+
+  function getEmployeeActiveByLocation($area,$branch,$appid){
+
+    $this->db->select("B.*");
+    $this->db->from("tbemployeeareacabang A");
+    $this->db->join("tbemployee B","B.employee_id = A.employeeareacabang_employee_id");
+    $this->db->where("A.employee_area_id",$area);
+    $this->db->where("A.employee_cabang_id",$branch);
+    $this->db->where("A.appid",$appid);
+    $this->db->where("B.appid",$appid);
+
+    $this->db->where("B.is_del","0");
+
+    $this->db->where("B.resign_confirmed","no");
+
+    $this->db->where("A.status","active");
+    
+    $sql = $this->db->get();
+    
+    return $sql;
+  }
+
+  function saveIgnoreDuplicate($dataInsert){
+    $this->db->select("employeeareacabang_employee_id");
+    $where = $dataInsert;
+
+    unset($where["employeeareacabang_date_create"]);
+    unset($where["employeeareacabang_user_add"]);
+
+    $sqlCheck = $this->db->get_where($this->tableName,$where);
+    if($sqlCheck->num_rows()>0){
+      $rows = $sqlCheck->row();
+      $loc_id = $rows->employeeareacabang_id;
+      $insertStatus = "skipped";
+    }else{
+      $insert_query = $this->db->insert_string($this->tableName, $dataInsert);
+      $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
+      $this->db->query($insert_query);
+      $loc_id = $this->db->insert_id();
+      $insertStatus = "inserted";
+    }
+
+    $output = [
+      "loc_id" => $loc_id,
+      "insertStatus"  => $insertStatus
+    ];
+
+    return $output;
+  }
+
+  function locationLeave($employeeID){
+    $this->db->select("tbarea.area_name");
+    $this->db->select("tbcabang.cabang_name");
+    $this->db->from("tbemployeeareacabang");
+    $this->db->join("tbarea", "tbarea.area_id = tbemployeeareacabang.employee_area_id","inner");
+    $this->db->join("tbcabang","tbcabang.cabang_id = tbemployeeareacabang.employee_cabang_id","inner");
+    $this->db->where("tbemployeeareacabang.employeeareacabang_employee_id",$employeeID);
+    $this->db->where("tbemployeeareacabang.employeeareacabang_datearchive is not null",null,false);
+    return $this->db->get();
+  }
+}

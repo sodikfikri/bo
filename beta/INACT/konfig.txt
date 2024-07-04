@@ -1,0 +1,15 @@
+Konfigurasi InAct Cloud
+Database
+dbianct (untuk inact cloud)
+dbslim (untuk slim)
+menu-master.sql untuk diexport di dbinact
+
+
+Inact
+- Konfigurasi database : hostname, username, password, database
+- Config : base url project/ root
+- Constant : MYBILLING_LINK
+
+Slim
+- Src/setting : host, user, pass, dbname
+- Src/routes.php : localhost/inact-projects/ diganti domain dari inact cloud

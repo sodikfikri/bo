@@ -1,0 +1,425 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+/**
+ *
+ */
+class Mutation extends CI_Controller
+{
+  var $now;
+  var $tabel_template  = array(
+        'table_open'            => '<table id="example2" class="table table-bordered table-stripped" >',
+        'table_close'           => '</table>'
+	);
+  function __construct()
+  {
+    parent::__construct();
+    $this->load->model("system_model");
+    $this->now = date("Y-m-d H:i:s");
+
+    $languange = !empty($this->session->userdata('lang')) ? $this->session->userdata('lang') :"en";
+    $this->load->library("gtrans/gtrans",["lang" => $languange]);
+
+    $this->load->model("menu_model");
+    
+    $this->system_model->checkSession(11);
+    $this->listMenu = $this->menu_model->list_menu();
+  }
+
+  function index(){
+    load_model(["area_model","employee_model"]);
+    $this->load->helper("form_helper");
+    
+    $sqlArea = $this->area_model->getAll();
+    //$sqlEmployee = $this->employee_model->getAll();
+    $cmbArea = '<select data-validation-engine="validate[required]" name="area" id="area" class="form-control"><option value="" />';
+    foreach ($sqlArea as $rowArea) {
+      $cmbArea .= '<option value="'.$rowArea->area_id.'" />'.$rowArea->area_name;
+    }
+
+    $cmbArea   .= '</select>';
+
+    $data['cmbArea']     = $cmbArea;
+    //$data['sqlEmployee'] = $sqlEmployee;
+    $data['dataArea']    = $sqlArea;
+    $data["notif"] = $this->checkNotif();
+    $parentViewData = [
+      "title"   => $this->gtrans->line("Mutation"),  // title page
+      "content" => "transaction/mutation",  // content view
+      "viewData"=> $data,
+      "listMenu"=> $this->listMenu,
+      "externalCSS" => [
+        base_url("asset/template/bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css")
+      ],
+      "externalJS"  => [
+        "https://cdn.jsdelivr.net/npm/sweetalert2@8",
+        base_url("asset/template/bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"),
+        base_url("asset/js/tooltip.min.js"),
+        base_url("asset/template/bower_components/datatables.net/js/jquery.dataTables.min.js"),
+        base_url("asset/template/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js")
+      ]
+    ];
+
+    $this->load->view("layouts/main",$parentViewData);
+    $this->gtrans->saveNewWords();
+  }
+
+  /*
+  function loadTableMutation(){
+    load_model(["employee_model","employeemutation_model"]);
+    $this->load->library("table");
+    $this->load->library("encryption_org");
+    $sArea  = $this->input->post("sArea");
+    $sCabang  = $this->input->post("sCabang");
+    $sStatus  = $this->input->post("sStatus");
+    $name     = $this->input->post("name");
+
+    $this->table->set_template($this->tabel_template);
+    $this->table->set_heading(
+      "ID",
+      "Full Name",
+      "Source Branch",
+      "Destination Branch",
+      ["data"=>"Option","style"=>"text-align:center"]);
+
+    $sql = $this->employeemutation_model->getAll($sArea,$sCabang,$sStatus,$name);
+    foreach ($sql as $row) {
+      $encLocId = $this->encryption_org->encode($row->employeeareacabang_id);
+      $encEmployeeid = $this->encryption_org->encode($row->employee_id);
+
+      $encName  = base64_encode($row->employee_full_name);
+      if($sStatus=="new"){
+        $btnSelect = '<button onclick="newMutation(\''.$encLocId.'\',\''.$encName.'\',\''.$encEmployeeid.'\')" type="button" class="btn btn-default btn-sm"><i class="fa fa-external-link-square"></i> Set Mutation</button>';
+      }elseif ($sStatus=="pending") {
+        $encMutationId = $this->encryption_org->encode($row->employeemutation_id);
+        $btnSelect = '<button onclick="cancelMutation(\''.$encMutationId.'\',\''.$encName.'\')" type="button" class="btn btn-danger btn-sm"><i class="fa fa-repeat"></i> Cancel Mutation</button>';
+      }elseif ($sStatus=="success") {
+        $btnSelect = '';
+      }
+
+      $this->table->add_row(
+        $row->employee_account_no,
+        $row->employee_full_name,
+        $row->cabang_name,
+        (($sStatus!="new")? '<a onclick="showDestination(\''.$this->encryption_org->encode($row->employeemutation_id).'\')" href="#">'.$row->total_destination.' Location</a>' : ""),
+        ["style"=>"text-align:center","data"=>$btnSelect]
+      );
+    }
+    $output = $this->table->generate();
+    echo json_encode($output);
+  }
+  */
+
+  function loadDTMutation(){
+    load_library(["encryption_org"]);
+    load_model(["employee_model","employeemutation_model","area_model","cabang_model","employeeareacabang_model","employeetemplate_model"]);
+
+    $draw   = $_REQUEST['draw'];
+		$length = $_REQUEST['length'];
+		$start  = $_REQUEST['start'];
+		$search = $_REQUEST['search']["value"];
+
+    $sArea  = $this->input->post("sArea");
+    $sCabang  = $this->input->post("sCabang");
+    $sStatus  = $this->input->post("sStatus");
+
+    $name     = $this->input->post("name");
+    $appid    = $this->session->userdata("ses_appid");
+
+    $sqlArea  = $this->area_model->getById($sArea,$appid);
+    $sqlCabang= $this->cabang_model->getById($sCabang,$appid);
+    $areaName   = ($sqlArea!=false) ? $sqlArea->area_name : "";
+    $cabangName = ($sqlCabang!=false) ? $sqlCabang->cabang_name : "";
+
+    $allRecord  = 15;
+    $sql = $this->employeemutation_model->getAll($sArea,$sCabang,$sStatus,$name,$start,$length,$appid);
+    $recordsFiltered = $this->employeemutation_model->getAll($sArea,$sCabang,$sStatus,$name,"","",$appid);
+    $output['recordsTotal']    = $allRecord;
+    $output['recordsFiltered'] = $recordsFiltered->num_rows();
+
+    $no  = 0;
+    $output['data'] = array();
+    foreach ($sql->result() as $row) {
+      $no++;
+      $encLocId = $this->encryption_org->encode($row->employeeareacabang_id);
+      $encEmployeeid = $this->encryption_org->encode($row->employee_id);
+      $strLocation   = "";
+      $arrLocation   = $this->employeeareacabang_model->getLocationName($row->employee_id,$appid);
+      foreach ($arrLocation as $location) {
+        $strLocation .= '<p>'.$location->area_name.' <i class="fa fa-long-arrow-right"></i> '.$location->cabang_name.' (radius scan: '.$location->employeeareacabang_radius.' meter)</p>';
+      }
+      //////////
+      $templates = $this->employeetemplate_model->getEmployeeTemplate($row->employee_id);
+      $faceTemplate   = 0;
+      $fingerTemplate = 0;
+      foreach ($templates->result() as $row1) {
+        if($row1->employeetemplate_jenis == "fingerprint"){
+          $fingerTemplate++;
+        }elseif ($row1->employeetemplate_jenis == "face") {
+          $faceTemplate++;
+        }
+      }
+
+      $template = "";
+
+      if($faceTemplate>0){
+        $template .= ' <i class="material-icons">face</i>';
+      }
+      if($fingerTemplate>0){
+        $template .= ' <i class="material-icons">fingerprint</i>';
+      }
+
+      if($row->employee_card!=""){
+        $template .= ' <i class="material-icons">assignment</i>';
+      }
+      if($row->employee_password!=""){
+        $template .= ' <i class="material-icons">vpn_key</i>';
+      }
+
+      /////////
+      $encName  = base64_encode($row->employee_full_name);
+      if($sStatus=="new"){
+        $btnSelect = '<button onclick="newMutation(\''.$encLocId.'\',\''.$encName.'\',\''.$encEmployeeid.'\')" type="button" class="btn btn-default btn-sm"><i class="fa fa-external-link-square"></i> '.$this->gtrans->line("Set Mutation").'</button>';
+      }elseif ($sStatus=="pending") {
+        $encMutationId = $this->encryption_org->encode($row->employeemutation_id);
+        $btnSelect = '<button onclick="cancelMutation(\''.$encMutationId.'\',\''.$encName.'\')" type="button" class="btn btn-danger btn-sm"><i class="fa fa-repeat"></i> '.$this->gtrans->line("Cancel Mutation").'</button>';
+      }elseif ($sStatus=="success") {
+        $btnSelect = '';
+      }
+
+      $output['data'][] = array(
+        '<div class="text-center"><input type="checkbox"  name="" id="employee-to-mutate" value="'.$this->encryption_org->encode($row->employee_id).'|'.$row->employee_full_name.'" onclick="selectEmployee(\''.$this->encryption_org->encode($row->employee_id).'\',\''.($row->employee_full_name).'\',this)" ></div>',
+        $row->employee_account_no,
+        $row->employee_full_name.'<br>'.$template,
+        $strLocation,
+        (($sStatus!="new")? '<a onclick="showDestination(\''.$this->encryption_org->encode($row->employeemutation_id).'\')" href="#">'.$row->total_destination.' '.$this->gtrans->line("Location").'</a>' : "")
+        //'<div class="text-center">'.$btnSelect.'</div>'
+      );
+		}
+
+    if($no==0&&$sArea!="-"&&$sCabang!="-"){
+      $output["emptyMessage"] = '<div class="callout callout-danger">
+                <p>'.$this->gtrans->line("There is no data for area").' '.$areaName.', '.$this->gtrans->line("branch").' '.$cabangName.', Status '.$sStatus.' '.(($name!="")?' '.$this->gtrans->line("with keyword").' '.$name:"").'</p>
+              </div>';
+    }else{
+      $output["emptyMessage"] = 'none';
+    }
+    echo json_encode($output);
+  }
+
+  function cancelMutation(){
+    load_model(["employeemutation_model"]);
+    
+    $this->load->library("encryption_org");
+    $encMutationId = $this->input->post("mutation_id");
+    $mutationID    = $this->encryption_org->decode($encMutationId);
+    $delDetailMutation = $this->employeemutation_model->deleteDetailByMutationID($mutationID);
+    if($delDetailMutation==true){
+      $delMutation = $this->employeemutation_model->deleteByMutationID($mutationID);
+      if($delMutation==true){
+        echo "OK";
+      }
+    }
+  }
+
+  function cancelGroupMutation(){
+    load_model(["employeemutation_model"]);
+    
+    $this->load->library("encryption_org");
+    $appid = $this->session->userdata("ses_appid");    
+    $selectedEmployee = $this->input->post("selectedEmployee");
+    
+    foreach ($selectedEmployee as $encEmployee) {
+      $employeeId = $this->encryption_org->decode($encEmployee);
+      $dataMutation = $this->employeemutation_model->getPendingMutation($employeeId,$appid);
+      foreach ($dataMutation->result() as $mutation) {
+        $delDetailMutation = $this->employeemutation_model->deleteDetailByMutationID($mutation->employeemutation_id);
+        if($delDetailMutation==true){
+          $delMutation = $this->employeemutation_model->deleteByMutationID($mutation->employeemutation_id);
+          //if($delMutation==true){
+            
+          //}
+        }
+      }
+      
+    }
+    echo "OK";
+    /*
+    $encMutationId = $this->input->post("mutation_id");
+    $mutationID    = $this->encryption_org->decode($encMutationId);
+    
+    */
+  }
+
+  function saveMutation(){
+    //$anotherLocationSource = $this->input->post("mutation-source");
+    
+    $this->load->library("encryption_org");
+
+    load_model([
+      "employeeareacabang_model",
+      "employeemutation_model"
+    ]);
+    $userID           = $this->session->userdata("ses_userid");
+    $appid            = $this->session->userdata("ses_appid");
+    $selectedEmployee = $this->input->post("selectedEmployee");
+    $encArremployee   = explode(",", $selectedEmployee);
+    $cabang   = !empty($this->input->post("cabang"))? $this->input->post("cabang"): "";
+    $effdt    = date("Y-m-d",strtotime($this->input->post("date-effective")));
+
+    foreach ($encArremployee as $encEmployee) {
+      $employeeid = $this->encryption_org->decode($encEmployee);
+      // get source
+      $sqlLastLoc = $this->employeeareacabang_model->getLocationName($employeeid,$appid);
+      $arrLocId = [];
+      foreach ($sqlLastLoc as $rowLoc) {
+          $arrLocId[] = $rowLoc->employeeareacabang_id;
+      }
+      
+      // simpan cabang ke lokasi dengan status pending dan effective date
+      $arrNewLocation = [];
+      
+      // set lokasi terfilter date archive nya
+      // location source
+      // insert ke tabel mutasi
+      $dataMutation = [
+        "appid" => $appid,
+        "employeemutation_employeeid" => $employeeid,
+        "employeemutation_useradd" => $userID,
+        "employeemutation_dateadd" => $this->now,
+        "employeemutation_status" => "pending",
+        "employeemutation_effdt" => $effdt
+      ];
+      $mutationID = $this->employeemutation_model->insert($dataMutation,$appid);
+
+      // insert ke location source ke tabel mutasi child
+      foreach ($arrLocId as $locId) {
+        #teruskan
+        $dataMutationDetailSource = [
+          "employeemutation_id" => $mutationID,
+          "employeeareacabang_id" => $locId,
+          "child_status" => "source"
+        ];
+        $this->employeemutation_model->insert_detail($dataMutationDetailSource,$appid,$employeeid,$effdt);
+      }
+
+      // insert ke location destinantion ke tabel mutasi child
+      foreach ($cabang as $lokasi) {
+        $arrLokasi = explode(".",$lokasi);
+        $areaID    = $arrLokasi[0];
+        $cabangID  = $arrLokasi[1];
+
+        $dataMutationDetailDestination = [
+          "employeemutation_id" => $mutationID,
+          "employeeareacabang_id" => "0",
+          "area_id" => $areaID,
+          "cabang_id" => $cabangID,
+          "child_status" => "destination"
+        ];
+        $this->employeemutation_model->insert_detail($dataMutationDetailDestination,$appid,$employeeid,$effdt);
+      }
+    }
+    
+    $this->session->set_userdata("ses_msg",["type"=>"success","header"=>"success","msg"=> $this->gtrans->line("Mutation Added")."!"]);
+    echo "ok";
+    
+  }
+
+  function loadEmployeeSource(){
+    $this->load->library("encryption_org");
+    load_model(["employeeareacabang_model"]);
+    $encemployeeid   = $this->input->post("employeeid");
+    $encDontShowThis = $this->input->post("dontShowthis");
+    $employeeid      = $this->encryption_org->decode($encemployeeid);
+    $DontShowThis    = $this->encryption_org->decode($encDontShowThis);
+
+    $appid     = $this->session->userdata("ses_appid");
+    $sql       = $this->employeeareacabang_model->getLocationName($employeeid,$appid);
+    $txtSource = '<div class="">';
+    foreach ($sql as $row) {
+      if($DontShowThis != $row->employeeareacabang_id){
+        $txtSource .= '<div class="checkbox">
+          <label>
+            <input name="mutation-source[]" value="'.$row->employeeareacabang_id.'" type="checkbox"> '.$row->area_name.' <i class="fa fa-long-arrow-right"></i> '.$row->cabang_name.'
+          </label>
+        </div>';
+      }
+    }
+
+    $txtSource .= '</div>';
+
+    $allSource = [];
+    foreach ($sql as $row) {
+      $allSource[] = $row->cabang_id;
+    }
+
+    $output      = [
+      "tableSource" => $txtSource,
+      "allBranchSource"   => $allSource
+    ];
+    $this->gtrans->saveNewWords();
+
+    echo json_encode($output);
+  }
+
+  function getMutationDestination(){
+    load_model(["employeemutation_model"]);
+    $this->load->library("encryption_org");
+
+    $encMutationId = $this->input->post("mutationid");
+    $mutation_id   = $this->encryption_org->decode($encMutationId);
+    $appid = $this->session->userdata("ses_appid");
+    $objDestionation = $this->employeemutation_model->getMutationDestination($mutation_id,$appid);
+
+    $this->table->set_template($this->tabel_template);
+    $this->table->set_heading(
+      $this->gtrans->line("Area"),
+      $this->gtrans->line("Branch")
+    );
+
+    foreach ($objDestionation as $row) {
+      $this->table->add_row($row->area_name,$row->cabang_name);
+    }
+
+    $strOutput = $this->table->generate();
+    $this->gtrans->saveNewWords();
+    echo json_encode($strOutput);
+  }
+
+  function checkNotif(){
+    if(!empty($this->session->userdata("ses_msg"))){
+      $msg = $this->session->userdata("ses_msg");
+      $notif =createNotif($msg['type'],$msg['header'],$msg['msg']);
+      $this->session->set_userdata("ses_msg");
+      return $notif;
+    }else{
+      return "";
+    }
+  }
+
+  function getDataEmployee(){
+    $this->load->library("encryption_org");
+    $this->load->model("employee_model");
+    $this->load->model("employeeareacabang_model");
+
+    $employees   = $this->input->post("employees");
+    $arrEmployee = [];
+    foreach ($employees as $employee) {
+      $arrEmployee[] = $this->encryption_org->decode($employee);
+    }
+
+    $this->table->set_template($this->tabel_template);
+    $this->table->set_heading("Employee Name","Location Source");
+    $sql = $this->employee_model->getGroupEmployee($arrEmployee);
+    $appid = $this->session->userdata("ses_appid");
+
+    foreach ($sql->result() as $row) {
+      $locations = $this->employeeareacabang_model->getLocationName($row->employee_id,$appid);
+      $strLocation = "";
+      foreach ($locations as $location) {
+        $strLocation .= '<p>'.$location->area_name.' <i class="fa fa-long-arrow-right"></i> '.$location->cabang_name.' (radius scan: '.$location->employeeareacabang_radius.' meter)</p>';
+      }
+      $this->table->add_row($row->employee_full_name,$strLocation);
+    }
+    echo json_encode($this->table->generate());
+  }
+}

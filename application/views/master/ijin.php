@@ -1,0 +1,95 @@
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    <?= $this->gtrans->line("Master Ijin") ?>
+  </h1>
+</section>
+<!-- Main content -->
+<section class="content">
+<!-- Info boxes -->
+<?= !empty($addonsAlert) ? $addonsAlert : '' ?>
+<div class="row">
+  <div class="col-md-12">
+    <div class="box box-inact">
+      <!-- /.box-header -->
+      <div class="box-body">
+        <div class="row">
+          <div class="col-md-12">
+            <?= !empty($notif) ? $notif : "" ?>
+            <button type="button" class="btn btn-primary" data-toggle="modal" onclick="addNew()"><i class="fa fa-pencil"></i> <?= $this->gtrans->line("New Ijin") ?></button>
+          </div>
+          <div class="col-md-12" style="padding-top:10px">
+            <?= !empty($ijinTable) ? $ijinTable : "" ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<div class="modal fade" id="frmIjin">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><div id="frm-text"></div></h4>
+        </div>
+        <?= form_open("save-ijin",["id"=>"form-validation"]); ?>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="id">
+          <div class="form-group">
+            <label for=""><?= $this->gtrans->line("Ijin Name") ?> <span class="text-red">*</span></label>
+            <input onchange="checkExists('ijinname','msg-name','check-ijin-name-exists','<?= $this->gtrans->line('Ijin name was used by existing data') ?>','<?= $this->gtrans->line('Ijin Name Is Available') ?>',$('#id').val())" id="ijinname" data-validation-engine="validate[required,custom[onlyLetterNumberSemiSpesial],maxSize[100]]" type="text" name="ijinname" class="form-control" placeholder="">
+            <div id="msg-name"></div>
+          </div>
+          <div class="form-group">
+            <label for=""><?= $this->gtrans->line("Description") ?></label>
+            <textarea id="ijindesc" data-validation-engine="validate[custom[onlyLetterNumberSemiSpesial]]" name="ijindesc" class="form-control"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger pull-left" data-dismiss="modal"><i class="fa fa-long-arrow-left"></i> <?= $this->gtrans->line("Cancel") ?></button>
+          <button type="submit" class="btn btn-primary"><div id="txtBtnSave"></div></button>
+        </div>
+        <?= form_close() ?>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+  <!-- /.modal-dialog -->
+  </div>
+<script type="text/javascript">
+  function edit(id,name,description){
+    $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line('Save Changes') ?>');
+    $("#frm-text").html('<?= $this->gtrans->line("Edit Ijin") ?>');
+    $("#id").val(id);
+    $("#ijinname").val(atob(name));
+    $("#ijindesc").val(atob(description));
+    $("#frmIjin").modal('show');
+  }
+  function addNew(){
+    $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line('Save') ?>');
+    $("#frm-text").html('<?= $this->gtrans->line("Add New Ijin") ?>');
+    $("#id").val("");
+    $("#ijinname").val("");
+    $("#ijindesc").val("");
+    $("#frmIjin").modal('show');
+  }
+  function delIjin(idijin){
+    Swal.fire({
+        title: '<?= $this->gtrans->line("Are you sure") ?>?',
+        text: "<?= $this->gtrans->line("You won`t be able to revert this") ?>!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '<?= $this->gtrans->line("Yes, delete it!") ?>'
+      }).then((result) => {
+        if (result.value) {
+          window.open(url + 'delete-ijin/' + idijin,'_self');
+        }
+      });
+
+  }
+  $("#datatable").DataTable();
+</script>

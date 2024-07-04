@@ -1,0 +1,58 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+require APPPATH . 'libraries/REST_Controller.php';
+/**
+ *
+ */
+class Fakegps extends REST_Controller
+{
+  var $now;
+  var $apikey = "3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+	$this->load->model("fakegps_model");
+  }
+
+  function index_post(){
+    // get key
+    $key   = !empty($_POST["key"])   ? $_POST["key"]    : "";
+
+    if(!empty($key)){
+	  $dataFakegps = $this->fakegps_model->getAll();
+      if($key==$this->apikey){
+        $arrFakegps = [];
+        foreach ($dataFakegps as $row) {
+          $arrFakegps[] = [
+            "fakegps_code" => $row->fakegps_code,
+            "fakegps_name" => $row->fakegps_name,
+            "fakegps_keterangan"   => $row->fakegps_keterangan
+          ];
+		  $arrOutput = [
+              'success' 	=> "ok",
+              'error_code' 	=> "200",
+              'message' 	=> "",
+              'data' 		=> $arrFakegps
+            ];
+        }
+
+      }else{
+		$arrOutput = [
+           'success' 		=> "",
+           'error_code' 	=> "500",
+           'message' 		=> "Key is not valid",
+           'data' 			=> ""
+         ];
+      }
+    }else{
+		$arrOutput = [
+		  'success' 	=> "",
+		  'error_code' 	=> "500",
+		  'message' 	=> "Key must fill",
+		  'data' 		=> ""
+		];
+    }
+    echo output_api($arrOutput,"json");;
+  }
+}

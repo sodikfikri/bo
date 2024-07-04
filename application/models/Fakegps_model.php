@@ -1,0 +1,73 @@
+<?php 
+/**
+* 
+*/
+class Fakegps_model extends CI_Model
+{
+	private $tableName = "tbfakegps";
+	private $tableId   = "fakegps_id";
+	function __construct()
+	{
+		parent::__construct();
+
+	}
+
+	function auth($username,$password){
+		$where = [
+			"username" => $username,
+			"password" => $password
+		];
+		$this->db->limit(1);
+		$res = $this->db->get_where($this->tableName,$where);
+		if($res->num_rows()>0){
+			return $res->row();
+		}else{
+			return false;
+		}
+	}
+
+	function getAll(){
+		$this->db->where("tbfakegps.is_del !=","1");
+		$res = $this->db->get($this->tableName);
+		return $res;
+	}
+	
+	function getAllApi(){
+
+    $this->db->select("tbfakegps.*");
+    $this->db->from("tbfakegps");
+
+    $this->db->where("tbfakegps.is_del !=","1");
+    $sql = $this->db->get();
+    return $sql->result();
+  }
+
+	function getById($id){
+		$this->db->where($this->tableId,$id);
+		$sql = $this->db->get($this->tableName);
+		
+		if($sql->num_rows()>0){
+			return $sql->row();
+		}else{
+			return false;
+		}
+	}
+
+	function insert($data){
+		$res = $this->db->insert($this->tableName,$data);
+		return $res;
+	}
+
+	function update($data,$id){
+		$this->db->where($this->tableId,$id);
+		$res = $this->db->update($this->tableName,$data);
+		return $res;
+	}
+
+	function delete($id){
+		$this->db->where($this->tableId,$id);
+		$res = $this->db->delete($this->tableName);
+		return $res;
+	}
+
+}

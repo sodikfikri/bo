@@ -1,0 +1,196 @@
+<?php
+/**
+ *
+ */
+class Checkinout_model extends CI_Model
+{
+
+  var $tableName = "tbcheckinout";
+  var $tableId   = "checkinout_id";
+
+  function __construct()
+  {
+    parent::__construct();
+  }
+
+  function insert_batch($data){
+    $res = $this->db->insert_batch($this->tableName,$data);
+    return $res;
+  }
+  
+  function bulk_insert($arrayAttendance){
+    $length = count($arrayAttendance);
+    $map = 0;
+    $arrayInsert2 = [];
+    foreach ($arrayAttendance as $rowData) {
+      $map++;
+      $insert_query = $this->db->insert_string($this->tableName, $rowData);
+      $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
+      $res = $this->db->query($insert_query);
+      if($map==$length){
+        return true;
+      }
+    }  
+  }
+  function isExist($appid,$employee_id,$datetime){
+    $this->db->select("checkinout_id");
+    $this->db->where("appid",$appid);
+    $this->db->where("checkinout_employee_id",$employee_id);
+    $this->db->where("checkinout_datetime",$datetime);
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()>0){
+      return true;
+    }else{
+      return false;
+    }
+  }
+  function getLastEmptySnapshootRecord($accountNo,$appid){
+    $this->db->where("checkinout_employeecode",$accountNo);
+    $this->db->where("appid",$appid);
+    $this->db->where("log_image is null",null , false);
+    $this->db->order_by("checkinout_id","DESC");
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()>0){
+      return $sql->row();
+    }else{
+      return false;
+    }
+  }
+  function setSnapshoot($imageName,$logID,$appid){
+    $this->db->where("appid",$appid);
+    $this->db->where("checkinout_id",$logID);
+    $this->db->update($this->tableName,[
+      "log_image" => $imageName
+    ]);
+    return $this->db->affected_rows();
+  }
+  function getData($date_start,$date_end,$downloadFlag,$appid){
+    $this->db->where("appid",$appid);
+    $this->db->where("checkinout_flag_download",$downloadFlag);
+    $this->db->where("DATE(checkinout_datetime) >=",$date_start);
+    $this->db->where("DATE(checkinout_datetime) <=",$date_end);
+    $sql = $this->db->get($this->tableName);
+    return $sql;
+  }
+
+  function getDataActiveIntrax($date_start,$date_end,$downloadFlag,$appid){
+    $this->db->select("tbcheckinout.*");
+    $this->db->where("tbcheckinout.appid",$appid);
+    //$this->db->where("tbcheckinout.intrax_flag_download","0");
+    $this->db->where("DATE(tbcheckinout.checkinout_datetime) >=",$date_start);
+    $this->db->where("DATE(tbcheckinout.checkinout_datetime) <=",$date_end);
+
+    $this->db->where("tbemployee.intrax_license","active");
+    $this->db->from("tbcheckinout");
+    $this->db->join("tbemployee","tbemployee.employee_id = tbcheckinout.checkinout_employee_id");
+    $this->db->group_by([
+      "tbcheckinout.appid",
+      "tbcheckinout.checkinout_employee_id",
+      "tbcheckinout.checkinout_datetime",
+      "tbcheckinout.checkinout_verification_mode",
+      "tbcheckinout.checkinout_code",
+      "tbcheckinout.checkinout_device_id",
+      "tbcheckinout.checkinout_SN",
+      "tbcheckinout.checkinout_area_id",
+      "tbcheckinout.checkinout_cabang_id"
+    ]);
+    $sql = $this->db->get();
+    return $sql;
+  }
+  
+  function getDataInOutMobile($date_start,$date_end,$employee_id){
+    $this->db->select("tbcheckinout_mobile.*");
+    $this->db->select("tbcabang.*");
+    $this->db->where("tbcheckinout_mobile.employee_id",$employee_id);
+    $this->db->where("tbcheckinout_mobile.checklog_from","INTRAX_2");
+    $this->db->where("DATE(tbcheckinout_mobile.checklog_date) >=",$date_start);
+    $this->db->where("DATE(tbcheckinout_mobile.checklog_date) <=",$date_end);
+    $this->db->from("tbcheckinout_mobile");
+    $this->db->join("tbcabang","tbcabang.cabang_code = tbcheckinout_mobile.checklog_id");
+    $sql = $this->db->get();
+    return $sql;
+  }
+
+  function updateByCollectId($data,$arrInOutID,$appid){
+    if(count($arrInOutID)>0){
+      $this->db->where("appid",$appid);
+      $this->db->where_in("checkinout_id",$arrInOutID);
+      $res = $this->db->update($this->tableName,$data);
+    }
+  }
+
+  function updateByPunchTimeID($data,$punchTimeID,$appid){
+    $this->db->where("REPLACE(REPLACE(REPLACE(checkinout_datetime,' ',''),'-',''),':','') = ",$punchTimeID);
+    $this->db->where("appid",$appid);
+    $this->db->update($this->tableName,$data);
+    return $this->db->affected_rows();
+  }
+
+  function countActive($appid,$date_start,$date_end,$areaid,$cabangid)
+  {
+    $this->db->select("count(A.checkinout_id) as total");
+    $this->db->from("tbcheckinout A");
+    $this->db->join("tbemployee B","A.checkinout_employee_id = B.employee_id","left");
+    $this->db->where("A.appid",$appid);
+    
+    $this->db->group_start();
+    $this->db->where("B.is_del","0");
+    $this->db->or_where("B.is_del is null",null,false);
+    $this->db->group_end();
+
+    $this->db->where("B.employee_resign_date is null",null, false);
+
+    $this->db->where("DATE(A.checkinout_datetime) >=",$date_start);
+    $this->db->where("DATE(A.checkinout_datetime) <=",$date_end);
+
+    if(!empty($areaid)){
+      $this->db->where("A.checkinout_area_id",$areaid);
+    }
+
+    if(!empty($cabangid)){
+      $this->db->where("A.checkinout_cabang_id",$cabangid);
+    }
+
+    $sql = $this->db->get();
+    return $sql->row()->total;
+  }
+
+  function getActive($date_start,$date_end,$areaid,$cabangid,$record_start,$record_length,$appid)
+  {
+    $this->db->select("B.employee_full_name");
+    $this->db->select("A.*");
+    $this->db->select("C.area_name");
+    $this->db->select("D.cabang_name");
+
+    $this->db->from("tbcheckinout A");
+    $this->db->join("tbemployee B","A.checkinout_employee_id = B.employee_id","left");
+    $this->db->join("tbarea C","C.area_id = A.checkinout_area_id");
+    $this->db->join("tbcabang D","D.cabang_id = A.checkinout_cabang_id");
+
+    if($record_length!="" &&$record_start!=""){
+      $this->db->limit($record_length,$record_start);
+    }
+
+    if(!empty($areaid)){
+      $this->db->where("A.checkinout_area_id",$areaid);
+    }
+
+    if(!empty($cabangid)){
+      $this->db->where("A.checkinout_cabang_id",$cabangid);
+    }
+
+    $this->db->where("A.appid",$appid);
+    $this->db->group_start();
+    $this->db->where("B.is_del","0");
+    $this->db->or_where("B.is_del is null",null,false);
+    $this->db->group_end();
+    $this->db->where("B.employee_resign_date is null",null, false);
+
+    $this->db->where("DATE(A.checkinout_datetime) >=",$date_start);
+    $this->db->where("DATE(A.checkinout_datetime) <=",$date_end);
+    $this->db->order_by("A.checkinout_id","DESC");
+    $sql = $this->db->get();
+
+    return $sql;
+  }
+}

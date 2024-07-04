@@ -1,0 +1,25 @@
+<?php 
+include "config.inc.php";
+$sql = "SELECT * FROM inact_devicedata.raw_data WHERE (`post` LIKE '%TZ=0000%' OR `post` = '') AND isProcessed = 'no';";
+$res = mysqli_query($conn_model_temp,$sql);
+$c_rec = mysqli_num_rows($res);
+if($c_rec > 0) {
+	$sql_upd = "SET SQL_SAFE_UPDATES = 0;";
+	mysqli_query($conn_model_temp,$sql_upd);
+	
+	$sql_upd = "UPDATE inact_devicedata.raw_data SET isProcessed = 'failed' WHERE `post` LIKE '%TZ=0000%' AND isProcessed = 'no';";
+	mysqli_query($conn_model_temp,$sql_upd);
+	
+	$sql_upd = "DELETE FROM inact_devicedata.raw_data WHERE `post` = '' AND isProcessed = 'no';";
+	mysqli_query($conn_model_temp,$sql_upd);
+	
+	$sql_upd = "SET SQL_SAFE_UPDATES = 1;";
+	mysqli_query($conn_model_temp,$sql_upd);
+	
+	echo "Ada yang aneh ".$c_rec;
+}
+else {
+	echo "Tidak ada template yang aneh";
+}
+mysqli_close($conn_model_temp);
+?>

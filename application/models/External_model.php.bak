@@ -1,0 +1,300 @@
+<?php
+/**
+ *
+ */
+class External_model extends CI_Model
+{
+  var $now;
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+  }
+
+  // MyBilling
+  function MyBillingRegisNewUser($input){
+    $data=array(
+      'member_mainemail'   => $input['mainEmail'],
+      'member_fullname'    => $input['fullName'],
+      'member_companyname' => $input['companyName'],
+      'date_created'       => $this->now,
+      'member_mainaddress' => "",
+      'product_code'       => PRODUCT_CODE,
+      'ipaddr'             => $input['ipAdrress'],
+      'mainphone'          => $input['mainPhone'],
+      'member_usrpassw'    => $input['password'],
+      'busines_category'   => "",
+      'countrycode'        => "",
+      'provincecode'       => "",
+      'regencycode'        => ""
+    );
+
+    $url 	= MYBILLING_LINK.'api/users';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response_json = curl_exec($ch);
+    curl_close($ch);
+    $response=json_decode($response_json, true);
+    if($response["result"]=="success"){
+      // Jika berhasil outputnya appid
+      return $response['appid'];
+    }elseif ($response["result"]=="error") {
+      // Jika gagal akan return false result
+      return false;
+    }
+  }
+
+  function myBillingActivateUser($appid){
+    $data=array(
+      'appid'   => $appid,
+      'confirm' => "1"
+    );
+
+    $url 	= MYBILLING_LINK.'api/activate_user';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    if($response=="success"){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
+  function mybillingRecordLogin($appid){
+    $data=array(
+      'theAppId'   => $appid
+    );
+
+    $url 	= MYBILLING_LINK.'api/appLogin';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response_json = curl_exec($ch);
+    curl_close($ch);
+    $response=json_decode($response_json, true);
+    return $response;
+  }
+
+  function myBillingGetActiveAddons($appid){
+    // generate addons
+    $sql = $this->db->get("systemaddons");
+    $arrAddonsConverter = [];
+    
+    foreach ($sql->result() as $record) {
+      $arrAddonsConverter[$record->addonscode] = $record->systemaddons_code;
+    }
+    
+    //echo "<pre>";
+        //print_r($arrAddonsConverter);
+    //echo "</pre>";
+    //
+    $data=array(
+      'appid'   => $appid,
+      'subs_status'   => 'active'
+    );
+
+    $url 	= MYBILLING_LINK.'api/getActiveAddons/3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $curlResponse = curl_exec($ch);
+    
+    curl_close($ch);
+    if($curlResponse!="false key!"){
+      $arrResponse = json_decode($curlResponse, true);
+      if($arrResponse['result']!="error"){
+        $systemAddons = [];
+        $arrResult = $arrResponse['result'];
+		$addons = [];
+        foreach ($arrResult as $row) {
+          
+          // cek apakah addons sudah tersedia dalam konverter
+          
+          if(!empty($arrAddonsConverter[$row['code']])){
+            
+            // cek memastikan addons masih aktif
+            if($row['status']=="active"){
+              
+				$systemAddon = $arrAddonsConverter[$row['code']];
+				$row['systemAddonsCode'] = $arrAddonsConverter[$row['code']];
+				if($row['type_member']==2){
+					$systemAddons[$row['subscription_id']] = $row;
+				} else {
+					$systemAddons[$systemAddon] = $row;
+				}
+              
+              // index (code, name, status, unitname, qty)
+            }
+          }
+        }
+		if($appid=='IA01M6858F20210906256'){
+			echo "<pre>";
+				print_r(json_decode($curlResponse, true));
+				print_r($systemAddons);
+			echo "</pre>";
+		}
+		
+        
+        return $systemAddons;
+      }else{
+        return false;
+      }
+    }else{
+      return false;
+    }
+  }
+
+  function myBillingGetAppAddons($appid){
+    $groupcode = MBGROUPCODE;
+    $data=array(
+      'groupcode'   => $groupcode,
+      'appid' => $appid
+    );
+
+    $url 	= MYBILLING_LINK.'api/getAllProduct/3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response_json = curl_exec($ch);
+    curl_close($ch);
+    $response=json_decode($response_json, true);
+
+    $addons = $response['addons'];
+    return $addons;
+  }
+
+  function myBillingTakeTrialAddons($appid,$addonsid,$qty){
+    $data = array(
+      'appid'     => $appid,
+      'addonsid'  => $addonsid,
+      'addonsqty' => $qty
+    );
+
+    $url 	= MYBILLING_LINK.'api/insert_trialorder/3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response_json = curl_exec($ch);
+    curl_close($ch);
+    $response=json_decode($response_json, true);
+    if($response['result']=="success"){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
+  function myBillingGetTrialAddons($appid){
+
+    // generate addons
+    $sql = $this->db->get("systemaddons");
+    $arrAddonsConverter = [];
+
+    foreach ($sql->result() as $record) {
+      $arrAddonsConverter[$record->addonscode] = $record->systemaddons_code;
+    }
+
+    //
+
+    $data=array(
+      'appid'     => $appid,
+      'subs_status'   => 'active'
+    );
+
+    $url 	= MYBILLING_LINK.'api/getActiveTrialAddons/3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $curlResponse = curl_exec($ch);
+    curl_close($ch);
+    if($curlResponse!="false key!"){
+      $arrResponse = json_decode($curlResponse, true);
+      
+      if($arrResponse['result']!="error"){
+        $systemAddons = [];
+        $arrResult = $arrResponse['result'];
+        if($arrResult!=false){
+          foreach ($arrResult as $row) {
+            // cek apakah addons sudah tersedia dalam konverter
+            if(!empty($arrAddonsConverter[$row['code']])){
+              // cek memastikan addons masih aktif
+              if($row['status']=="active"){
+                $systemAddon = $arrAddonsConverter[$row['code']];
+                $systemAddons[$systemAddon] = $row;
+                // index (code, name, status, unitname, qty)
+              }
+            }
+          }
+        }
+        return $systemAddons;
+      }else{
+        return false;
+      }
+    }else{
+      return false;
+    }
+  }
+
+  function getDetailSubscription($appid){
+    $data=array(
+      'theAppId'     => $appid,
+    );
+
+    $url 	= MYBILLING_LINK.'api/appLogin/3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9';
+    $ch 	= curl_init($url);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $curlResponse = curl_exec($ch);
+    curl_close($ch);
+    return  json_decode($curlResponse);
+  }
+
+
+  function getActiveAddons($appid){
+    $arrActiveAddons = $this->myBillingGetActiveAddons($appid);
+    $arrTrialAddons  = $this->myBillingGetTrialAddons($appid);
+    $sessAddons      = [];
+    $infoAddons      = [];
+
+    foreach ($arrActiveAddons as $index => $map) {
+      $sessAddons[$index] = $map['qty'];
+              
+      $infoAddons[$index] = [
+        "name"   => $map["name"],
+        "expired"=> $map["expired"]
+      ];
+    }
+
+    foreach ($arrTrialAddons as $index => $map) {
+      if(array_key_exists($index,$sessAddons)){
+        $sessAddons[$index] += $map['qty'];
+      }else{
+        $sessAddons[$index] = $map['qty'];
+      }
+    }
+    return $sessAddons;
+  }
+
+  //
+}

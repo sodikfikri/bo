@@ -1,0 +1,1073 @@
+<?php
+/**
+ *
+ */
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+class Import extends CI_Controller
+{
+
+  var $timestamp;
+  var $listMenu = "";
+  var $employeeLicense = 0;
+  var $reader;
+  var $filePath = FCPATH."sys_upload".DIRECTORY_SEPARATOR."temp".DIRECTORY_SEPARATOR;
+  var $tabel_template  = array(
+        'table_open'            => '<table class="table table-bordered table-stripped" >',
+        'table_close'           => '</table>'
+  );
+
+  function __construct()
+  {
+    parent::__construct();
+    $this->load->model("system_model");
+    // model general
+    $this->timestamp = date("Y-m-d H:i:s");
+
+    $languange = !empty($this->session->userdata('lang')) ? $this->session->userdata('lang') :"en";
+    $this->load->library("gtrans/gtrans",["lang" => $languange]);
+
+    $this->load->model("menu_model");
+    
+    $this->system_model->checkSession(21);
+    // memanggil list menu harus load library gtrans di atasnya dulu
+
+    $this->listMenu = $this->menu_model->list_menu();
+    $this->reader   = \PhpOffice\PhpSpreadsheet\IOFactory::createReader("Xls");
+    //\PhpOffice\PhpSpreadsheet\IOFactory::createReader("csv");
+  }
+
+  function index(){
+    $data = [];
+    $parentViewData = [
+      "title"   => "Import",  // title page
+      "content" => "master/import",  // content view
+      "viewData"=> $data,
+      "listMenu"=> $this->listMenu,
+      "externalJS"  => [
+        "https://cdn.jsdelivr.net/npm/sweetalert2@8"
+      ]
+    ];
+    $this->load->view("layouts/main",$parentViewData);
+    $this->gtrans->saveNewWords();
+  }
+
+  function importArea(){
+    load_model([
+      "area_model",
+    ]);
+
+    $appid    = $this->session->userdata("ses_appid");
+    $upload   = $this->do_upload();
+    $fileName = $upload["filename"];
+
+    $userID   = $this->session->userdata("ses_userid");
+    $error    = [];
+    $inserted = 0;
+    $skipped  = 0;
+
+    if($fileName!=""){
+      //checkif sheet exist
+      $tempPath = $this->filePath.$fileName;
+      $sheetOnFile = $this->reader->listWorksheetNames($tempPath);
+      if(in_array("AREA",$sheetOnFile)){
+        $arrArea = $this->readArea($fileName);
+        if(count($arrArea)>0){
+          $listAreaCode = $this->area_model->getAreaCode($appid);
+          $listAreaName = $this->area_model->getAreaName($appid);
+          foreach ($arrArea as $index => $row) {
+            $line = $index + 4;
+            $specialCharCode = isSpecialCharExists($row['areaCode']);
+            $specialCharName = isSpecialCharExists($row['areaName']);
+            if($specialCharCode==false && $specialCharName==false ){
+              if($row["areaName"]){
+                $dataInsert = [
+                  "appid"            => $appid,
+                  "area_code"        => $row['areaCode'],
+                  "area_name"        => $row['areaName'],
+                  "area_user_add"    => $userID,
+                  "area_date_create" => $this->timestamp,
+                  "is_del"           => "0"
+                ];
+                $insertResult = $this->area_model->saveIgnoreDuplicate($dataInsert,$listAreaCode,$listAreaName);
+                if($insertResult["insertStatus"]=="inserted"){
+                  $inserted++;
+                }elseif ($insertResult["insertStatus"]=="skipped") {
+                  $skipped++;
+                }elseif ($insertResult["insertStatus"]=="duplicated_code") {
+                  $error[] = 'There is duplicate "KODE AREA" on line '.$line;
+                }elseif ($insertResult["insertStatus"]=="duplicated_name") {
+                  $error[] = 'There is duplicate "NAMA AREA" on line '.$line;
+                }
+              }else{
+                $error[] = 'Empty area name on line '.$line;
+              }
+            }else{
+              if($specialCharCode!=false){
+                $error[] = 'Special Character "'.$specialCharCode.'" found on field "KODE" line '.$line;
+              }
+              if($specialCharName!=false){
+                $error[] = 'Special Character "'.$specialCharName.'" found on field "NAMA" line '.$line;
+              }
+            }
+          }
+        }
+        $file_error = "";
+      }else{
+        $file_error = "Sheet AREA was not found, please correct the file";
+      }
+
+      // delete temporary file
+      $tempFile = $this->filePath.$fileName;
+      if(file_exists($tempFile)){
+        unlink($tempFile);
+      }
+    }else{
+      $file_error = $upload["error"];
+    }
+    $output = [
+      "skipped" => $skipped,
+      "inserted" => $inserted,
+      "error"     => $error,
+      "file_error" => $file_error
+    ];
+    echo json_encode($output);
+  }
+
+  function importBranch(){
+    load_model([
+      "area_model",
+      "cabang_model"
+    ]);
+    $this->load->helper("timezone");
+    $timeZone = getTimezone();
+
+    $appid    = $this->session->userdata("ses_appid");
+    $upload   = $this->do_upload();
+    $fileName = $upload["filename"];
+    $userID   = $this->session->userdata("ses_userid");
+    $error    = [];
+    $inserted = 0;
+    $skipped  = 0;
+
+    if($fileName!=""){
+      $tempPath = $this->filePath.$fileName;
+      $sheetOnFile = $this->reader->listWorksheetNames($tempPath);
+      if(in_array("CABANG",$sheetOnFile)){
+        $arrBranch = $this->readBranch($fileName);
+        if(count($arrBranch)>0){
+          $allArea  = $this->area_model->getActiveAreaIdentification($appid);
+          $listBranchCode = $this->cabang_model->getBranchCode($appid);
+          $listBranchName = $this->cabang_model->getBranchName($appid);
+          foreach ($arrBranch as $index => $row) {
+            // filter 1
+            $line = $index + 4;
+            if($row["cabangName"]=="" || $row["address"]=="" || $row["timezone"]=="" || $row["areaName"]==""){
+              $error[] = 'There is empty required field on line '.$line;
+            }else{
+              // filter 2
+              $areaIdentification = createIdentification($row["areaName"]);
+
+              if(in_array($areaIdentification,$allArea)){
+                // ok
+
+                if(!empty($timeZone[$row['timezone']])){
+                  /*
+                  * pengecekan karakter spesial
+                  */
+                  $spCharCode = isSpecialCharExists($row["cabangCode"],["-"]);
+                  $spCharName = isSpecialCharExists($row['cabangName']);
+                  $spCharAdrress = isSpecialCharExists($row["address"],[".",","]);
+                  $spCharPhone= isSpecialCharExists($row["phone"]);
+                  $spTimezone = isSpecialCharExists($row['timezone'],["/","-","_"]);
+
+                  if($spCharCode==false && $spCharName==false  && $spCharAdrress==false && $spCharPhone==false && $spTimezone==false){
+                    $areaID = array_search($areaIdentification, $allArea);
+                    $UTC    = !empty($timeZone[$row['timezone']]) ? str_replace(")","",str_replace("(","",explode(" ",$timeZone[$row['timezone']])[0])) : "";
+                    $dataInsert = [
+                      "appid"                => $appid,
+                      "cabang_area_id"       => $areaID,
+                      "cabang_code"          => $row["cabangCode"],
+                      "cabang_timezone"      => $row['timezone'],
+                      "cabang_utc"           => $UTC,
+                      "cabang_name"          => $row['cabangName'],
+                      "cabang_address"       => $row["address"],
+                      "cabang_contactnumber" => $row["phone"],
+                      "cabang_user_add"      => $userID,
+                      "cabang_date_create"   => $this->timestamp,
+                      "is_del"               => "0"
+                    ];
+                    $insertResult = $this->cabang_model->saveIgnoreDuplicate($dataInsert,$listBranchCode,$listBranchName);
+
+                    if($insertResult["insertStatus"]=="inserted"){
+                      $inserted++;
+                    }elseif ($insertResult["insertStatus"]=="skipped") {
+                      $skipped++;
+                    }elseif ($insertResult["insertStatus"]=="duplicated_code") {
+                      $error[] = 'There is duplicate "KODE CABANG" on line '.$line;
+                    }elseif ($insertResult["insertStatus"]=="duplicated_name") {
+                      $error[] = 'There is duplicate "NAMA CABANG" on line '.$line;
+                    }elseif ($insertResult["insertStatus"]=="duplicated_code_name") {
+                      $error[] = 'There is duplicate "KODE CABANG" and "NAMA CABANG" on line '.$line;
+                    }
+                  }else{
+                    if($spCharCode!=false){
+                      $error[] = 'Special Character "'.$spCharCode.'" found on field "KODE" line '.$line;
+                    }
+                    if($spCharName!=false){
+                      $error[] = 'Special Character "'.$spCharName.'" found on field "NAMA" line '.$line;
+                    }
+                    if($spCharAdrress!=false){
+                      $error[] = 'Special Character "'.$spCharAdrress.'" found on field "ALAMAT" line '.$line;
+                    }
+                    if($spCharPhone!=false){
+                      $error[] = 'Special Character "'.$spCharPhone.'" found on field "NO TELEPON" line '.$line;
+                    }
+                    if($spTimezone!=false){
+                      $error[] = 'Special Character "'.$spTimezone.'" found on field "TIMEZONE" line '.$line;
+                    }
+                  }
+                }else{
+                  $error[] = 'Timezone not found on line '.$line;
+                }
+              }else{
+                // error
+                $error[] = 'Area name is not registered on line '.$line;
+              }
+            }
+          }
+        }
+        $file_error = "";
+      }else{
+        $file_error = "Sheet CABANG was not found, please correct the file";
+      }
+
+      // delete temporary file
+      $tempFile = $this->filePath.$fileName;
+      if(file_exists($tempFile)){
+        unlink($tempFile);
+      }
+    }else{
+      $file_error = $upload["error"];
+    }
+
+    $output = [
+      "skipped" => $skipped,
+      "inserted" => $inserted,
+      "error"     => $error,
+      "file_error" => $file_error
+    ];
+    echo json_encode($output);
+  }
+
+  function importEmployee(){
+    load_model([
+      "area_model",
+      "cabang_model",
+      "employee_model",
+      "employeeareacabang_model",
+      "firewall_model"
+    ]);
+
+    $appid      = $this->session->userdata("ses_appid");
+    $upload     = $this->do_upload();
+    $fileName   = $upload["filename"];
+    $userID     = $this->session->userdata("ses_userid");
+    $importType = $this->input->post("type-import");
+    $error      = [];
+    $inserted   = 0;
+    $skipped    = 0;
+    $updated    = 0;
+	$pinIntrax	= 0;
+	$identify	= 1;
+	$dataPin	= "";
+    if($fileName!=""){
+      $tempPath = $this->filePath.$fileName;
+      $sheetOnFile = $this->reader->listWorksheetNames($tempPath);
+      if(in_array("KARYAWAN",$sheetOnFile)){
+        $arrEmployee = $this->readEmployee($fileName);
+        if(count($arrEmployee)>0){
+          $allBranch  = $this->cabang_model->getActiveBranchIdentification($appid);
+          $dataBranch = $this->cabang_model->getActiveBranch($appid);
+          $listEmployeeCode = $this->employee_model->getEmployeeCode($appid);
+          $dataSubscription = $this->employee_model->getSubscription($appid);
+          foreach ($arrEmployee as $index => $row) {
+            // filter 1
+            $line = $index + 4;
+			// pengecekan subscription
+			if($dataSubscription[0]!=0){
+				$dataPin	= $row["pinIntrax"]=="";
+				$pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
+				$identify	= 6;
+			} else {
+				if($row["pinIntrax"]!=0 OR $row["pinIntrax"]!=""){
+					$dataPin	= $row["pinIntrax"]=="";
+					$pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
+					$identify	= 6;
+				} else {
+					$pinIntrax	= 0;
+				}
+			}
+            if($row["employeeCode"]=="" || $row["employeeName"]=="" || $row["nickName"]=="" || $row["joinDate"]=="" || $row["branchs"]=="" || $row["email"]=="" || $dataPin){
+              $error[] = 'There is empty required field on line '.$line;
+            }else{
+              /*
+              if(!in_array($row["employeeCode"],$listEmployeeCode)){
+
+              }else{
+
+              }*/
+              // filter 2
+              if($row["branchs"]!=""){
+                // ok
+                $branchs = explode("|",$row["branchs"]);
+                // pengecekan apakah ada nama branch yang belum terdaftar
+                $failedBranch = false;
+                foreach ($branchs as $branch) {
+				  if($appid=='IA01M6858F20210906256' OR $appid=='IA01M82337F20230627732'){
+					$newBranch = substr($branch,0,strpos($branch,"-"));
+				  } else {
+					$newBranch = $branch;
+				  }
+                  if(!in_array(createIdentification($newBranch),$allBranch)){
+
+                    $failedBranch = true;
+                    goto endBranchChecking;
+                  }
+                }
+                endBranchChecking:
+                if($failedBranch==true){
+                  $error[] = 'There is unregistered branch on line '.$line;
+                }else{
+				  $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
+				  // pengecekan format email
+				  if(filter_var($row["email"], FILTER_VALIDATE_EMAIL)){
+					  // cek available email
+					  if($getEmail==0) {
+						  // pengecekan karakter spesial
+						  $spCharCode     = isSpecialCharExists($row["employeeCode"],["-","."]);
+						  $spCharName     = isSpecialCharExists($row["employeeName"],["-","`",".","(",")"]);
+						  $spCharNickName = isSpecialCharExists($row["nickName"],["-","`",".","(",")"]);
+						  $spCharJoinDate = isSpecialCharExists($row["joinDate"],["-"]);
+						  $spCharBranch   = isSpecialCharExists($row["branchs"],["|","-"]);
+						  if($spCharCode==false && $spCharName==false && $spCharNickName==false && $spCharJoinDate==false && $spCharBranch==false){
+							// insert data employee
+							$joinDate = date("Y-m-d",strtotime($row["joinDate"]));
+							$nickName = $row["nickName"];
+							if($appid=='IA01M6858F20210906256' OR $appid=='IA01M82337F20230627732'){
+								$dataInsert = [
+								  "appid"               => $appid,
+								  "employee_account_no" => $row["employeeCode"],
+								  "employee_full_name"  => $row["employeeName"],
+								  "email"  				=> $row["email"],
+								  "employee_nick_name"  => $nickName,
+								  "employee_join_date"  => $joinDate,
+								  "employee_user_add"   => $userID,
+								  "employee_date_create"=> $this->timestamp,
+								  "employee_license"    => "active",
+								  "employee_is_active"  => "0",
+								  "is_del"              => "0",
+								  "intrax_pin"          => $pinIntrax,
+								  "presence_method"     => $row["presenceMethod"],
+								  "presence_mode"       => $row["presenceMode"]
+								];
+							} else {
+								$dataInsert = [
+								  "appid"               => $appid,
+								  "employee_account_no" => $row["employeeCode"],
+								  "employee_full_name"  => $row["employeeName"],
+								  "email"  				=> $row["email"],
+								  "employee_nick_name"  => $nickName,
+								  "employee_join_date"  => $joinDate,
+								  "employee_user_add"   => $userID,
+								  "employee_date_create"=> $this->timestamp,
+								  "employee_license"    => "active",
+								  "employee_is_active"  => "0",
+								  "is_del"              => "0",
+								  "intrax_pin"          => $pinIntrax
+								];
+							}
+							
+							// pengecekan subscription
+							  if($dataSubscription[0]!=0){
+								  //cek pin intrax 123456
+								  if($pinIntrax!=123456){
+									 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
+										// add employee
+										$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									} else {
+										$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+									}
+								  } else {
+									  $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+								  }
+								} else {
+								  //cek pin intrax 123456
+								  if($pinIntrax!=123456){
+									  if($pinIntrax==0){
+										 // add employee
+										$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									  } else {
+										 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
+											// add employee
+											$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+										} else {
+											$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+										}
+									  }
+								  } else {
+									  $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+								  }
+									
+								}
+							
+
+							if($insertResult["insertStatus"]=="inserted"){
+							  $employeeID = $insertResult["employee_id"];
+							  // add location
+							  // mengecek branch name dari excel ke database
+							  $recordBranch = [];
+							  foreach ($branchs as $excelBranchName) {
+								  if($appid=='IA01M6858F20210906256' OR $appid=='IA01M82337F20230627732'){
+									$newExcelBranchName = substr($excelBranchName,0,strpos($excelBranchName,"-"));
+								  } else {
+									$newExcelBranchName = $excelBranchName;
+								  }
+								foreach ($dataBranch as $existingBranch) {
+								  // cari nama cabang sesuai dengan di excel
+								  if(createIdentification($existingBranch["cabang_name"])==createIdentification($newExcelBranchName)){
+									$recordBranch = $existingBranch;
+									// jika sudah nemu data branch nya maka proses di stop dan exist loop
+									goto endSearching;
+								  }
+								}
+								endSearching:
+
+								if(count($recordBranch)>0){
+								  if($appid=='IA01M6858F20210906256' OR $appid=='IA01M82337F20230627732'){
+									  $dataInsertLocation = [
+										"appid" => $appid,
+										"employeeareacabang_employee_id" => $employeeID,
+										"employee_area_id" => $recordBranch["cabang_area_id"],
+										"employee_cabang_id" => $recordBranch["cabang_id"],
+										"employeeareacabang_effdt" => $joinDate,
+										"employeeareacabang_date_create" => $this->timestamp,
+										"employeeareacabang_user_add" => $userID,
+										"status" => "pending",
+										"employeeareacabang_radius" => substr($excelBranchName,strpos($excelBranchName,"-")+1)
+									  ];
+								  } else {
+									  $dataInsertLocation = [
+										"appid" => $appid,
+										"employeeareacabang_employee_id" => $employeeID,
+										"employee_area_id" => $recordBranch["cabang_area_id"],
+										"employee_cabang_id" => $recordBranch["cabang_id"],
+										"employeeareacabang_effdt" => $joinDate,
+										"employeeareacabang_date_create" => $this->timestamp,
+										"employeeareacabang_user_add" => $userID,
+										"status" => "pending"
+									  ];
+								  }
+								  
+								  $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+								}else{
+								  $error[] = 'There is invalid "NAMA CABANG" on line '.$line;
+								}
+							  }
+							  $inserted++;
+							}elseif ($insertResult["insertStatus"]=="skipped") {
+							  $skipped++;
+							}elseif ($insertResult["insertStatus"]=="duplicated_code") {
+							  $error[] = 'There is duplicate "NO AKUN/ BARCODE" on line '.$line;
+							}elseif ($insertResult["insertStatus"]=="updated") {
+							  $employeeID = $insertResult["employee_id"];
+							  $updated++;
+							}
+							// open gate
+							if($insertResult["insertStatus"]=="inserted"||$insertResult["insertStatus"]=="updated"){
+							  $this->firewall_model->openGate($employeeID,$joinDate);
+							}
+
+							// 
+						  }else{
+							if($spCharCode!=false){
+							  $error[] = 'Special Character "'.$spCharCode.'" found on field "BARCODE" line '.$line;
+							}
+
+							if($spCharName!=false){
+							  $error[] = 'Special Character "'.$spCharName.'" found on field "NAMA KARYAWAN" line '.$line;
+							}
+
+							if($spCharNickName!=false){
+							  $error[] = 'Special Character "'.$spCharNickName.'" found on field "NAMA PANGGILAN" line '.$line;
+							}
+
+							if($spCharJoinDate!=false){
+							  $error[] = 'Special Character "'.$spCharJoinDate.'" found on field "JOIN DATE" line '.$line;
+							}
+
+							if($spCharBranch!=false){
+							  $error[] = 'Special Character "'.$spCharBranch.'" found on field "NAMA CABANG" line '.$line;
+							}
+						  }
+					  } else {
+						$error[] = 'There is error email unavailable on line '.$line;
+					  }
+				  }else{
+					 $error[] = 'There is error format email on line '.$line;
+				  }
+                }
+              }else{
+                // error
+                $error[] = 'Field "NAMA CABANG" is empty on line '.$line;
+              }
+            }
+          }
+        }
+        $file_error = "";
+      }else {
+        $file_error = "Sheet KARYAWAN was not found, please correct the file";
+      }
+      // delete temporary file
+      $tempFile = $this->filePath.$fileName;
+      if(file_exists($tempFile)){
+        unlink($tempFile);
+      }
+    }else{
+      $file_error = $upload["error"];
+    }
+    $output = [
+      "skipped"    => $skipped,
+      "inserted"   => $inserted,
+      "updated"    => $updated,
+      "error"      => $error,
+      "file_error" => $file_error
+    ];
+    echo json_encode($output);
+  }
+  
+  function importEmployeeIntrax($dataUrl){
+    load_model([
+      "area_model",
+      "cabang_model",
+      "employee_model",
+      "employeeareacabang_model",
+      "firewall_model"
+    ]);
+
+    $appid      = $this->session->userdata("ses_appid");
+    $upload     = $this->do_upload();
+    $fileName   = $upload["filename"];
+    $userID     = $this->session->userdata("ses_userid");
+    $importType = $this->input->post("type-import");
+    $error      = [];
+    $inserted   = 0;
+    $skipped    = 0;
+    $updated    = 0;
+	$pinIntrax	= 0;
+	$identify	= 1;
+	$dataPin	= "";
+    if($fileName!=""){
+      $tempPath = $this->filePath.$fileName;
+      $sheetOnFile = $this->reader->listWorksheetNames($tempPath);
+      if(in_array("KARYAWAN",$sheetOnFile)){
+        $arrEmployee = $this->readEmployeeIntrax($fileName);
+        if(count($arrEmployee)>0){
+          $listEmployeeCode = $this->employee_model->getEmployeeCode($appid);
+          $dataSubscription = $this->employee_model->getSubscription($appid);
+          foreach ($arrEmployee as $index => $row) {
+            // filter 1
+            $line = $index + 4;
+			// pengecekan subscription
+			if($dataSubscription[0]!=0){
+				$dataPin	= $row["pinIntrax"]=="";
+				$pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
+				$identify	= 6;
+			} else {
+				if($row["pinIntrax"]!=0 OR $row["pinIntrax"]!=""){
+					$dataPin	= $row["pinIntrax"]=="";
+					$pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
+					$identify	= 6;
+				} else {
+					$pinIntrax	= 0;
+				}
+			}
+            if($row["employeeCode"]=="" || $row["employeeName"]=="" || $row["position"]=="" || $row["gender"]=="" || $row["phoneNumber"]=="" || $row["email"]=="" || $dataPin){
+              $error[] = 'There is empty required field on line '.$line;
+            }else{
+			  /*
+			  if(!in_array($row["employeeCode"],$listEmployeeCode)){
+
+			  }else{
+
+			  }*/
+			  // ok
+			  $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
+			  // pengecekan format email
+			  if(filter_var($row["email"], FILTER_VALIDATE_EMAIL)){
+				  // cek available email
+				  if($getEmail==0) {
+					  // pengecekan karakter spesial
+					  $spCharCode     = isSpecialCharExists($row["employeeCode"],["-","."]);
+					  $spCharName     = isSpecialCharExists($row["employeeName"],["-","`",".","(",")"]);
+					  if($spCharCode==false && $spCharName==false){
+						// insert data employee
+						$joinDate = date("Y-m-d");
+						$dataInsert = [
+						  "appid"               => $appid,
+						  "employee_account_no" => $row["employeeCode"],
+						  "employee_full_name"  => $row["employeeName"],
+						  "email"  				=> $row["email"],
+						  "gender"  			=> $row["gender"],
+						  "phone_number"  		=> $row["phoneNumber"],
+						  "employee_user_add"   => $userID,
+						  "employee_join_date"	=> $this->timestamp,
+						  "employee_date_create"=> $this->timestamp,
+						  "employee_license"    => "active",
+						  "employee_is_active"  => "0",
+						  "is_del"              => "0",
+						  "intrax_pin"          => $pinIntrax,
+						  "employee_position"   => $row["position"]
+						];
+						
+						// pengecekan subscription
+						  if($dataSubscription[0]!=0){
+							  //cek pin intrax 123456
+							  if($pinIntrax!=123456){
+								 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
+									// add employee
+									$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+								} else {
+									$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+								}
+							  } else {
+								  $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+							  }
+							} else {
+							  //cek pin intrax 123456
+							  if($pinIntrax!=123456){
+								  if($pinIntrax==0){
+									 // add employee
+									$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+								  } else {
+									 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
+										// add employee
+										$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									} else {
+										$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+									}
+								  }
+							  } else {
+								  $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+							  }
+								
+							}
+						
+
+						if($insertResult["insertStatus"]=="inserted"){
+						  $employeeID = $insertResult["employee_id"];
+						  // add location
+						  $dataInsertLocation = [
+							"appid" => $appid,
+							"employeeareacabang_employee_id" => $employeeID,
+							"employee_area_id" => 0,
+							"employee_cabang_id" => $this->encryption_org->decode($dataUrl),
+							"employeeareacabang_effdt" => $this->timestamp,
+							"employeeareacabang_date_create" => $this->timestamp,
+							"employeeareacabang_user_add" => $userID,
+							"status" => "pending"
+						  ];
+						  $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+						  $inserted++;
+						}elseif ($insertResult["insertStatus"]=="skipped") {
+						  $skipped++;
+						}elseif ($insertResult["insertStatus"]=="duplicated_code") {
+						  $error[] = 'There is duplicate "NO AKUN/ BARCODE" on line '.$line;
+						}elseif ($insertResult["insertStatus"]=="updated") {
+						  $employeeID = $insertResult["employee_id"];
+						  $updated++;
+						}
+						// open gate
+						if($insertResult["insertStatus"]=="inserted"||$insertResult["insertStatus"]=="updated"){
+						  $this->firewall_model->openGate($employeeID,$joinDate);
+						}
+
+						// 
+					  }else{
+						if($spCharCode!=false){
+						  $error[] = 'Special Character "'.$spCharCode.'" found on field "BARCODE" line '.$line;
+						}
+
+						if($spCharName!=false){
+						  $error[] = 'Special Character "'.$spCharName.'" found on field "NAMA KARYAWAN" line '.$line;
+						}
+					  }
+				  } else {
+					$error[] = 'There is error email unavailable on line '.$line;
+				  }
+			  }else{
+				 $error[] = 'There is error format email on line '.$line;
+			  }
+            }
+          }
+        }
+        $file_error = "";
+      }else {
+        $file_error = "Sheet KARYAWAN was not found, please correct the file";
+      }
+      // delete temporary file
+      $tempFile = $this->filePath.$fileName;
+      if(file_exists($tempFile)){
+        unlink($tempFile);
+      }
+    }else{
+      $file_error = $upload["error"];
+    }
+    $output = [
+      "skipped"    => $skipped,
+      "inserted"   => $inserted,
+      "updated"    => $updated,
+      "error"      => $error,
+      "file_error" => $file_error
+    ];
+    echo json_encode($output);
+  }
+
+  function importDevice(){
+    load_model([
+      "area_model",
+      "cabang_model",
+      "device_model"
+    ]);
+
+    $appid    = $this->session->userdata("ses_appid");
+    $upload   = $this->do_upload();
+    $fileName = $upload["filename"];
+    $userID   = $this->session->userdata("ses_userid");
+    $error    = [];
+    $inserted = 0;
+    $skipped  = 0;
+    if($fileName!=""){
+      $tempPath = $this->filePath.$fileName;
+      $sheetOnFile = $this->reader->listWorksheetNames($tempPath);
+      if(in_array("DEVICE",$sheetOnFile)){
+        $arrDevice = $this->readDevice($fileName);
+        if(count($arrDevice)>0){
+          $allBranch        = $this->cabang_model->getActiveBranchIdentification($appid); //
+          $dataBranch       = $this->cabang_model->getActiveBranch($appid); //
+          $listDeviceCode   = $this->device_model->getDeviceCode($appid);
+          $listSNRegistered = $this->device_model->getRegisteredSN();
+
+          foreach ($arrDevice as $index => $row) {
+            // filter 1
+            $line = $index + 4;
+            if($row["deviceName"]=="" || $row["SN"]=="" || $row["branch"]==""){
+              $error[] = 'There is empty required field on line '.$line;
+            }else{
+              // filter 2
+              if($row["branch"]!=""){
+                // ok
+                $branch = $row["branch"];
+                // pengecekan apakah ada nama branch yang belum terdaftar
+
+                if(!in_array(createIdentification($branch),$allBranch)){
+                  $error[] = 'There is unregistered branch on line '.$line;
+                }else{
+                  // insert data device
+                  $selectedBranch = false;
+                  foreach ($dataBranch as $rowExistingBranch) {
+                    if(createIdentification($row["branch"])==createIdentification($rowExistingBranch["cabang_name"])){
+                      $selectedBranch = $rowExistingBranch;
+                    }
+                  }
+                  if($selectedBranch==false){
+
+                  }else{
+                    if(!in_array(createIdentification($row["SN"]),$listSNRegistered)){
+                      // cek spesial karakter
+                      $spCharSN     = isSpecialCharExists($row["SN"]);
+                      $spCharCode   = isSpecialCharExists($row["deviceCode"],["-","."]);
+                      $spCharName   = isSpecialCharExists($row["deviceName"],[]);
+                      $spCharBranch = isSpecialCharExists($row["branch"]);
+                      if($spCharSN==false && $spCharCode==false && $spCharName==false && $spCharBranch==false){
+                        $dataInsert = [
+                          "appid"           => $appid,
+                          "device_area_id"  => $selectedBranch["cabang_area_id"],
+                          "device_cabang_id"=> $selectedBranch["cabang_id"],
+                          "device_SN"       => $row["SN"],
+                          "device_code"     => $row["deviceCode"],
+                          "device_name"     => $row["deviceName"],
+                          "device_user_add" => $userID,
+                          "device_date_create"=> $this->timestamp,
+                          "is_del"          => "0",
+                          "device_license"  => "notactive"
+                        ];
+                        // add employee
+                        $insertResult = $this->device_model->saveIgnoreDuplicate($dataInsert,$listDeviceCode);
+
+                        if($insertResult["insertStatus"]=="inserted"){
+                          $inserted++;
+                        }elseif ($insertResult["insertStatus"]=="skipped") {
+                          $skipped++;
+                        }elseif ($insertResult["insertStatus"]=="duplicated_code") {
+                          $error[] = 'There is duplicate "KODE" on line '.$line;
+                        }
+                      }else{
+                        if($spCharSN!=false){
+                          $error[] = 'Special Character "'.$spCharSN.'" found on field "SN" line '.$line;
+                        }
+
+                        if($spCharCode!=false){
+                          $error[] = 'Special Character "'.$spCharCode.'" found on field "KODE" line '.$line;
+                        }
+
+                        if($spCharName!=false){
+                          $error[] = 'Special Character "'.$spCharName.'" found on field "NAME" line '.$line;
+                        }
+
+                        if($spCharBranch!=false){
+                          $error[] = 'Special Character "'.$spCharBranch.'" found on field "CABANG" line '.$line;
+                        }
+                      }
+                    }else{
+                      $error[] = 'Device SN was registered on line '.$line;
+                    }
+                  }
+                }
+              }else{
+                // error
+                $error[] = 'Field "CABANG" is empty on line '.$line;
+              }
+            }
+          }
+        }
+        $file_error = "";
+      }else{
+        $file_error = "Sheet DEVICE was not found, please correct the file";
+      }
+
+      // delete temporary file
+      $tempFile = $this->filePath.$fileName;
+      if(file_exists($tempFile)){
+        unlink($tempFile);
+      }
+    }else{
+      $file_error = $upload["error"];
+    }
+    $output = [
+      "skipped" => $skipped,
+      "inserted" => $inserted,
+      "error"     => $error,
+      "file_error" => $file_error
+    ];
+    echo json_encode($output);
+  }
+
+  function readArea($fileName){
+    $tempPath = $this->filePath.$fileName;
+    $this->reader->setLoadSheetsOnly("AREA");
+    $this->reader->setReadDataOnly(true);
+
+    $spreadsheet = $this->reader->load($tempPath);
+    $worksheet   = $spreadsheet->getActiveSheet();
+    $arrSheet    = $worksheet->toArray();
+    $output      = [];
+    foreach ($arrSheet as $index => $row) {
+      if($index>2){
+        $areaCode = $row[0];
+        $areaName = $row[1];
+        if($areaCode==""){
+          $areaCode = str_replace(" ","",strtolower($areaName));
+        }
+        $output[] = [
+          "areaCode" => str_replace(" ","",$areaCode),
+          "areaName" => $areaName
+        ];
+      }
+    }
+    return $output;
+  }
+
+  function readEmployee($fileName){
+    $tempPath = $this->filePath.$fileName;
+    $this->reader->setLoadSheetsOnly("KARYAWAN");
+    $this->reader->setReadDataOnly(true);
+	$appid    = $this->session->userdata("ses_appid");
+
+    $spreadsheet = $this->reader->load($tempPath);
+    $worksheet   = $spreadsheet->getActiveSheet();
+    $arrSheet    = $worksheet->toArray();
+    $output      = [];
+    foreach ($arrSheet as $index => $row) {
+      if($index>2){
+		  if($appid=='IA01M6858F20210906256' OR $appid=='IA01M82337F20230627732'){
+			$employeeCode = $row[0];
+			$name         = str_replace("'","`",str_replace('"',"`",$row[1])); // " => ` , ' => `
+			$nickName     = $row[2];
+			$joinDate     = $row[3];
+			$strBranchs   = $row[4];
+			$email   	  = $row[5];
+			$pinIntrax    = $row[6];
+			$arrBranch    = $strBranchs;
+			if($row[7]!=0){$pin=$row[7]."|";}else{$pin="";};
+			if($row[8]!=0){$fingerprint=$row[8]."|";}else{$fingerprint="";};
+			if($row[9]!=0){$faceid=$row[9]."|";}else{$faceid="";};
+			if($row[10]!=0){$takepicture=$row[10]."|";}else{$takepicture="";};
+			$presenceMode = $row[11];
+			$output[] = [
+			  "employeeCode" => str_replace(" ","",$employeeCode),
+			  "employeeName" => $name,
+			  "nickName"     => $nickName,
+			  "joinDate"     => $joinDate,
+			  "email"     	 => $email,
+			  "pinIntrax"    => $pinIntrax,
+			  "branchs"      => $arrBranch,
+			  "presenceMethod" => $pin.$fingerprint.$faceid.$takepicture,
+			  "presenceMode" => $presenceMode
+			]; 
+		  } else {
+			$employeeCode = $row[0];
+			$name         = str_replace("'","`",str_replace('"',"`",$row[1])); // " => ` , ' => `
+			$nickName     = $row[2];
+			$joinDate     = $row[3];
+			$strBranchs   = $row[4];
+			$email   	  = $row[5];
+			$pinIntrax    = $row[6];
+			$arrBranch    = $strBranchs;
+			$output[] = [
+			  "employeeCode" => str_replace(" ","",$employeeCode),
+			  "employeeName" => $name,
+			  "nickName"     => $nickName,
+			  "joinDate"     => $joinDate,
+			  "email"     	 => $email,
+			  "pinIntrax"    => $pinIntrax,
+			  "branchs"      => $arrBranch
+			];
+		  }
+      }
+    }
+    return $output;
+  }
+  
+  function readEmployeeIntrax($fileName){
+    $tempPath = $this->filePath.$fileName;
+    $this->reader->setLoadSheetsOnly("KARYAWAN");
+    $this->reader->setReadDataOnly(true);
+	$appid    = $this->session->userdata("ses_appid");
+
+    $spreadsheet = $this->reader->load($tempPath);
+    $worksheet   = $spreadsheet->getActiveSheet();
+    $arrSheet    = $worksheet->toArray();
+    $output      = [];
+    foreach ($arrSheet as $index => $row) {
+      if($index>2){
+		$employeeCode = $row[0];
+		$name         = str_replace("'","`",str_replace('"',"`",$row[1])); // " => ` , ' => `
+		$position     = $row[2];
+		$gender		  = $row[3];
+		$phoneNumber  = $row[4];
+		$email   	  = $row[5];
+		$pinIntrax    = $row[6];
+		$output[] = [
+		  "employeeCode" => str_replace(" ","",$employeeCode),
+		  "employeeName" => $name,
+		  "position"     => $position,
+		  "gender"    	 => $gender,
+		  "phoneNumber"  => $phoneNumber,
+		  "email"     	 => $email,
+		  "pinIntrax"    => $pinIntrax,
+		]; 
+      }
+    }
+    return $output;
+  }
+
+  function readBranch($fileName){
+    $tempPath = $this->filePath.$fileName;
+    $this->reader->setLoadSheetsOnly("CABANG");
+    $this->reader->setReadDataOnly(true);
+
+    $spreadsheet = $this->reader->load($tempPath);
+    $worksheet   = $spreadsheet->getActiveSheet();
+    $arrSheet    = $worksheet->toArray();
+    $output      = [];
+    foreach ($arrSheet as $index => $row) {
+      if($index>2){
+        $areaName   = $row[0];
+        $cabangCode = $row[1];
+        $cabangName = $row[2];
+        $address    = $row[3];
+        $phone      = $row[4];
+        $timezone   = $row[5];
+
+        if($cabangCode==""){
+          $cabangCode = str_replace(" ","",strtolower($cabangName));
+        }
+
+        $output[] = [
+          "areaName"   => $areaName,
+          "cabangCode" => str_replace(" ","",$cabangCode),
+          "cabangName" => $cabangName,
+          "address"    => $address,
+          "phone"      => $phone,
+          "timezone"   => $timezone
+        ];
+      }
+    }
+    return $output;
+  }
+
+  function readDevice($fileName){
+    $tempPath = $this->filePath.$fileName;
+    $this->reader->setLoadSheetsOnly("DEVICE");
+    $this->reader->setReadDataOnly(true);
+
+    $spreadsheet = $this->reader->load($tempPath);
+    $worksheet   = $spreadsheet->getActiveSheet();
+    $arrSheet    = $worksheet->toArray();
+    $output      = [];
+    foreach ($arrSheet as $index => $row) {
+      if($index>2){
+        $deviceCode = $row[0];
+        $deviceName = $row[1];
+        $SN         = $row[2];
+        $branch     = $row[3];
+
+        if($deviceCode==""){
+          $deviceCode = str_replace(" ","",strtolower($deviceName));
+        }
+
+        $output[] = [
+          "deviceCode"=> str_replace(" ","",$deviceCode),
+          "deviceName"=> $deviceName,
+          "SN"        => $SN,
+          "branch"    => $branch
+        ];
+      }
+    }
+    return $output;
+  }
+
+  function do_upload(){
+    $config['upload_path']="./sys_upload/temp";
+    $config['allowed_types']='xls';
+    $config['encrypt_name'] = TRUE;
+     $config['max_size']    = 2048; // 2mb
+    $this->load->library('upload',$config);
+    if($this->upload->do_upload("file")){
+      $data = array('upload_data' => $this->upload->data());
+
+      $judul= $this->input->post('judul');
+      $fileName = $data['upload_data']['file_name'];
+      $error    = "";
+    }else{
+      $fileName = "";
+      $error    = strip_tags($this->upload->display_errors());
+    }
+    return [
+      "error"    => $error,
+      "filename" => $fileName
+    ];
+  }
+}

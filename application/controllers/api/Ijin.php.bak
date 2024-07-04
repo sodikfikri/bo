@@ -1,0 +1,50 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+require APPPATH . 'libraries/REST_Controller.php';
+/**
+ *
+ */
+class Ijin extends REST_Controller
+{
+  var $now;
+  var $apikey = "IAdev-apikey3fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9ed48151b389apikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9e7b7c2f8d891dfc9b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
+  function __construct()
+  {
+    parent::__construct();
+    $this->now = date("Y-m-d H:i:s");
+	$this->load->model("ijin_model");
+  }
+
+  function index_post(){
+	$headers = getRequestHeaders();
+	$data = json_decode(file_get_contents('php://input'), true);
+    $apikey  = !empty($headers["Apikey"]) ? $headers["Apikey"] : null;
+    $company_id  = !empty($data['company_id']) ? $data['company_id'] : "";
+
+    if(!empty($apikey) && !empty($company_id)){
+		$dataIjin = $this->ijin_model->getAllByCompanyid($company_id);
+		if($apikey==$this->apikey && $dataIjin!=false){
+			foreach ($dataIjin as $row) {
+				$arrOutput[] = [
+					"ijin_code" => "IJ".sprintf("%06d", $row->ijin_id),
+					"ijin_name" => $row->ijin_name,
+					"ijin_keterangan"   => $row->ijin_keterangan
+				];
+			}
+
+		}else{
+			$arrOutput = [
+				'result'		=> false,
+				'message' 		=> "company_id or apikey are not valid"
+			];
+		}
+    }else{
+		$arrOutput = [
+			'result'		=> false,
+			'message' 		=> "company_id or apikey are not defined"
+		];
+    }
+    header("Content-Type:application/json");
+    echo json_encode($arrOutput);
+  }
+}

@@ -1,0 +1,199 @@
+
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <h1>
+      <?= $this->gtrans->line("Setting Company") ?>
+    </h1>
+  </section>
+<!-- Main content -->
+<section class="content">
+  <!-- Info boxes -->
+  <?= !empty($addonsAlert) ? $addonsAlert : '' ?>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-inact">
+        <!-- /.box-header -->
+        <div class="box-body">
+		  <div class="row">
+		    <center><img src="<?= !empty($companyData)? 'https://inact.interactiveholic.net/bo/sys_upload/company_profile/'.$companyData->company_photo : 'https://inact.interactiveholic.net/bo/sys_upload/company_profile/img_avatar_company.png' ?>" id="srcImg" alt="photocompany" style="border-radius: 50%;margin:10px" width="100px" height="100px"></center>
+		    <form class="" id="import-photocompany" enctype="multipart/form-data" action="" method="post">
+			  <input type="hidden" name="id" id="id" value="">
+			  <div class="form-group">
+                <label for="photocompany" class="col-sm-3 control-label"><?= $this->gtrans->line("Photo Profile") ?> </label>
+                <div class="col-sm-7">
+                  <input type="file" name="photocompany" data-validation-engine="" onchange="" id="photocompany" class="form-control">
+                  <div style="color:red"><?= $this->gtrans->line("Please fill in if you want to change photos. (max. size 2mb)") ?></div>
+                </div>
+				<div class="col-sm-2">
+                  <button type="submit" class="btn btn-primary"><i class="fa fa-refresh"></i></button>
+                </div>
+              </div>
+			  
+			  </form>
+		  </div>
+		  <hr>
+          <div class="row">
+            <form action="#" enctype="multipart/form-data" class="form-horizontal" id="form-validation" method="post">
+              <div id="setting-msg"></div>
+            <div class="col-md-6">
+                <div class="form-group">
+                  <label for="companyName" class="col-sm-3 control-label"><?= $this->gtrans->line("Company Name") ?> <span class="text-red">*</span></label>
+                  <div class="col-sm-9">
+                    <input data-validation-engine="validate[required,custom[onlyLetterNumberSemiSpesial],maxSize[100]]" name="companyName" value="<?= !empty($companyData)? $companyData->company_name : '' ?>" type="text" class="form-control" id="companyName" placeholder="">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="country" class="col-sm-3 control-label"><?= $this->gtrans->line("Country") ?> <span class="text-red">*</span></label>
+                  <div class="col-sm-9">
+                    <select name="country" id="country" class="form-control">
+                      <option value=""><?= $this->gtrans->line("Select Country") ?></option>
+                      <?php
+                      $selectedCountry = !empty($companyData) ? $companyData->company_country : '';
+                      foreach ($dataCountry as $row) {
+                        $selected = ($selectedCountry==$row->country_name) ? "selected" : "";
+                        echo '<option '.$selected.' value="'.$row->country_name.'">'.$row->country_name.'</option>';
+                      }
+                      ?>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="province" class="col-sm-3 control-label"><?= $this->gtrans->line("Province") ?></label>
+                  <div class="col-sm-9">
+                    <div id="component-province"></div>
+
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="city" class="col-sm-3 control-label"><?= $this->gtrans->line("City") ?></label>
+                  <div class="col-sm-9">
+                    <div id="component-city"></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="address" class="col-sm-3 control-label"><?= $this->gtrans->line("Address") ?> <span class="text-red">*</span></label>
+                  <div class="col-sm-9">
+                    <textarea data-validation-engine="validate[required]" name="address" class="form-control" id="address" ><?= !empty($companyData)? $companyData->company_addr : '' ?></textarea>
+                  </div>
+                </div>
+				<hr>
+				<div class="form-group">
+                  <label for="address" class="col-sm-3 control-label"><?= $this->gtrans->line("Presence Period") ?></label>
+                  <div class="col-sm-4">
+                    <input name="date_start" value="<?= !empty($companyData)? $companyData->date_start_period : '1' ?>" type="number" class="form-control" id="date_start" placeholder="">
+                  </div>
+				  <div class="col-sm-1">
+                    <center><p>until</p></center>
+                  </div>
+				  <div class="col-sm-4">
+                    <input name="date_end" value="<?= !empty($companyData)? $companyData->date_end_period : '1' ?>" type="number" class="form-control" id="date_end" placeholder="">
+                  </div>
+                </div>
+				<div class="form-group">
+                  <label for="address" class="col-sm-3 control-label"><?= $this->gtrans->line("Presence Access") ?></label>
+                  <div class="col-sm-9">
+                    <div class="checkbox"><?php $accessPres = explode("|", $companyData->access_presence); ?>
+                      <label><input type="checkbox" name="access[]" value="1" <?= (!empty($accessPres) && in_array(1, $accessPres)) ? 'checked' : '' ?>> Check In</label>
+                    </div>
+                    <div class="checkbox">
+                      <label><input type="checkbox" name="access[]" value="2" <?= (!empty($accessPres) && in_array(2, $accessPres)) ? 'checked' : '' ?>> Break In</label>
+                    </div>
+                    <div class="checkbox">
+                      <label><input type="checkbox" name="access[]" value="3" <?= (!empty($accessPres) && in_array(3, $accessPres)) ? 'checked' : '' ?>> Break Out</label>
+                    </div>
+					<div class="checkbox">
+                      <label><input type="checkbox" name="access[]" value="4" <?= (!empty($accessPres) && in_array(4, $accessPres)) ? 'checked' : '' ?>> Check Out</label>
+                    </div>
+					<div class="checkbox">
+                      <label><input type="checkbox" name="access[]" value="5" <?= (!empty($accessPres) && in_array(5, $accessPres)) ? 'checked' : '' ?>> Leave</label>
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="telp" class="col-sm-3 control-label"><?= $this->gtrans->line("Telp") ?> <span class="text-red">*</span></label>
+                <div class="col-sm-9">
+                  <input data-validation-engine="validate[required,custom[phone],maxSize[20]]" name="telp" value="<?= !empty($companyData)? $companyData->company_telp : '' ?>" type="text" class="form-control" id="telp" placeholder="">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="email" class="col-sm-3 control-label"><?= $this->gtrans->line("Email") ?></label>
+                <div class="col-sm-9">
+                  <input readonly name="email" value="<?= !empty($companyData)? $companyData->company_email : '' ?>" type="text" class="form-control" id="email" placeholder="">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="website" class="col-sm-3 control-label">Website</label>
+                <div class="col-sm-9">
+                  <input data-validation-engine="validate[custom[url],maxSize[255]]" name="website" type="text" value="<?= !empty($companyData)? $companyData->company_websiteurl : '' ?>" class="form-control" id="website" placeholder="">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="companysize" class="col-sm-3 control-label"><?= $this->gtrans->line("Company Size") ?></label>
+                <div class="col-sm-9">
+                  <select data-validation-engine="validate[required]" name="companysize" class="form-control" id="companysize">
+                    <option disabled value="" ><?= $this->gtrans->line("Company Size") ?></option>
+                    <option <?= (!empty($companyData)&&$companyData->company_size=="1 - 100") ? "selected" : "" ?> value="1 - 100">1 - 100</option>
+                    <option <?= (!empty($companyData)&&$companyData->company_size=="101 - 500") ? "selected" : "" ?> value="101 - 500">101 - 500</option>
+                    <option <?= (!empty($companyData)&&$companyData->company_size=="501 - 1000") ? "selected" : "" ?> value="501 - 1000">501 - 1000</option>
+                    <option <?= (!empty($companyData)&&$companyData->company_size=="1000+") ? "selected" : "" ?> value="1000+" >1000+</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="name" class="col-sm-3 control-label">App ID</label>
+                <div class="col-sm-9">
+                  <input readonly name="appid" value="<?= !empty($companyData)? $companyData->appid : '' ?>" type="text" class="form-control" id="appid" placeholder="">
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12 text-right">
+              <button type="submit" id="btnSave" class="btn btn-primary" ><?= $this->gtrans->line("SAVE CHANGE") ?></button>
+            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script type="text/javascript">
+  $("#form-validation").validationEngine();
+  loadProvince(globalCountryID);
+  loadCity(provinceID);
+  stat = 0;
+  jQuery("#form-validation").validationEngine('attach', {
+    onValidationComplete: function(form, status){
+      if(status==true){
+        stat = stat + 1;
+        if(stat%2==0){
+          updateSetting();
+          return false;
+        }
+      }
+    }
+  });
+  $('#import-photocompany').submit(function(e){ 
+  e.preventDefault();
+	  $.ajax({
+		url:url +'import-photocompany', //URL submit
+		type:"post",
+		data:new FormData(this),
+		processData:false,
+		contentType:false,
+		cache:false,
+		//async:false,
+		success: function(response){
+			const obj = JSON.parse(response);
+			if(obj.code=="200"){
+				$("#photocompany").val("");
+				alert("Success update photo company.");
+				location.reload(true);
+			}else{
+				alert("Failed update photo company, check your format photo or size photo");
+			}
+		}
+	  });
+	});
+</script>

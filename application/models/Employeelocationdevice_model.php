@@ -1,0 +1,216 @@
+<?php
+/**
+ *
+ */
+class Employeelocationdevice_model extends CI_Model
+{
+  var $tableName = "tbemployeelocationdevice";
+  var $tableId   = "employeelocationdevice_id";
+  function __construct()
+  {
+    parent::__construct();
+  }
+
+  function insert_batch($dataInsert){
+    $res = $this->db->insert_batch($this->tableName,$dataInsert);
+    return $res;
+  }
+
+  function update_batch($dataUpdate,$key){
+    $res = $this->db->update_batch($this->tableName,$dataUpdate,$key);
+  }
+
+  function remove($location_id,$device_id){
+    $this->db->where("employeeareacabang_id",$location_id);
+    $this->db->where("device_id",$device_id);
+    $res = $this->db->delete($this->tableName);
+    return $res;
+  }
+
+  function countDeviceLocation($locationID){
+    $this->db->select($this->tableId);
+    $this->db->where("employeeareacabang_id");
+    $sql = $this->db->get($this->tableName);
+    return $sql->num_rows();
+  }
+
+  function setNeedUpdate($arrEmployeeID,$status){
+    /*
+    if($status=="yes"){
+      $this->load->model("firewall_model");
+      
+      $this->db->distinct();
+      $this->db->select("device_id");
+      $this->db->where_in("employee_id",$arrEmployeeID);
+      $sql = $this->db->get($this->tableName);
+      foreach ($sql->result() as $row) {
+        $this->firewall_model->setSchedule($row->device_id,date("Y-m-d"));
+      }
+    }
+    */
+    $dataUpdate = [];
+    foreach ($arrEmployeeID as $employeeID) {
+      $dataUpdate[] = [
+        "employee_id" => $employeeID,
+        "need_update" => $status
+      ];
+    }
+
+    $res = $this->db->update_batch($this->tableName,$dataUpdate,"employee_id");
+    return $res;
+  }
+
+  function setNeedUpdateUser($employeeID){
+    $this->db->select("C.employeelocationdevice_id");
+    $this->db->from("tbemployee A");
+    $this->db->join("tbemployeeareacabang B","B.employeeareacabang_employee_id = A.employee_id","inner");
+    $this->db->join("tbemployeelocationdevice C","C.employeeareacabang_id = B.employeeareacabang_id");
+
+    $this->db->where("B.status","active");
+    $this->db->where("A.employee_id",$employeeID);
+    $sql = $this->db->get();
+
+    $arrUpdate = [];
+    foreach ($sql->result() as $row) {
+      $arrUpdate[] = [
+        "employeelocationdevice_id" => $row->employeelocationdevice_id,
+        "need_update" => "yes"
+      ];
+    }
+
+    $res = $this->db->update_batch("tbemployeelocationdevice", $arrUpdate, "employeelocationdevice_id");
+    return $res;
+  }
+
+  function checkTemplateExists($employeeid,$index,$jenis){
+    $this->db->select("employeetemplate_id");
+    $this->db->where("employeetemplate_employee_id",$employeeid);
+    $this->db->where("employeetemplate_index",$index);
+    $this->db->where("employeetemplate_jenis",$jenis);
+    $sql = $this->db->get("tbemployeetemplate");
+    if($sql->num_rows()>0){
+      $templateId = $sql->row()->employeetemplate_id;
+      return $templateId;
+    }else{
+      return false;
+    }
+  }
+  function rePushTemplate($arrEmployeeID,$templateId=""){
+    $this->load->model("firewall_model");
+
+    $this->db->select("tdevice.device_id");
+    $this->db->select("tLocTemplate.employeelocationdevicetemplate_id");
+    $this->db->from("tbemployeeareacabang tlocation");
+    $this->db->join("tbemployeelocationdevice tdevice", "tdevice.employeeareacabang_id = tlocation.employeeareacabang_id","left");
+    $this->db->join("tbemployeelocationdevicetemplate tLocTemplate","tLocTemplate.employeelocationdevice_id = tdevice.employeelocationdevice_id");
+
+    $this->db->where("tlocation.status","active");
+    $this->db->where_in("tlocation.employeeareacabang_employee_id",$arrEmployeeID);
+
+    $sql = $this->db->get();
+    // belum selesai
+    // optimasi redistribute all
+    $dataUpdate = [];
+    foreach ($sql->result() as $row) {
+      //$this->firewall_model->setSchedule($row->device_id,date("Y-m-d"));
+      $dataUpdate[] = [
+        "employeelocationdevicetemplate_id" => $row->employeelocationdevicetemplate_id,
+        "push_count" => 0
+      ];
+    }
+    if(count($dataUpdate)>0){
+      $this->db->update_batch("tbemployeelocationdevicetemplate",$dataUpdate,"employeelocationdevicetemplate_id");
+    }
+  }
+
+  function getLocationDevice($locationID,$deviceID)
+  {
+    $this->db->select($this->tableId);
+    $this->db->where("employeeareacabang_id",$locationID);
+    $this->db->where("device_id",$deviceID);
+    $sql = $this->db->get($this->tableName);
+    if($sql->num_rows()){
+      return $sql->row();
+    }else{
+      return false;
+    }
+  }
+
+  function removeDeviceTemplate($locationdeviceID)
+  {
+    $this->db->where("employeelocationdevice_id",$locationdeviceID);
+    $res = $this->db->delete("tbemployeelocationdevicetemplate");
+    return $res;
+  }
+  
+  function setRemoveDeviceTemplate($arrLocationdeviceID){
+	$this->db->select('employeetemplate_id');
+	$this->db->where_in('employeetemplate_employee_id', $arrEmployeeID);
+    $sql = $this->db->get('tbemployeetemplate');
+	$arrTempID = [];
+	foreach($sql->result() as $row){
+		$arrTempID[] = $row->employeetemplate_id;
+	}
+	  
+	$this->db->where_in('employeetemplate_id', $arrTempID);
+    $res = $this->db->delete('tbemployeelocationdevicetemplate');
+    return $res;
+  }
+  
+  function setRemoveLocation($arrEmployeeID){
+	$this->db->where_in('employee_id', $arrEmployeeID);
+    $res = $this->db->delete($this->tableName);
+    return $res;
+  }
+
+  function getPicNeedUpdate($deviceId,$appid){
+    $this->db->select("A.*");
+    $this->db->select("B.picture");
+    $this->db->select("B.employee_account_no");
+    $this->db->select("B.image");
+
+    $this->db->from("tbemployeelocationdevice A");
+    $this->db->join("tbemployee B","B.employee_id = A.employee_id");
+
+    $this->db->where("B.appid",$appid);
+    $this->db->where("A.device_id",$deviceId);
+    $this->db->where("A.pic_need_update","yes");
+    $sql = $this->db->get();
+    return $sql;
+  }
+
+  function setPicNeedUpdate($arrEmployeeID){
+    $this->db->select("locDevice.employeelocationdevice_id");
+    $this->db->where_in("location.employeeareacabang_employee_id",$arrEmployeeID);
+    $this->db->where("location.status","active");
+    $this->db->from("tbemployeeareacabang location");
+    $this->db->join("tbemployeelocationdevice locDevice","locDevice.employeeareacabang_id = location.employeeareacabang_id");
+    $sql = $this->db->get();
+    $arrUpdate = [];
+    foreach ($sql->result() as $row) {
+      $arrUpdate[] = [
+        "employeelocationdevice_id" => $row->employeelocationdevice_id,
+        "pic_need_update" => "yes"
+      ];
+    }
+    if(count($arrUpdate)>0){
+      $this->db->update_batch("tbemployeelocationdevice",$arrUpdate,"employeelocationdevice_id");
+    }
+  }
+
+  function isUsed($device_id,$appid){
+    $this->db->select("A.employeelocationdevice_id");
+    $this->db->from("tbemployeelocationdevice A");
+    $this->db->join("tbemployeeareacabang B","B.employeeareacabang_id = A.employeeareacabang_id");
+
+    $this->db->where("B.appid",$appid);
+    $this->db->where("A.device_id",$device_id);
+
+    $sql = $this->db->get();
+    if($sql->num_rows()>0){
+      return true;
+    }else{
+      return false;
+    }
+  }
+}

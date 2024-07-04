@@ -1,0 +1,455 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+//use Restserver\Libraries\REST_Controller;
+//require APPPATH . 'libraries/REST_Controller.php';
+//require APPPATH . 'libraries/Format.php';
+/**
+ *
+ */
+// class Cdata extends REST_Controller
+class Cdata extends CI_Controller
+{
+
+  var $now;
+  var $apikey = "3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
+  public function __construct()
+  {
+    parent::__construct();
+    $this->now = date('Y-m-d H:i:s');
+    $this->load->model("datafinger_model");
+    $this->load->library("device_door");
+
+    /*
+    $this->methods['users_get']['limit'] = 500; // 500 requests per hour per user/key
+    $this->methods['users_post']['limit'] = 100; // 100 requests per hour per user/key
+    $this->methods['users_delete']['limit'] = 50; // 50 requests per hour per user/key
+
+
+    $dataget = !empty( json_encode($_GET)) ?  json_encode($_GET) : "";
+    $datapost= !empty(file_get_contents( 'php://input' )) ? file_get_contents( 'php://input' ) : "";
+    $dataInsert = [
+      "get_data"   => $dataget,
+      "post_data"  => $datapost,
+      "datecreated"=> date("Y-m-d H:i:s")
+    ];
+    $this->datafinger_model->insert($dataInsert);
+    */
+  }
+
+  function toDeviceTimeZone($zone){
+    
+    $zone = str_replace("UTC","", $zone);
+    if(substr($zone, 0,1)=="+"){
+        $zone = substr($zone, 1);
+        if(substr($zone, 0,1)==0){
+            $zone = substr($zone, 1);
+        }
+        $arrTime = explode(":", $zone);
+        if($arrTime[1]=="00"){
+            $zone = $arrTime[0];
+        }else{
+            $zone = $arrTime[0].".".$arrTime[1];
+        }
+    }else{
+        $zone = substr($zone, 1);
+        if(substr($zone, 0,1)==0){
+            $zone = substr($zone, 1);
+        }
+        $arrTime = explode(":", $zone);
+        if($arrTime[1]=="00"){
+            $zone = $arrTime[0];
+        }else{
+            $zone = $arrTime[0].".".$arrTime[1];
+        }
+        $zone = "-".$zone;
+    }
+    return $zone;
+  }
+
+  /*
+  * Identifikasi mesin
+  */
+  public function cdata_get($strAPIkey)
+  {
+    
+    $this->load->helper("responsecode_helper");
+
+    $arrKey  = explode("-",$strAPIkey);
+    $SN      = $arrKey[1];
+    $apikey  = $arrKey[0];
+    if(true){
+      load_model(['device_model','deviceshipments_model']);
+      //$options = $_GET['options'];
+      $exists  = $this->device_model->checkMachineExist($SN);
+      $get= $this->input->post("get");
+      // add shipment
+      $dataShipment = [
+        "post"     => "",
+        "SN"       => $SN,
+        "appid"    => (!empty($exists->appid) ? $exists->appid : ''),
+        "endpoint" => "cdata",
+        "method"   => "get",
+        "get"      => json_encode($get)
+      ];
+
+      //$this->deviceshipments_model->insert($dataShipment);
+
+      if($exists!=false && $this->apikey==$apikey){
+        
+        // mengosongkan algoritma version
+        $this->db->where("appid",$exists->appid);
+        $this->db->where("device_id",$exists->device_id);
+        $this->db->update("tbdevice",[
+          "alg_version" => ""
+        ]);
+        
+        $deviceTZ        = $this->toDeviceTimeZone($exists->cabang_utc);
+        $responsecode_id = $exists->response_code;
+        if($responsecode_id==3 || $responsecode_id==4 || $responsecode_id==5 || $responsecode_id==6){
+          $deviceID        = $exists->device_id;
+          $response_code   = getResponseCodeThermoAttendance($deviceID,$SN,$deviceTZ);
+          
+          //header("Server: InAct");
+          //header("Content-Length: ".strlen($response));
+          //header("Content-Type: text/plain;charset=ISO-8859-1");
+
+        }else{
+          $response_code   = getResponseCode($responsecode_id,$SN,$deviceTZ);
+        }
+        
+        echo $response_code;
+      }else{
+        $option = "Illegal Device";
+        echo $option;
+      }
+    }else{
+      redirect("jadksjadjsla");
+    }
+  }
+
+  public function cdata_post($strAPIkey)
+  {
+    
+    $arrKey   = explode("-",$strAPIkey);
+    $SN       = $arrKey[1];
+    $apikey   = $arrKey[0];
+		
+    if(true){
+          
+      load_model(['device_model','deviceshipments_model']);
+      $exists   = $this->device_model->checkMachineExist($SN);
+      
+      $dataPost = $this->input->post("postBody");
+      $table    = $this->input->post("table");
+      $tablename= $this->input->post("tablename");
+      $get= $this->input->post("get");
+			
+      if($exists!=false && $this->apikey==$apikey){
+        $arrGet = json_decode($get);
+					$exists->response_code = 3;
+        if($exists->response_code==3){
+          // kondisi jika mesin pakek thermo attendance
+          $this->load->model("thermoattendance_model");
+          $appID = $exists->appid;
+          $dataCount = !empty($arrGet->count) ? $arrGet->count : 0;
+					
+          $response = $this->thermoattendance_model->procedCdata($dataPost,$exists,$table,$tablename,$dataCount);
+					
+          echo $response;
+        }elseif($exists->response_code==4){
+          /*
+          $this->load->model("attendance04_model");
+          $appID = $exists->appid;
+          $dataCount = !empty($arrGet->count) ? $arrGet->count : 0;
+          $response = $this->attendance04_model->procedCdata($dataPost,$exists,$table,$tablename,$dataCount);
+          */
+          $dataShipment = [
+            "post"     => $dataPost,
+            "SN"       => $SN,
+            "appid"    => (!empty($exists->appid) ? $exists->appid : ''),
+            "endpoint" => "cdata",
+            "method"   => "post",
+            "get" => $get
+          ];
+
+          //if($SN=="CKUH202361603"){
+          $this->deviceshipments_model->insert($dataShipment);
+          //}
+
+          echo "OK";
+
+        }elseif($exists->response_code==5){
+          /*
+          $this->load->model("attendance04_model");
+          $appID = $exists->appid;
+          $dataCount = !empty($arrGet->count) ? $arrGet->count : 0;
+          $response = $this->attendance04_model->procedCdata($dataPost,$exists,$table,$tablename,$dataCount);
+          */
+          $dataShipment = [
+            "post"     => $dataPost,
+            "SN"       => $SN,
+            "appid"    => (!empty($exists->appid) ? $exists->appid : ''),
+            "endpoint" => "cdata",
+            "method"   => "post",
+            "get" => $get
+          ];
+
+          //if($SN=="CKUH202361603"){
+          $this->deviceshipments_model->insert($dataShipment);
+          //}
+
+          echo "OK";
+
+        }elseif($exists->response_code==6){
+          /*
+          $this->load->model("attendance04_model");
+          $appID = $exists->appid;
+          $dataCount = !empty($arrGet->count) ? $arrGet->count : 0;
+          $response = $this->attendance04_model->procedCdata($dataPost,$exists,$table,$tablename,$dataCount);
+          */
+          $dataShipment = [
+            "post"     => $dataPost,
+            "SN"       => $SN,
+            "appid"    => (!empty($exists->appid) ? $exists->appid : ''),
+            "endpoint" => "cdata",
+            "method"   => "post",
+            "get" => $get
+          ];
+
+          //if($SN=="CKUH202361603"){
+          $this->deviceshipments_model->insert($dataShipment);
+          //}
+
+          echo "OK";
+
+        }else{
+          // create device shipment        
+          $appid    = $exists->appid;
+          ///
+          $postIdentify = $this->postIdentify($dataPost);
+
+          if($postIdentify=="attendance"){
+            
+            $this->load->model("checkinout_model");
+            $arrayAttendance = $this->prepareAttendanceToArray($dataPost,$appid,$SN,$exists->device_id,$exists->device_area_id,$exists->device_cabang_id);
+
+            if(count($arrayAttendance)>0){
+
+              $insertAttendance = $this->checkinout_model->bulk_insert($arrayAttendance);
+              if($insertAttendance==true){
+                echo "OK";
+              }
+            }else{
+              echo "OK";
+            }
+          }elseif ($postIdentify=="adduser") {
+            $this->load->library("machinepost_reader");
+            $arrUser    = $this->machinepost_reader->readUser($appid,$dataPost);
+            $userUpdate = [];
+
+            if(count($arrUser)>0){
+              $arrEmployeeID = [];
+              foreach ($arrUser as $row) {
+                $userUpdate[] = [
+                  "employee_id" => $row["employee_id"],
+                  "employee_password" => $row["password"],
+                  "employee_card" => $row["card"]
+                ];
+                if(!in_array($row["employee_id"],$arrEmployeeID)){
+                  $arrEmployeeID[] = $row["employee_id"];
+                }
+              }
+              $this->load->model("employee_model");
+              $this->load->model("employeelocationdevice_model");
+              // update data user
+              $this->employee_model->update_batch($userUpdate,"employee_id");
+
+              // set need update di tiap location device
+              foreach ($arrEmployeeID as $employeeID) {
+                $this->employeelocationdevice_model->setNeedUpdate([$employeeID],"yes");
+              }
+              echo "OK";
+            }else{
+              echo "OK";
+            }
+          }elseif($postIdentify=="template_fp"){
+            $this->load->library("machinepost_reader");
+            $this->load->model("employeetemplate_model");
+            $this->load->model("employeelocationdevice_model");
+            $this->load->model("firewall_model");
+            $arrTemplate = $this->machinepost_reader->readFingerprint($dataPost,$appid);
+
+            $arrEmployeeID = [];
+            foreach ($arrTemplate as $row) {
+              unset($row["pin"]);
+              $employeeid = $row["employeetemplate_employee_id"];
+              $index      = $row["employeetemplate_index"];
+              $jenis      = $row["employeetemplate_jenis"];
+              
+              // cek apakah sudah pernah melakukan perekaman jari
+              $templateExist = $this->employeelocationdevice_model->checkTemplateExists($employeeid,$index,$jenis);
+              $this->firewall_model->openGate($employeeid);
+
+              $this->employeetemplate_model->replace($row);
+              if($templateExist){
+                $this->employeelocationdevice_model->rePushTemplate([$employeeid],$templateExist);
+              }
+            }
+            echo "OK";
+          }elseif($postIdentify=="template_face"){
+            $this->load->library("machinepost_reader");
+            $this->load->model("employeetemplate_model");
+            $this->load->model("employeelocationdevice_model");
+            $this->load->model("firewall_model");
+            
+            $arrTemplate = $this->machinepost_reader->readFace($exists->appid,$dataPost);
+            $arrEmployeeID = [];
+            foreach ($arrTemplate as $row) {
+              unset($row["pin"]);
+              $this->employeetemplate_model->replace($row);
+              $this->firewall_model->openGate($row["employeetemplate_employee_id"]);
+
+              // set need Update
+              $templateID = $this->employeetemplate_model->getTemplateID($row["employeetemplate_employee_id"],$row["employeetemplate_index"],$row["employeetemplate_jenis"]);
+              /*
+              if($templateID!=false){
+                $this->db->where("employeetemplate_id",$templateID);
+                $this->db->update("tbemployeelocationdevicetemplate",[
+                  "push_count" => "0"
+                ]);
+              }
+              */
+              if($templateID){
+                $this->employeelocationdevice_model->rePushTemplate([$row["employeetemplate_employee_id"]],$templateID);
+              }
+            }
+
+            echo "OK";
+          }elseif ($postIdentify=="sayhello") {
+            echo "OK";
+          }elseif ($postIdentify=="face_pic") {
+            $this->load->library("machinepost_reader");
+            $this->load->model("firewall_model");
+
+            load_model(['employee_model']);
+            $arrPicture = $this->machinepost_reader->readProfileImage($exists->appid,$dataPost);
+            $updatePic  = [];
+            $needUpdatePic = [];
+            foreach ($arrPicture as $row) {
+              // save to file
+              $image      = base64_decode($row['employee_image']);
+              $imageName  = $row['file_name'];
+              $employeeID = $row['employee_id'];
+
+              $rowLastDetail = $this->employee_model->getSpecifiedDetailEmployee($employeeID,["image"],$exists->appid);
+
+              // delete last image;
+              if($rowLastDetail!=false){
+                if(!empty($rowLastDetail->image)){
+                  $filePath = FCPATH.'sys_upload\employeepic\\'.$rowLastDetail->image;
+                  if(file_exists($filePath)){
+                    unlink($filePath);
+                  }
+                }
+              }
+              // create image
+              file_put_contents('./sys_upload/employeepic/'.$imageName, $image);
+
+              $updatePic[] = [
+                "picture" => "", // picture dikosongkan
+                "image" => $imageName,
+                "employee_id" => $employeeID
+              ];
+
+              $needUpdatePic[] = [
+                "employee_id" => $employeeID,
+                "pic_need_update" => "yes"
+              ];
+              $this->firewall_model->openGate($employeeID);
+            }
+            
+            if(count($updatePic)>0){
+              $this->employee_model->update_batch($updatePic,"employee_id");
+            }
+
+            if(count($needUpdatePic)){
+              load_model(["employeelocationdevice_model"]);
+
+              $this->employeelocationdevice_model->update_batch($needUpdatePic,"employee_id");
+            }
+            echo "OK";
+          }else{
+            // menolak semua selain type kondisi
+            echo "OK";
+          }
+        }
+      }else{
+        echo "illegal";
+      }
+    }else{
+      redirect("jadksjadjsla");
+    }
+  }
+
+  function prepareAttendanceToArray($dataPost,$appid,$sn,$deviceID,$areaid,$cabangid){
+
+    $this->load->model("employee_model");
+    $output = [];
+    $arrRow = preg_split("/[\r\n]/",$dataPost);
+    $arrEmployeeID = $this->employee_model->getAllEmployeeCode($appid);
+
+    foreach ($arrRow as $row) {
+      if($row!=""){
+        $arrField = preg_split("/[\t]/", $row);
+        $employeeCode  = $arrField[0];
+        $checkDateTime = $arrField[1];
+
+        $employeeID = !empty($arrEmployeeID[$employeeCode]) ? $arrEmployeeID[$employeeCode] : 0;
+        // jika tidak ditemukan employeecode maka data akan diabaikan
+        if(!empty($arrEmployeeID[$employeeCode])){
+          $output[] = [
+            "appid" => $appid,
+            "checkinout_employee_id"  => $employeeID,
+            "checkinout_employeecode" => $arrField[0],
+            "checkinout_datetime"     => $arrField[1],
+            "checkinout_code"         => $arrField[2],
+            "checkinout_verification_mode" => $arrField[3],
+            "checkinout_device_id"    => $deviceID,
+            "checkinout_SN"           => $sn,
+            "checkinout_date_create"  => $this->now,
+            "checkinout_area_id"      => $areaid,
+            "checkinout_cabang_id"    => $cabangid
+          ];
+        }
+      }
+    }
+    return $output;
+  }
+
+  private function checkStringExists($param,$postdata){
+    preg_match("/".$param."/",$postdata,$matches);
+    if(count($matches)>0){
+	     return true;
+    }else{
+       return false;
+    }
+  }
+
+  private function postIdentify($string){
+    if($this->checkStringExists("USER PIN",$string)==true){
+      $output = 'adduser';
+    }elseif($this->checkStringExists("OPLOG",$string)==true){
+      $output = 'sayhello';
+    }elseif ($this->checkStringExists("FP PIN",$string)==true && $this->checkStringExists("TMP",$string)==true && $this->checkStringExists("FID",$string)==true) {
+      $output = 'template_fp';
+    }elseif ($this->checkStringExists("FACE PIN",$string)==true && $this->checkStringExists("TMP",$string)==true && $this->checkStringExists("FID",$string)==true) {
+      $output = 'template_face';
+    }elseif ($this->checkStringExists("USERPIC",$string)==true && $this->checkStringExists("FileName",$string)==true && $this->checkStringExists("Content",$string)==true) {
+      $output = 'face_pic';
+    }else{
+      $output = 'attendance';
+    }
+
+    return $output;
+  }
+}

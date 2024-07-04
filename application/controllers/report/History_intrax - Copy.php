@@ -1,0 +1,102 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+/**
+ *
+ */
+class History_intr extends CI_Controller
+{
+  var $listMenu = "";
+  var $tabel_template  = array(
+        'table_open'            => '<table class="table table-bordered table-stripped" id="datatable">',
+        'table_close'           => '</table>'
+	);
+
+  function __construct()
+  {
+    parent::__construct();
+    $this->load->model("system_model");
+    // model general
+    $this->timestamp = date("Y-m-d H:i:s");
+
+    $languange = !empty($this->session->userdata('lang')) ? $this->session->userdata('lang') :"en";
+    $this->load->library("gtrans/gtrans",["lang" => $languange]);
+
+    $this->load->model("menu_model");
+    
+    $this->load->model("area_model");
+	$this->load->model("cabang_model");
+	$this->load->model("employee_model");
+	$this->load->model("inoutmobile_model");
+    $this->system_model->checkSession(4);
+    $this->listMenu = $this->menu_model->list_menu();
+    // bahasa
+  }
+
+  function index(){
+    $this->load->library("form_validation");
+    $this->load->library("encryption_org");
+	
+	$fromDate=date("Y-m-d");
+	$toDate=date("Y-m-d");
+    $dataInout = $this->inoutmobile_model->getAllDataInOutMobile($fromDate,$toDate);
+    $this->table->set_template($this->tabel_template);
+    $this->table->set_heading(
+      ["data"=> "No","class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Location"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Latitude"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Longitude"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Account No"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Name"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Datetime"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Absen Event"),"class"=>"text-center"],
+      ["data"=> $this->gtrans->line("Absen Image"),"class"=>"text-center"]);
+    $no = 0;
+    foreach ($dataInout as $row) {
+      $no++;
+      $encId = $this->encryption_org->encode($row->id);
+	  if(!empty($row->image)){
+		  $photo = '<img src="https://inact.interactiveholic.net/bo/sys_upload/absen_image/'.$row->image.'" alt="absen-image" width="50px"></img>';
+	  }else{
+		  $photo = '';
+	  }
+      $encCode  = base64_encode($row->id);
+      $this->table->add_row(
+        textCenter($no),
+        $row->checklog_address,
+        $row->checklog_latitude,
+        $row->checklog_longitude,
+        $row->employee_id,
+        $row->employee_full_name,
+        $row->checklog_date,
+        $row->checklog_event,
+        $photo
+      );
+    }
+
+    if(!empty($this->session->userdata("ses_msg"))){
+      $msg = $this->session->userdata("ses_msg");
+      $data["notif"] =createNotif($msg['type'],$msg['header'],$msg['msg']);
+      $this->session->set_userdata("ses_msg");
+    }
+
+    $data["areaTable"] = $this->table->generate();
+    $parentViewData = [
+      "title"   => $this->gtrans->line("History Log Intrax"),  // title page
+      "content" => "report/history_intrax",  // content view
+      "viewData"=> $data,
+      "listMenu"=> $this->listMenu,
+      "externalCSS" => [
+        base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
+      ],
+      "externalJS" => [
+        base_url("asset/template/bower_components/datatables.net/js/jquery.dataTables.min.js"),
+        base_url("asset/template/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"),
+        "https://cdn.jsdelivr.net/npm/sweetalert2@8",
+        base_url("asset/js/checkCode.js"),
+      ],
+      "varJS" => ["url" => base_url()]
+    ];
+    $this->load->view("layouts/main",$parentViewData);
+    $this->gtrans->saveNewWords();
+  }
+}

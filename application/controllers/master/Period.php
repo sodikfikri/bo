@@ -131,7 +131,6 @@ class Period extends CI_Controller
             } else {
                 $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Fail to add period')]);
             }
-            return redirect("active-period");
         } else {
             $this->load->library("encryption_org");
             $pid = $this->encryption_org->decode($id);
@@ -153,9 +152,8 @@ class Period extends CI_Controller
             } else {
                 $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Fail to update period')]);
             }   
-            return redirect("active-period");
         }
-        
+        return redirect("active-period");
     }
 
     function delData($encId) {
@@ -166,11 +164,10 @@ class Period extends CI_Controller
         if ($del) {
             $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('period Was Deleted')]);
             setActivity("master active periode","delete");
-            return redirect("active-period");
         } else {
             $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Filed to delete period')]);
-            return redirect("active-period");
         }
+        return redirect("active-period");
     }
 
 }

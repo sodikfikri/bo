@@ -19,7 +19,6 @@ class Institution_model extends CI_Model
       $appid = $this->session->userdata("ses_appid");
     }
 
-
     if(!empty($appid)){
       $userID = $this->session->userdata("ses_userid");
       $dataInsert["appid"]              = $appid;
@@ -45,6 +44,63 @@ class Institution_model extends CI_Model
     }
   }
 
+  function insert_temp($dataInsert,$appid="") {
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+      $dataInsert["appid"]              = $appid;
+      $dataInsert["cabang_user_add"]    = $userID;
+      $dataInsert["cabang_date_create"] = $this->now;
+
+      $res = $this->db->insert('tbcabang_temp',$dataInsert);
+      if($res){
+        if(!empty($dataInsert['cabang_area_id'])){
+          $areaID = $dataInsert['cabang_area_id'];
+          $totalCabang = $this->countActiveCabangByArea($areaID);
+          $this->load->model("area_model");
+          $this->area_model->setTotalCabang($totalCabang,$areaID);
+        }
+
+        return true;
+      }else{
+        return false;
+      }
+
+    }else {
+      return false;
+    }
+  }
+
+  function update_temp($dataUpdate,$id){
+    $appid = $this->session->userdata("ses_appid");
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+
+      $dataUpdate["cabang_user_modif"]    = $userID;
+      $dataUpdate["cabang_date_modif"]    = $this->now;
+      $dataUpdate["cabang_jenis_modif"]   = "edit";
+
+      $this->db->where("appid",$appid);
+      $this->db->where('id',$id);
+      $res = $this->db->update('tbcabang_temp',$dataUpdate);
+      if($res){
+        if(!empty($dataUpdate['cabang_area_id'])){
+          $areaID = $dataUpdate['cabang_area_id'];
+          $totalCabang = $this->countActiveCabangByArea($areaID);
+          $this->load->model("area_model");
+          $this->area_model->setTotalCabang($totalCabang,$areaID);
+        }
+        return true;
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
   function update($dataUpdate,$id){
     $appid = $this->session->userdata("ses_appid");
     if(!empty($appid)){
@@ -126,6 +182,60 @@ class Institution_model extends CI_Model
     }
   }
 
+  function getAll_temp($appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+	  $ses_id = $this->session->userdata("ses_userid");
+      $this->db->select("tbcabang_temp.*");
+      $this->db->select("
+      (
+        1
+      ) as totalDevice
+
+      ");
+      $this->db->select("
+      (
+        select
+        count(tbemployeeareacabang_temp.employeeareacabang_id)
+        from
+        tbemployeeareacabang_temp
+        where
+		tbemployeeareacabang_temp.appid = tbcabang_temp.appid AND
+        tbemployeeareacabang_temp.employee_cabang_id = tbcabang_temp.id
+      ) as totalEmployee
+      ");
+	  
+	  $this->db->select("
+      (
+        select
+        count(tbemployeeareacabang_temp.employeeareacabang_id)
+        from
+        tbemployeeareacabang_temp
+        where
+		tbemployeeareacabang_temp.appid = tbcabang_temp.appid AND
+        tbemployeeareacabang_temp.employee_cabang_id = tbcabang_temp.id
+      ) as waitingToPay
+      ");
+
+      $this->db->where("tbcabang_temp.appid",$appid);
+      $this->db->where("tbcabang_temp.cabang_user_add",$ses_id);
+      //$this->db->where("tbcabang.cabang_area_id","0");
+      $this->db->where("tbcabang_temp.is_del !=","1");
+
+      $this->db->from('tbcabang_temp');
+      // $query = $this->db->get_compiled_select();
+
+      // return $query;
+
+      $sql = $this->db->get();
+      return $sql->result();
+    }else {
+      return false;
+    }
+  }
   function getAll($appid=""){
     if($appid==""){
       $appid = $this->session->userdata("ses_appid");

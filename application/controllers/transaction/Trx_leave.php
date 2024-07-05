@@ -34,20 +34,51 @@ class Trx_leave extends CI_Controller
     }
 
     function index() {
-        // print_r('masuk'); die;
+        $is_filter = false;
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
+            ["data"=> '<div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="head-check">
+                            <label class="form-check-label" for="head-check"></label>
+                        </div>', "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Employee Name"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Category"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Start Time"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("End Time"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Reason"), "class"=>"text-left"],
-            ["data"=> $this->gtrans->line("Document"), "class"=>"text-center"]
+            ["data"=> $this->gtrans->line("Document"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
         );
 
-        $data_leave = $this->leave_model->leaveList($this->appid);
+        $params = [];
+        if ($this->input->post()) {
+            if ($this->input->post('category') == 0) {
+                # code...
+                $is_filter = false;
+            } else {
+                $params['start_date'] = $this->input->post('start_date');
+                $params['end_date'] = $this->input->post('end_date');
+                $params['category'] = $this->input->post('category');
+    
+                $is_filter = true;
+            }
+        }
+        $data_cats = $this->leave_model->getcategoryList($this->appid);
+
+        $data_leave = $this->leave_model->leaveList($this->appid, $is_filter, $params);
+
+        // print_r($data_leave); die;
+
         foreach($data_leave as $key => $items) {
+            $encId = $this->encryption_org->encode($items->id);
             $this->table->add_row(
+                [
+                    'data' => '<div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name id="checkid[]" value="'.$encId.'">
+                                    <label class="form-check-label" for="checkid[]"></label>
+                                </div>',
+                    'style' => 'text-align: center;'
+                ],
                 $items->employee_full_name,
                 $items->category_name,
                 [
@@ -62,8 +93,19 @@ class Trx_leave extends CI_Controller
                 [
                     'data' => '<span style="cursor:pointer" data-id="'.$this->encryption_org->encode($items->id).'" class="text-blue btn-download"><i  class="fa fa-download fa-lg"></i></span>',
                     'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                    'style' => 'text-align:center;'
                 ]
             );
+        }
+        if(!empty($this->session->userdata("ses_notif"))){
+            $arrNotif = $this->session->userdata("ses_notif");
+      
+            $notif    = createNotif($arrNotif['type'],$arrNotif['header'],$arrNotif['msg']);
+            $data['notif'] = $notif;
+            $this->session->unset_userdata("ses_notif");
         }
         $data['datatable'] = $this->table->generate();
 
@@ -72,6 +114,7 @@ class Trx_leave extends CI_Controller
             "content" => "transaction/trx_leave",  // content view
             "viewData"=> $data,
             "listMenu"=> $this->listMenu,
+            'listCategory' => $data_cats,
             "varJS" => ["url" => base_url()],
             "externalCSS" => [
                 base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
@@ -104,5 +147,30 @@ class Trx_leave extends CI_Controller
         $data = $this->leave_model->leaveList($this->appid);
 
         echo json_encode($data);
+    }
+
+    function deleteData() {
+        $data = $this->input->post('id');
+
+        $arr_id = [];
+
+        foreach($data as $item) {
+            $this->load->library("encryption_org");
+            $delId = $this->encryption_org->decode($item);
+
+            array_push($arr_id, $delId);
+        }
+
+        $del = $this->leave_model->delTrxLeave($arr_id);
+
+        $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('Success delete data')]);
+
+        $response = [
+            'meta' => [
+                'code' => 200,
+            ]
+        ];
+
+        echo json_encode($response);
     }
 }

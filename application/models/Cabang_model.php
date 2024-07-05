@@ -126,6 +126,18 @@ class Cabang_model extends CI_Model
     }
   }
 
+  function getDataSelectBranch(){
+    $sql = "SELECT * FROM tbcabang WHERE is_del = 0";
+
+    $response = $this->db->query($sql);
+
+    return $response->result();
+  }
+  function saveData($params) {
+    $ins = $this->db->insert('tbcabang_temp', $params);
+
+    return $ins;
+  }
   function getAll($appid=""){
     if($appid==""){
       $appid = $this->session->userdata("ses_appid");

@@ -93,6 +93,7 @@ $route['schedule-work-hours'] = 'schedule/work_hours';
 
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';
+$route['schedule-holidays/delete'] = 'schedule/holidays/deldata';
 
 $route['check-email-exists'] = 'master/user/checkEmail';
 $route['check-phone-exists'] = 'master/user/checkPhone';
@@ -110,6 +111,7 @@ $route['check-area-code-exists'] = 'master/area/checkCodeExists';
 $route['check-area-name-exists'] = 'master/area/checkNameExists';
 $route['master-institution'] = 'master/institution';
 $route['save-institution']   = 'master/institution/saveInstitution';
+$route['save-institution-temp']   = 'master/institution/savedata';
 $route['save-request-register']   = 'master/request_register/saveInstitution';
 $route['delete-institution/(:any)'] = 'master/institution/deleteInstitution/$1';
 $route['check-institution-code-exists'] = 'master/institution/checkCodeExists';
@@ -157,11 +159,12 @@ $route['employee-get-detail'] = 'master/employee/loadDetailEmployee';
 $route['load-table-employee'] = 'master/employee/loadTableEmployee';
 $route['save-employee'] = 'master/employee/saveEmployee';
 $route['save-prospective-employees/(:any)'] = 'master/prospective_employees/saveEmployee/$1';
+$route['save-prospective-employees-temp/(:any)'] = 'master/prospective_employees/saveEmployeeTemp/$1';
 $route['accept-prospective-employees/(:any)'] = 'master/prospective_employees/acceptEmployee/$1';
 $route['get-employee-edit'] = 'master/employee/getDataEdit';
 $route['get-prospective_employees-edit'] = 'master/prospective_employees/getDataEdit';
 $route['delete-employee/(:any)'] = 'master/employee/deleteEmployee/$1';
-$route['delete-employee-intrax/(:any)'] = 'master/prospective_employees/deleteEmployee/$1';
+$route['delete-employee-intrax/(:any)/(:any)'] = 'master/prospective_employees/deleteEmployee/$1/$2';
 $route['device-switch-license']  = 'master/device/switchLicense';
 $route['employee-switch-license']= 'master/employee/switchLicense';
 $route['ajax-get-employee-data']= 'master/employee/loadDTemployee';
@@ -218,6 +221,7 @@ $route['report-employee-resign'] = 'report/employee_resign';
 $route['employee-leave'] = 'transaction/trx_leave';
 $route['employee-leave-file/(:any)'] = 'transaction/trx_leave/download_file/$1';
 $route['employee-leave/export'] = 'transaction/trx_leave/toxlsx';
+$route['employee-leave/delete'] = 'transaction/trx_leave/deleteData';
 
 $route['active-period'] = 'master/period';
 $route['active-period/submit'] = 'master/period/submitdata';

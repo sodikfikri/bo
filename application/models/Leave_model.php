@@ -62,7 +62,7 @@ class Leave_model extends CI_Model
     }
 
     function countLeave($appid, $employee_id, $start_date, $end_date) {
-        $sql = "SELECT count(*) total FROM tbleaveclass WHERE DATE_FORMAT(created_at, '%Y-%m-%d') BETWEEN '$start_date' AND '$end_date' AND appid = '$appid' AND employee_id = $employee_id";
+        $sql = "SELECT count(*) total FROM tbleaveclass WHERE DATE_FORMAT(start_date, '%Y-%m-%d') >= '$start_date' AND DATE_FORMAT(end_date, '%Y-%m-%d') <= '$end_date' AND appid = '$appid' AND employee_id = $employee_id AND is_delete = 0";
         $response = $this->db->query($sql);
 
         return $response->result();
@@ -86,7 +86,8 @@ class Leave_model extends CI_Model
                 WHERE 
                     lv.appid = '$appid' 
                     AND emp.employee_id = $employee_id 
-                    AND DATE_FORMAT(lv.created_at, '%Y-%m-%d') BETWEEN '$start_date' AND '$end_date'
+                    AND lv.is_delete = 0
+                    AND DATE_FORMAT(lv.start_date, '%Y-%m-%d') >= '$start_date' AND DATE_FORMAT(lv.end_date, '%Y-%m-%d') <= '$end_date'
                     $sql_leave_id 
                 ORDER BY lv.id DESC";
         
@@ -104,7 +105,18 @@ class Leave_model extends CI_Model
     }
 
     // ======================== Transaction Leave ======================== //
-    function leaveList($appid) {
+    function leaveList($appid, $is_filter, $params) {
+        $sql_filter = '';
+        
+        if ($is_filter) {
+            if ($params['start_date']) {
+                $sql_filter = ' DATE_FORMAT(lv.start_date, "%Y-%m-%d") >= "'.$params['start_date'].'" AND DATE_FORMAT(lv.end_date, "%Y-%m-%d")  <= "' .$params['end_date']. '"';
+            }
+
+            if ($params['category']) {
+                $sql_filter = ' AND cats.id = ' . $params['category'];       
+            }
+        }
         $sql = "SELECT 
                     lv.*, emp.employee_full_name, cats.name category_name FROM tbleaveclass lv 
                 JOIN
@@ -112,8 +124,8 @@ class Leave_model extends CI_Model
                 JOIN
                     tbleavecategories cats ON lv.category_id = cats.id
                 WHERE 
-                    lv.appid = '$appid' ORDER BY lv.id DESC";
-
+                    lv.appid = '$appid' AND lv.is_delete = 0 $sql_filter ORDER BY lv.id DESC";
+        // return $sql;
         $query = $this->db->query($sql);
 
         return $query->result();
@@ -124,5 +136,14 @@ class Leave_model extends CI_Model
         $query = $this->db->query($sql);
 
         return $query->result();
+    }
+
+    function delTrxLeave($id) {
+        $upt = (new DateTime())->format('Y-m-d H:i:s');
+        $str_id = implode(',', $id);
+        $sql = "UPDATE tbleaveclass SET is_delete = 1, updated_at = '$upt' WHERE id IN ($str_id)";
+        // return $sql;
+        $res = $this->db->query($sql);
+        return $res;
     }
 }

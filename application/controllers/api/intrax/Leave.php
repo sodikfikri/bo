@@ -9,7 +9,7 @@ class Leave extends REST_Controller
     var $now;
     var $apikey = "IAdev-apikey3fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9ed48151b389apikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9e7b7c2f8d891dfc9b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
 
-    public $ngrok = 'https://0fa7-36-90-57-45.ngrok-free.app/inact/bo';
+    public $ngrok = 'https://f877-36-90-57-45.ngrok-free.app/inact/bo';
     public $response = [];
 
     function __construct()
@@ -65,6 +65,9 @@ class Leave extends REST_Controller
     }
 
     function Submit_leave_post() {
+        // $this->load->library("encryption_org");
+        // $catsid = $this->encryption_org->decode('QmlBbDRzNzcvbTR0TFFJWjU0L29Ddz09');
+        // print_r($catsid); return;
         $headers = getRequestHeaders();
         // $data = json_decode(file_get_contents('php://input'), true);
         $apikey  = !empty($headers["Apikey"]) ? $headers["Apikey"] : null;
@@ -81,6 +84,12 @@ class Leave extends REST_Controller
             'appid' => $this->input->post('appid'),
             'employee_id' => $this->input->post('employee_id')
         ];
+
+        if (!$this->input->post('appid') || !$this->input->post('category_id') || !$this->input->post('employee_id') || !$this->input->post('start_date') || !$this->input->post('end_date')) {
+            $response = $this->SetRespose(400, 'incomplete parameters');
+            header("Content-Type:application/json");
+            echo json_encode($response); return;
+        }
 
         $params['start_date'] = $this->input->post('start_date');
         $params['end_date'] = $this->input->post('end_date');
@@ -164,8 +173,10 @@ class Leave extends REST_Controller
                 "id" => $items->id,
                 "employee_full_name" => $items->employee_full_name,
                 "category_name" => $items->category_name,
-                "start" => $items->category_id == 1 || $items->category_id == 3 ? $items->start_date : (new DateTime($items->created_at))->format('Y-m-d') .' ' . $items->start_time,
-                "end" => $items->category_id == 1 || $items->category_id == 3 ? $items->end_date : (new DateTime($items->created_at))->format('Y-m-d') .' ' . $items->end_time,
+                "start_date" => $items->start_date,
+                "start_time" => $items->start_time,
+                "end_date" => $items->end_date,
+                "end_time" => $items->end_time,
                 "reason" => $items->reason,
                 "doc" => $items->doc_path ? $this->ngrok . ltrim($items->doc_path, '.') : '',
                 "created_at" => $items->created_at

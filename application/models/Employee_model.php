@@ -52,6 +52,31 @@ class Employee_model extends CI_Model
     }
   }
   
+  function update_temp($dataUpdate,$employeeID,$appid=null){
+    if($appid==null){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+
+      $dataUpdate["employee_user_modif"] = $userID;
+      $dataUpdate["employee_date_modif"] = $this->now;
+      $dataUpdate["employee_jenis_modif"]= "edit";
+
+      $this->db->where("appid",$appid);
+      $this->db->where("employee_id",$employeeID);
+      $res = $this->db->update('tbemployee_temp',$dataUpdate);
+
+      if($res){
+        return true;
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
   function update($dataUpdate,$employeeID,$appid=null){
     if($appid==null){
       $appid = $this->session->userdata("ses_appid");

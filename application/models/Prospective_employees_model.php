@@ -38,6 +38,31 @@ class Prospective_employees_model extends CI_Model
       return false;
     }
   }
+
+  function insert_temp($dataInsert,$appid="") {
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+    
+    if(!empty($appid)){
+      if(!empty($this->session->userdata("ses_userid"))){
+        $userID = $this->session->userdata("ses_userid");
+        $dataInsert["employee_user_add"]    = $userID;
+      }
+      
+      $dataInsert["appid"]              = $appid;
+      $dataInsert["employee_date_create"] = $this->now;
+
+      $res = $this->db->insert('tbemployee_temp',$dataInsert);
+      if($res){
+        return $this->db->insert_id();
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
   
   function insertOrder($dataInsert,$appid=""){
     if($appid==""){
@@ -103,6 +128,31 @@ class Prospective_employees_model extends CI_Model
       $this->db->where("appid",$appid);
       $this->db->where("employee_id",$employeeID);
       $res = $this->db->update($this->tableName,$dataUpdate);
+
+      if($res){
+        return true;
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
+  function update_temp($dataUpdate,$employeeID,$appid=null){
+    if($appid==null){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+
+      $dataUpdate["employee_user_modif"] = $userID;
+      $dataUpdate["employee_date_modif"] = $this->now;
+      $dataUpdate["employee_jenis_modif"]= "edit";
+
+      $this->db->where("appid",$appid);
+      $this->db->where("employee_id",$employeeID);
+      $res = $this->db->update('tbemployee_temp',$dataUpdate);
 
       if($res){
         return true;
@@ -330,6 +380,29 @@ class Prospective_employees_model extends CI_Model
     }
   }
 
+  function getById_temp($id,$appid=null){
+    if($appid==null){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $this->db->select("tbemployee_temp.*");
+      $this->db->select("iasubscription.intrax_plan_code");
+      $this->db->from("tbemployee_temp");
+	  $this->db->join("iasubscription","tbemployee_temp.appid = iasubscription.appid");
+      $this->db->where("tbemployee_temp.appid",$appid);
+      $this->db->where("tbemployee_temp.is_del !=","1");
+      $this->db->where("tbemployee_temp.employee_id",$id);
+      $sql = $this->db->get();
+      if($sql->num_rows()>0){
+        return $sql->row();
+      }else{
+        return false;
+      }
+    }else{
+      return false;
+    }
+  }
   function getById($id,$appid=null){
     if($appid==null){
       $appid = $this->session->userdata("ses_appid");
@@ -391,6 +464,24 @@ class Prospective_employees_model extends CI_Model
     }
   }
   
+  function delete_temp($employeeID){
+    $appid = $this->session->userdata("ses_appid");
+    if(!empty($appid)){
+      $userID = $this->session->userdata("ses_userid");
+      $dataUpdate = [
+        "employee_user_modif" => $userID,
+        "employee_date_modif" => $this->now,
+        "employee_jenis_modif"=> "delete",
+        "is_del"              => "1"
+      ];
+      $this->db->where("appid",$appid);
+      $this->db->where("employee_id",$employeeID);
+      $res = $this->db->update('tbemployee_temp',$dataUpdate);
+      return $res;
+    }else{
+      return false;
+    }
+  }
   function delete($employeeID){
     $appid = $this->session->userdata("ses_appid");
     if(!empty($appid)){
@@ -719,6 +810,50 @@ class Prospective_employees_model extends CI_Model
     return $sql;
   }
 
+  function getAvailable_temp($areaid,$cabangid,$record_start,$record_length,$appid,$dataUrl)
+  {
+    $this->db->select([
+      "A.employee_id",
+      "A.employee_account_no",
+      "A.employee_full_name",
+      "A.employee_join_date",
+      "A.employee_last_mutasi",
+      "A.employee_license",
+      "A.employee_password",
+      "A.employee_card",
+      "A.gender",
+      "A.intrax_pin",
+      "A.employee_position",
+      "A.employee_level",
+      "A.image",
+      "A.employee_is_active",
+      "A.employee_resign_date"
+    ]);
+	
+	$this->db->select("(select ifnull(count(order.order_id),0)from `order` where order.appid = A.appid AND order.order_id = A.parent_order_id AND order.status = 'active' ) as paymentActive");
+
+    $this->db->from("tbemployee_temp A");
+    $this->db->join("tbemployeeareacabang_temp B","B.employeeareacabang_employee_id = A.employee_id","left");
+
+    if($record_length!="" && $record_start!=""){
+      $this->db->limit($record_length,$record_start);
+    }
+
+    $this->db->where("A.appid",$appid);
+    $this->db->where("A.is_del","0");
+    $this->db->where("(select ifnull(count(order.order_id),0)from `order` where order.appid = A.appid AND order.order_id = A.parent_order_id AND (order.status = 'paid' OR order.status = 'active'))=","0");
+    $this->db->where("A.resign_confirmed","no");
+    $this->db->where("B.employee_cabang_id",$dataUrl);
+
+    $this->db->group_start();
+    $this->db->where("B.status","pending");
+    $this->db->or_where("B.status","active");
+    $this->db->group_end();
+
+    $this->db->group_by("A.employee_id");
+    $sql = $this->db->get();
+    return $sql;
+  }
   function getAvailable($areaid,$cabangid,$record_start,$record_length,$appid,$dataUrl)
   {
     $this->db->select([
@@ -839,6 +974,27 @@ class Prospective_employees_model extends CI_Model
     return $sql->num_rows();
   }
 
+  function countAvailableFiltered_temp($areaid,$cabangid,$appid,$dataUrl)
+  {
+    $this->db->select("A.employee_id");
+
+    $this->db->from("tbemployee_temp A");
+    $this->db->join("tbemployeeareacabang B","B.employeeareacabang_employee_id = A.employee_id","left");
+
+    $this->db->where("A.appid",$appid);
+    $this->db->where("B.employee_cabang_id",$dataUrl);
+    $this->db->where("A.is_del","0");
+    $this->db->where("A.resign_confirmed","no");
+
+    $this->db->group_start();
+    $this->db->where("B.status","active");
+    $this->db->or_where("B.status","pending");
+    $this->db->group_end();
+
+    $this->db->group_by("A.employee_id");
+    $sql = $this->db->get();
+    return $sql->num_rows();
+  }
   function countAvailableFiltered($areaid,$cabangid,$appid,$dataUrl)
   {
     $this->db->select("A.employee_id");
@@ -894,6 +1050,27 @@ class Prospective_employees_model extends CI_Model
     return $sql->num_rows();
   }
 
+  function countAvailableAll_temp($appid,$dataUrl)
+  {
+    $this->db->select("A.employee_id");
+
+    $this->db->from("tbemployee_temp A");
+    $this->db->join("tbemployeeareacabang B","B.employeeareacabang_employee_id = A.employee_id","left");
+
+    $this->db->where("A.appid",$appid);
+    $this->db->where("B.employee_cabang_id",$dataUrl);
+    $this->db->where("A.is_del","0");
+    $this->db->where("A.resign_confirmed","no");
+
+    $this->db->group_start();
+    $this->db->where("B.status","active");
+    $this->db->or_where("B.status","pending");
+    $this->db->group_end();
+
+    $this->db->group_by("A.employee_id");
+    $sql = $this->db->get();
+    return $sql->num_rows();
+  }
   function countAvailableAll($appid,$dataUrl)
   {
     $this->db->select("A.employee_id");

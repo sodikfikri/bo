@@ -48,6 +48,129 @@
           <h4 class="modal-title"><b><div id="frm-text"></div></b></h4>
           <p><div id="frm-desc"></div></p>
         </div>
+        <?= form_open("save-institution-temp",["id"=>"form-validation","class"=>"form-horizontal formInstitution"]); ?>
+        <input type="hidden" name="reboot" id="reboot">
+        <div class="modal-body">
+          <input type="hidden" name="id" id="id">
+          <!-- <div class="form-group" hidden>
+            <label for="area" class="col-sm-3 control-label"><?= $this->gtrans->line("Area Name") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <?= $cmbArea ?>
+            </div>
+          </div> -->
+          <div class="form-group">
+            <label for="institutioncode" class="col-sm-3 control-label"><?= $this->gtrans->line("Institution Code") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input onchange="checkExists('institutioncode','msg-code','check-cabang-code-exists','<?= $this->gtrans->line("Code was used by deleted or existing data") ?>','<?= $this->gtrans->line("Institution Code Is Available") ?>',$('#id').val())" name="institutioncode" data-validation-engine="validate[required,maxSize[50],custom[onlyLetterNumberSemiSpesial]]" type="text" class="form-control" id="institutioncode" placeholder="<?= $this->gtrans->line("Institution Code") ?>">
+              <div id="msg-code"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="institutionname" class="col-sm-3 control-label"><?= $this->gtrans->line("Institution Name") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input onchange="checkExists('institutionname','msg-name','check-cabang-name-exists','<?= $this->gtrans->line("Institution Name was used by existing data") ?>','<?= $this->gtrans->line("Institution Name Is Available") ?>',$('#id').val())" name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
+              <div id="msg-name"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cabang" class="col-sm-3 control-label"><?= $this->gtrans->line("Branch") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <select class="form-control" name="cabang" id="cabang">
+                <?php foreach($dropdownCabang as $cabang_items): ?>
+                  <option value="<?= $cabang_items->cabang_id ?>"><?= $cabang_items->cabang_name ?></option>
+                <?php endforeach; ?>
+                <!-- <option value="">Branch 2</option>
+                <option value="">Branch 3</option> -->
+              </select>
+              <!-- <input onchange="checkExists('institutionname','msg-name','check-cabang-name-exists','<?= $this->gtrans->line("Institution Name was used by existing data") ?>','<?= $this->gtrans->line("Institution Name Is Available") ?>',$('#id').val())" name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
+              <div id="msg-name"></div> -->
+            </div>
+          </div>
+          <!-- <div class="form-group">
+            <label for="timezone" class="col-sm-3 control-label"><?= $this->gtrans->line("TimeZone") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <?= $cmbTimezone ?>
+            </div>
+          </div> -->
+          <div class="form-group">
+            <label for="address" class="col-sm-3 control-label"><?= $this->gtrans->line("Address") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input name="address" type="text" data-validation-engine="validate[required]" class="form-control" id="address" placeholder="<?= $this->gtrans->line("Address") ?>">
+			  <label style="color:#FF9800">nb: memilih rekomendasi lokasi dengan menggunakan arah panah, selanjutnya tekan tab untuk lokasi yang dipilih.</label>
+            </div>
+          </div>
+		  <!-- <div class="form-group">
+            <label for="longitude" class="col-sm-3 control-label"><?= $this->gtrans->line("Longitude") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input name="longitude" type="number" step=".00000000000000001" data-validation-engine="validate[maxSize[100]]" class="form-control longitude" id="longitude" placeholder="<?= $this->gtrans->line("Longitude") ?>">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="latitude" class="col-sm-3 control-label"><?= $this->gtrans->line("Latitude") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input name="latitude" type="number" step=".00000000000000001" data-validation-engine="validate[maxSize[100]]" class="form-control latitude" id="latitude" placeholder="<?= $this->gtrans->line("Latitude") ?>">
+            </div>
+          </div> -->
+		  <!-- <div class="form-group">
+			<label for="maps" class="col-sm-3 control-label"><?= $this->gtrans->line("Maps") ?> <span class="text-red">*</span></label>
+			<div class="col-sm-9">
+				<div id="map-canvas" style="height: 400px;width: 100%;"></div>
+				<input type="hidden" class="city" placeholder="City">
+			</div>
+		  </div> -->
+          <div class="form-group">
+            <label for="npwp" class="col-sm-3 control-label"><?= $this->gtrans->line("NPWP") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <input data-validation-engine="validate[custom[phone],maxSize[20]]" name="npwp" type="text"  class="form-control" id="npwp" placeholder="<?= $this->gtrans->line("NPWP") ?>">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="description" class="col-sm-3 control-label"><?= $this->gtrans->line("Description") ?></label>
+            <div class="col-sm-9">
+              <textarea data-validation-engine="validate[custom[onlyLetterNumberSemiSpesial]]" name="description" rows="4" cols="80" id="description" class="form-control" placeholder="<?= $this->gtrans->line("Description") ?>"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger pull-left" data-dismiss="modal"><i class="fa fa-long-arrow-left"></i> <?= $this->gtrans->line("Cancel") ?></button>
+          <button type="submit" class="btn btn-primary"><div id="txtBtnSave"></div></button>
+        </div>
+        <?= form_close() ?>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="showDetailEmployee">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><b><div id="show-detail-employee"></div></b></h4>
+          <p><div id="show-text-desc"></div></p>
+        </div>
+        <div class="modal-body">
+		<center>
+		  <input type="hidden" id="idBranch" placeholder="encID">
+          <button type="button" class="btn btn-primary" style="margin-right:5px" onclick="redirectPage()"><div id="txtBtnAdd"></div></button>
+          <button type="button" class="btn btn-secondary" onclick="redirectPage()"><div id="txtBtnImport"></div></button>
+		</center>
+        </div>
+        <div class="modal-footer">
+          
+        </div>
+        <?= form_close() ?>
+      </div>
+    </div>
+</div>
+<!-- <div class="modal fade" id="frmCabang">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"><b><div id="frm-text"></div></b></h4>
+          <p><div id="frm-desc"></div></p>
+        </div>
         <?= form_open("save-institution",["id"=>"form-validation","class"=>"form-horizontal formInstitution"]); ?>
         <input type="hidden" name="reboot" id="reboot">
         <div class="modal-body">
@@ -123,9 +246,7 @@
         </div>
         <?= form_close() ?>
       </div>
-      <!-- /.modal-content -->
     </div>
-  <!-- /.modal-dialog -->
   </div>
   <div class="modal fade" id="showDetailEmployee">
   <div class="modal-dialog">
@@ -148,10 +269,8 @@
         </div>
         <?= form_close() ?>
       </div>
-      <!-- /.modal-content -->
     </div>
-  <!-- /.modal-dialog -->
-  </div>
+</div> -->
 <script type="text/javascript">
   var url = "<?= base_url() ?>";
   var existingTimezone = '';
@@ -174,13 +293,14 @@
             }).then((result) => {
               $("#reboot").val("yes");
               if(result.value==true){
+              // return console.log('akan masuk ke kondisi ajax');
 
                 var formdata = $('#form-validation').serialize();
                 $.ajax({
                   method : "POST",
                   url    : url + "save-institution",
                   data   : formdata,
-                  success: function (){
+                  success: function (res){
                     location.reload();
                   }
                 });
@@ -188,6 +308,7 @@
               
             });
           }else{
+            // return console.log('masuk ke kondisi else');
             $("#reboot").val("");
             var formdata = $('#form-validation').serialize();
             $.ajax({
@@ -230,6 +351,9 @@
   $('.select2').select2({
     dropdownParent: $("#frm-text")
   });
+  $('.select2').select2({
+    dropdownParent: $("#cabang")
+  });
   function addNew(){
     $("#timezone").select2('destroy');
     $("#timezone").val('QXNpYS9KYWthcnRhfFVUQyswNzowMA==');
@@ -248,6 +372,7 @@
     $("#longitude").val("");
     $("#latitude").val("");
     $("#contactnumber").val("");
+    $("#npwp").val("");
     $("#description").val("");
     $("#frmCabang").modal('show');
     
@@ -256,7 +381,7 @@
 
   }
 
-  function edit(id,area,code,name,timezone,address,longitude,latitude,contact,description){
+  function edit(id,area,code,name,timezone,address,longitude,latitude,contact,description,cabang_id){
     existingTimezone = atob(timezone);
 
     $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line("Save Changes") ?>');
@@ -270,10 +395,13 @@
     $(".select2").select2({
       dropdownParent: $("#frm-text"),
       });
+
+    $("#cabang").val(atob(cabang_id)).change();
     $("#address").val(atob(address));
     $("#longitude").val(atob(longitude));
     $("#latitude").val(atob(latitude));
     $("#contactnumber").val(atob(contact));
+    $("#npwp").val(atob(contact));
     $("#description").val(atob(description));
     // mengosongkan existing timezone
     
@@ -347,14 +475,14 @@
 			element = document.getElementById( 'map-canvas' );
 			city = document.querySelector( '.city' );
 
-		mapOptions = {
-			zoom: 12,
-			center: new google.maps.LatLng( <?php echo $new_arr[0]['geoplugin_latitude']; ?>, <?php echo $new_arr[0]['geoplugin_longitude']; ?> ),
-			disableDefaultUI: false, 
-			scrollWheel: true, 
-			draggable: true,
+		// mapOptions = {
+		// 	zoom: 12,
+		// 	center: new google.maps.LatLng( <?php echo $new_arr[0]['geoplugin_latitude']; ?>, <?php echo $new_arr[0]['geoplugin_longitude']; ?> ),
+		// 	disableDefaultUI: false, 
+		// 	scrollWheel: true, 
+		// 	draggable: true,
 
-		};
+		// };
 
 		map = new google.maps.Map( element, mapOptions ); 
 		marker = new google.maps.Marker({

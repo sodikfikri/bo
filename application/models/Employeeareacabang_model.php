@@ -550,6 +550,34 @@ class Employeeareacabang_model extends CI_Model
     return $sql;
   }
 
+  function saveIgnoreDuplicate_temp($dataInsert){
+    $this->db->select("employeeareacabang_employee_id");
+    $where = $dataInsert;
+
+    unset($where["employeeareacabang_date_create"]);
+    unset($where["employeeareacabang_user_add"]);
+
+    $sqlCheck = $this->db->get_where($this->tableName,$where);
+    if($sqlCheck->num_rows()>0){
+      $rows = $sqlCheck->row();
+      $loc_id = $rows->employeeareacabang_id;
+      $insertStatus = "skipped";
+    }else{
+      $insert_query = $this->db->insert_string('tbemployeeareacabang_temp', $dataInsert);
+      $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
+      $this->db->query($insert_query);
+      $loc_id = $this->db->insert_id();
+      $insertStatus = "inserted";
+    }
+
+    $output = [
+      "loc_id" => $loc_id,
+      "insertStatus"  => $insertStatus
+    ];
+
+    return $output;
+  }
+
   function saveIgnoreDuplicate($dataInsert){
     $this->db->select("employeeareacabang_employee_id");
     $where = $dataInsert;

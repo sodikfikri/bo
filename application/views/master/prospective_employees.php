@@ -149,7 +149,8 @@
               <div class="form-group">
                 <label for="intrax-pin" class="col-sm-3 control-label"><?= $this->gtrans->line("Intrax PIN") ?> <span class="text-red">*</span></label>
                 <div class="col-sm-9">
-                  <input type="number" name="intrax-pin" data-validation-engine="validate[required,custom[integer],pinSize[6]]" min="0" maxlength="6" class="form-control" id="intrax-pin" placeholder="123456">
+                  <input type="number" name="intrax-pin" min="0" maxlength="6" class="form-control" id="intrax-pin" placeholder="123456">
+                  <!-- <input type="number" name="intrax-pin" data-validation-engine="validate[required,custom[integer],pinSize[6]]" min="0" maxlength="6" class="form-control" id="intrax-pin" placeholder="123456"> -->
                 </div>
               </div>
             </div>
@@ -324,6 +325,7 @@
     $('input[name="employee-id[]"]:checked').each(function() { 
 		employeeid.push($(this).val()); 
     });
+    // return console.log(employeeid);
     var buyingCount = document.querySelectorAll('input[name="employee-id[]"]:checked').length;
 	if(buyingCount==0){
 	  alert("<?= $this->gtrans->line('Please select at least one employee') ?>");
@@ -334,7 +336,10 @@
 	  data   : {pluginsid:pluginsid,employeeid:employeeid,buyingCount:buyingCount},
 	  success : function(res){
 		  window.location.href = url+"checkout-cart/"+res+"/"+appid;
-		}
+		}, 
+    error: function(e) {
+      console.log('error: ', e);
+    }
 	  });
 	}
   }
@@ -480,6 +485,7 @@
   }
 
   function edit(id){
+    // return console.log('masuk ke sini');
     $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line("Save Changes") ?>');
     $("#frm-text").html('<?= $this->gtrans->line("Edit Employee") ?>');
     $("#id").val(id);
@@ -489,6 +495,7 @@
       data   : {id:id},
       success: function(res){
         var obj = jQuery.parseJSON(res);
+        console.log(obj);
         $("#id").val(id);
         $("#id_image").val(id);
         $("#accountno").val(obj.accountno);
@@ -621,18 +628,18 @@
           var objArr = $("#form-validation").serializeArray();
             $.ajax({
               method : "POST",
-              url    : url + "save-prospective-employees/<?= $this->uri->segment(2); ?>",
+              url    : url + "save-prospective-employees-temp/<?= $this->uri->segment(2); ?>",
               data   : $("#form-validation").serialize(),
               success: function(res){
                 var response = jQuery.parseJSON(res);
                 if(response.response=="ok"){
                   $("#fullname").val("");
                   $("#position").val("");
-				  $("#phone-number").val("");
-				  $("#email").val("");
-				  $("#intrax-pin").val("");
-				  $("#msg").html('');
-				  $("#email-msg").html('');
+                  $("#phone-number").val("");
+                  $("#email").val("");
+                  $("#intrax-pin").val("");
+                  $("#msg").html('');
+                  $("#email-msg").html('');
                   $("#frmEmployee").modal('hide');
                   draw_dt();
                   $("#main-msg").html('<div class="callout callout-'+response.msg.type+'">'+
@@ -648,6 +655,9 @@
                   });
                   $("#accountno").val("");
                 }
+              },
+              error: function(e) {
+                console.log(e);
               }
             });
           return false;
@@ -668,7 +678,7 @@
       confirmButtonText: '<?= $this->gtrans->line("Yes, delete it") ?>!'
     }).then((result) => {
       if (result.value) {
-        window.open(url + 'delete-employee-intrax/' + idemployee,'_self');
+        window.open(url + 'delete-employee-intrax/' + idemployee + '/<?= $this->uri->segment(2); ?>','_self');
       }
     })
   }

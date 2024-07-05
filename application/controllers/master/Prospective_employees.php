@@ -266,7 +266,8 @@ class Prospective_employees extends CI_Controller
 	$appid          = $this->session->userdata("ses_appid");
     $dataUrl		= $this->encryption_org->decode($this->uri->segment(2));
 	
-	$allRecord  = $this->prospective_employees_model->countAvailableAll($appid,$dataUrl);
+	// $allRecord  = $this->prospective_employees_model->countAvailableAll($appid,$dataUrl);
+	$allRecord  = $this->prospective_employees_model->countAvailableAll_temp($appid,$dataUrl);
     
 
     $this->db->order_by("A.employee_account_no","ASC");
@@ -284,9 +285,11 @@ class Prospective_employees extends CI_Controller
       $this->db->where("(select count(tbemployeetemplate.employeetemplate_id) as total from tbemployeetemplate where tbemployeetemplate.employeetemplate_employee_id = A.employee_id) ".$stringFilter,null,false);
     }
     
-	$sql = $this->prospective_employees_model->getAvailable($sArea,$sCabang,$start,$length,$appid,$dataUrl);
+	$sql = $this->prospective_employees_model->getAvailable_temp($sArea,$sCabang,$start,$length,$appid,$dataUrl);
+	// $sql = $this->prospective_employees_model->getAvailable($sArea,$sCabang,$start,$length,$appid,$dataUrl);
 	$this->db->like("A.employee_full_name",$strCari);
-	$recordsFiltered = $this->prospective_employees_model->countAvailableFiltered($sArea,$sCabang,$appid,$dataUrl);
+	$recordsFiltered = $this->prospective_employees_model->countAvailableFiltered_temp($sArea,$sCabang,$appid,$dataUrl);
+	// $recordsFiltered = $this->prospective_employees_model->countAvailableFiltered($sArea,$sCabang,$appid,$dataUrl);
 
     
 
@@ -468,7 +471,8 @@ class Prospective_employees extends CI_Controller
     $this->load->library("encryption_org");
     $encId = $this->input->post("id");
     $id    = $this->encryption_org->decode($encId);
-    $dataEmployee = $this->prospective_employees_model->getById($id);
+    // $dataEmployee = $this->prospective_employees_model->getById($id);
+    $dataEmployee = $this->prospective_employees_model->getById_temp($id);
     if($dataEmployee){
 
       $level  = ($dataEmployee->employee_level==14) ? "admin" : "user";
@@ -573,26 +577,26 @@ class Prospective_employees extends CI_Controller
         // add
         $this->prospective_employees_model->insert($dataSource);
         $employeeID = $this->db->insert_id();
-		$dataInsertLocation = [
-			"appid" => $appid,
-			"employeeareacabang_employee_id" => $employeeID,
-			"employee_area_id" => 0,
-			"employee_cabang_id" => $this->encryption_org->decode($dataUrl),
-			"employeeareacabang_effdt" => $this->timestamp,
-			"employeeareacabang_date_create" => $this->timestamp,
-			"employeeareacabang_user_add" => $userID,
-			"status" => "pending"
-		];
-		$this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
-		$dataInsertBatch = [
-			"appid" => $appid,
-			"employee_id" => $employeeID,
-			"cabang_id" => $this->encryption_org->decode($dataUrl),
-			"batch_name" => 'NEW',
-			"employeebatchcabang_date_create" => $this->timestamp,
-			"employeebatchcabang_user_add" => $userID
-		];
-		$this->employeebatchcabang_model->insert($dataInsertBatch);
+        $dataInsertLocation = [
+          "appid" => $appid,
+          "employeeareacabang_employee_id" => $employeeID,
+          "employee_area_id" => 0,
+          "employee_cabang_id" => $this->encryption_org->decode($dataUrl),
+          "employeeareacabang_effdt" => $this->timestamp,
+          "employeeareacabang_date_create" => $this->timestamp,
+          "employeeareacabang_user_add" => $userID,
+          "status" => "pending"
+        ];
+        $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+        $dataInsertBatch = [
+          "appid" => $appid,
+          "employee_id" => $employeeID,
+          "cabang_id" => $this->encryption_org->decode($dataUrl),
+          "batch_name" => 'NEW',
+          "employeebatchcabang_date_create" => $this->timestamp,
+          "employeebatchcabang_user_add" => $userID
+        ];
+        $this->employeebatchcabang_model->insert($dataInsertBatch);
         $mode = "add";
         setActivity("master employee","add");
         $this->employeehistory_model->insert($employeeID,$this->now,"add");
@@ -624,6 +628,84 @@ class Prospective_employees extends CI_Controller
         echo json_encode($output);
       }
     }
+  }
+
+  function saveEmployeeTemp($dataUrl) {
+    $this->load->library("encryption_org");
+    $this->load->model("employeeareacabang_model");
+    $this->load->model("employeebatchcabang_model");
+    $encId = $this->input->post("id");
+    $accountno = $this->input->post("accountno");
+    $fullname  = $this->input->post("fullname");
+    $position  = $this->input->post("position");
+    $appid     = $this->session->userdata("ses_appid");
+    $level     = "";
+    $password  = NULL;
+
+    $gender       = $this->input->post("gender");
+    $birthday     = "";
+    $phoneNumber  = $this->input->post("phone-number");
+    $email        = $this->input->post("email");
+    $address      = NULL;
+    $intraxPin    = $this->input->post("intrax-pin");
+    $userID     = $this->session->userdata("ses_userid");
+
+    $dataSource= [
+			"appid" => $appid,
+			"employee_account_no" => $accountno,
+			"employee_full_name" => $fullname,
+			"employee_position" => $position,
+			"gender" =>$gender,
+			"phone_number" => $phoneNumber,
+			"email" => $email,
+			"employee_user_add" => $userID,
+			"employee_join_date" => $this->timestamp,
+			"employee_date_create" => $this->timestamp,
+			"employee_license" => "active",
+			"employee_is_active" => "0",
+			"is_del" => "0",
+			"intrax_pin" => $intraxPin,
+			"status_added" => "notactive"
+		];
+
+    $dataSource["employee_password "] = $password;
+
+    $dataSource["employee_level"] = "0";
+    // print_r($encId); return;
+    if($encId==""){
+      $this->prospective_employees_model->insert_temp($dataSource);
+  
+      $employeeID = $this->db->insert_id();
+        $dataInsertLocation = [
+          "appid" => $appid,
+          "employeeareacabang_employee_id" => $employeeID,
+          "employee_area_id" => 0,
+          "employee_cabang_id" => $this->encryption_org->decode($dataUrl),
+          "employeeareacabang_effdt" => $this->timestamp,
+          "employeeareacabang_date_create" => $this->timestamp,
+          "employeeareacabang_user_add" => $userID,
+          "status" => "pending"
+        ];
+        // print_r($dataInsertLocation); return;
+      $this->employeeareacabang_model->saveIgnoreDuplicate_temp($dataInsertLocation);
+    } else {
+      // edit
+      $employeeID = $this->encryption_org->decode($encId);
+      $this->prospective_employees_model->update_temp($dataSource,$employeeID);
+      
+      $mode = "update";
+      // setActivity("master employee","edit");
+      // $add_history = $this->employeehistory_model->insert_temp($employeeID,$this->now,"edit");
+    }
+
+    $output = [
+			"response" => "ok",
+			"code" => "200",
+			"msg" => ["type"=>"success","header"=>"success","msg"=> $this->gtrans->line("Employee has been added successfully")."!"]
+		];
+
+    $this->gtrans->saveNewWords();
+    echo json_encode($output);
   }
   
   function acceptEmployee($dataUrl){
@@ -702,7 +784,7 @@ class Prospective_employees extends CI_Controller
     $pluginsId   = $this->encryption_org->decode($this->input->post('pluginsid'));
 	//add order cart
 	$data_insert  = [
-      "cabang_id"      		=> $pluginsId,
+      "cabang_id_temp"      		=> $pluginsId,
       "price_currency"      => 'IDR',
       "price"         		=> 150000,
       "license_count" 		=> $buyingCount,
@@ -725,6 +807,7 @@ class Prospective_employees extends CI_Controller
       "typeorder"         	=> "new",
       "nota_iboss"       	=> "OKOK"
     ];
+    
 	$insertResult = $this->prospective_employees_model->insertOrder($data_insert);
 	if($insertResult>0){
 		//cancel all order if status is pending
@@ -735,7 +818,8 @@ class Prospective_employees extends CI_Controller
 			  "parent_order_id"  => $insertResult
 			];
 			$employeeid = $this->encryption_org->decode($rowID);
-			$this->employee_model->update($data_update,$employeeid);
+			// $this->employee_model->update($data_update,$employeeid);
+			$this->employee_model->update_temp($data_update,$employeeid);
 		}
 	}
     $strBuy      = $pluginsId."|".$buyingCount."|".$insertResult;
@@ -940,17 +1024,18 @@ class Prospective_employees extends CI_Controller
       return "";
     }
   }
-  function deleteEmployee($encId){
+  function deleteEmployee($encId, $uniq){
     $this->load->model("employeeareacabang_model");
     $this->load->library("encryption_org");
     $id  = $this->encryption_org->decode($encId);
-    $res = $this->prospective_employees_model->delete($id);
+    // $res = $this->prospective_employees_model->delete($id);
+    $res = $this->prospective_employees_model->delete_temp($id);
 
     if($res){
       $this->employeeareacabang_model->setArchive($id);
       setActivity("master employee","delete");
       $this->session->set_userdata("ses_msg",["type"=>"success","header"=>"success","msg"=> $this->gtrans->line("Employee has been deleted successfully")."!"]);
-      redirect("master-prospective-employees");
+      redirect("master-prospective-employees/".$uniq);
     }
   }
 

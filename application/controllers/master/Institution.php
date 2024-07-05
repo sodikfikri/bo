@@ -23,6 +23,7 @@ class Institution extends CI_Controller
     $this->load->model("menu_model");
     $this->load->model("employee_model");
     $this->load->model("institution_model");
+    $this->load->model("cabang_model");
     $this->system_model->checkSession(100);
     $this->listMenu = $this->menu_model->list_menu();
   }
@@ -33,16 +34,17 @@ class Institution extends CI_Controller
     $this->load->helper("timezone");
     $this->load->library("encryption_org");
     $sqlArea = $this->area_model->getAll();
-
+    $dropdown_cabang = $this->cabang_model->getDataSelectBranch();
+    
     $cmbArea = '<select data-validation-engine="validate[]" name="area" id="area" class="form-control"><option value="0" />';
-	$arrArea = explode("|",$this->session->userdata("ses_area"));
+    $arrArea = explode("|",$this->session->userdata("ses_area"));
     foreach ($sqlArea as $rowArea) {
 	  if($this->session->userdata("ses_status")=="admin_area"){
 		if(in_array($rowArea->area_id, $arrArea)){
 		  $cmbArea .= '<option value="'.$rowArea->area_id.'" />'.$rowArea->area_name;
 		}
 	  } else {
-		$cmbArea .= '<option value="'.$rowArea->area_id.'" />'.$rowArea->area_name;
+      $cmbArea .= '<option value="'.$rowArea->area_id.'" />'.$rowArea->area_name;
 	  }
       
     }
@@ -60,7 +62,7 @@ class Institution extends CI_Controller
     }
 
     $cmbTimezone   .= '</select>';
-
+    
     $this->table->set_template($this->tabel_template);
     $this->table->set_heading(
       ["data" => "No","class" => "text-center"],
@@ -77,7 +79,12 @@ class Institution extends CI_Controller
     );
 	
 	$areaid  = !empty($this->input->post("areaid"))? $this->input->post("areaid"): "";
-    $sql = $this->institution_model->getAll();
+  // $sql = $this->institution_model->getAll();
+  $sql = $this->institution_model->getAll_temp();
+  // print_r("<pre>");
+  // print_r($sql);
+  // print_r("</pre>");
+  // die;
     $no = 0;
     foreach ($sql as $row) {
 	  if($this->session->userdata("ses_status")=="admin_area"){
@@ -130,7 +137,8 @@ class Institution extends CI_Controller
 		}
 	  } else {
 	  $no++;
-      $encId = $this->encryption_org->encode($row->cabang_id);
+      $encId = $this->encryption_org->encode($row->id);
+      $cabang_id = base64_encode($row->cabang_id);
       $encArea = base64_encode($row->cabang_area_id);
       $encCode = base64_encode($row->cabang_code);
       $encName = base64_encode($row->cabang_name);
@@ -154,7 +162,8 @@ class Institution extends CI_Controller
         \''.$encLongitude.'\',
         \''.$encLatitude.'\',
         \''.$encContact.'\',
-        \''.$encDescription.'\'
+        \''.$encDescription.'\',
+        \''.$cabang_id.'\'
       )"></i>';
 	  
       $delete  = '<span class="text-red" style="cursor:pointer" onclick="delInstitution(\''.$encId.'\','.$row->totalDevice.','.$row->totalEmployee.')"><i class="fa fa-trash fa-lg "></i></span>';
@@ -184,9 +193,9 @@ class Institution extends CI_Controller
       $data["notif"] =createNotif($msg['type'],$msg['header'],$msg['msg']);
       $this->session->set_userdata("ses_msg");
     }
-
     $data['institutionTable'] = $this->table->generate();
     $data['cmbArea']     = $cmbArea;
+    $data['dropdownCabang']     = $dropdown_cabang;
     $data['cmbTimezone'] = $cmbTimezone;
     $parentViewData = [
       "title"   => $this->gtrans->line("Master Institution"),  // title page
@@ -228,30 +237,47 @@ class Institution extends CI_Controller
     $area = $this->input->post("area");
     $institutioncode  = $this->input->post("institutioncode");
     $institutionname  = $this->input->post("institutionname");
-    $strTimezone = $this->input->post("timezone");
-    $arrTimezone = explode("|",base64_decode($strTimezone));
+    // $strTimezone = $this->input->post("timezone");
+    // $arrTimezone = explode("|",base64_decode($strTimezone));
     $address = $this->input->post("address");
-    $longitude = $this->input->post("longitude");
-    $latitude = $this->input->post("latitude");
-    $contactnumber = $this->input->post("contactnumber");
+    // $longitude = $this->input->post("longitude");
+    // $latitude = $this->input->post("latitude");
+    // $contactnumber = $this->input->post("contactnumber");
+    $contactnumber = $this->input->post("npwp");
     $description = $this->input->post("description");
 
     $dataSource = [
       "cabang_area_id" => 0,
       "cabang_code" => $institutioncode,
-      "cabang_timezone" => $arrTimezone[0],
-      "cabang_utc" => $arrTimezone[1],
+      // "cabang_timezone" => $arrTimezone[0],
+      // "cabang_utc" => $arrTimezone[1],
+      'cabang_id' => $this->input->post('cabang'),
       "cabang_name" => $institutionname,
       "cabang_address" => $address,
-      "longitude" => $longitude,
-      "latitude" => $latitude,
+      // "longitude" => $longitude,
+      // "latitude" => $latitude,
       "cabang_contactnumber" => $contactnumber,
       "cabang_keterangan" => $description
     ];
+    // print_r($dataSource); return;
+    // $dataSource = [
+    //   "cabang_area_id" => 0,
+    //   "cabang_code" => $institutioncode,
+    //   "cabang_timezone" => $arrTimezone[0],
+    //   "cabang_utc" => $arrTimezone[1],
+    //   'cabang_id' => $this->input->post('cabang'),
+    //   "cabang_name" => $institutionname,
+    //   "cabang_address" => $address,
+    //   "longitude" => $longitude,
+    //   "latitude" => $latitude,
+    //   "cabang_contactnumber" => $contactnumber,
+    //   "cabang_keterangan" => $description
+    // ];
 
     if($encId==""){
       // add
-      $res = $this->institution_model->insert($dataSource);
+      // $res = $this->institution_model->insert($dataSource);
+      $res = $this->institution_model->insert_temp($dataSource);
       if($res){
         setActivity("master institution","add");
         $this->session->set_userdata("ses_msg",["type"=>"success","header"=>"Success","msg"=> $this->gtrans->line("Institution has been added successfully")."!"]);
@@ -267,7 +293,8 @@ class Institution extends CI_Controller
       $id = $this->encryption_org->decode($encId);
       $cabangId = $id;
 
-      $res = $this->institution_model->update($dataSource,$id);
+      // $res = $this->institution_model->update($dataSource,$id);
+      $res = $this->institution_model->update_temp($dataSource,$id);
       if(!empty($this->input->post("reboot")) && $this->input->post("reboot")=="yes"){
         $this->device_model->setReboot("yes",$area,$cabangId,$appid);
       }
@@ -280,6 +307,30 @@ class Institution extends CI_Controller
         redirect("master-institution");
       }
     }
+  }
+
+  function saveData() {
+    $params = [
+      'cabang_code' => $this->input->post('institutioncode'),
+      'cabang_name' => $this->input->post('institutionname'),
+      'cabang_id' => $this->input->post('cabang'),
+      'cabang_address' => $this->input->post('address'),
+      'cabang_contactnumber' => $this->input->post('npwp'),
+      'cabang_keterangan' => $this->input->post('description'),
+      'cabang_date_create' =>  (new DateTime())->format('Y-m-d H:i:s')
+    ];
+    
+    $ins = $this->cabang_model->saveData($params);
+    
+    if ($ins) {
+      setActivity("master institution","add");
+      $this->session->set_userdata("ses_msg",["type"=>"success","header"=>"Success","msg"=> $this->gtrans->line("Institution has been added successfully")."!"]);
+      $this->gtrans->saveNewWords();
+    } else {
+      $this->session->set_userdata("ses_msg",["type"=>"error","header"=>"Failed","msg"=> $this->gtrans->line("Failed to add data institution")."!"]);
+      $this->gtrans->saveNewWords();
+    }
+    redirect("master-institution");
   }
 
   function deleteCabang($encId){

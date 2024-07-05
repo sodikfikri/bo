@@ -3,6 +3,7 @@
 application/cache/*
 !application/cache/index.html
 
+system/cache
 sys_upload
 storage
 asset

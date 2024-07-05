@@ -18,4 +18,11 @@ class Schedule_model extends CI_Model
         return $response->result();
     }
 
+    function RemoveHoliday($ids) {
+        $this->db->where_in('id', $ids);
+        $this->db->delete('tbholidays');
+
+        return $this->db->affected_rows();
+    }
+
 }

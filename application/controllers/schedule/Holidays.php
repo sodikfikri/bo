@@ -74,6 +74,7 @@ class Holidays extends CI_Controller
       
             $notif    = createNotif($arrNotif['type'],$arrNotif['header'],$arrNotif['msg']);
             $data['notif'] = $notif;
+
             $this->session->unset_userdata("ses_notif");
         }
 
@@ -111,12 +112,12 @@ class Holidays extends CI_Controller
         $data = [];
 
         for($n = 0; $n <= $diff->days; $n++) {
-            print_r($n); 
             if ($n == 0) {
                 $dt = [
                     'name' => $this->input->post('holiday_name'),
                     'start_time' => $start_date->format('Y-m-d'),
                     'holiday_type' => 'Cuti',
+                    'color' => $this->input->post('colour'),
                     'created_at' => (new DateTime())->format('Y-m-d H:i:s')
                 ];
 
@@ -126,6 +127,7 @@ class Holidays extends CI_Controller
                     'name' => $this->input->post('holiday_name'),
                     'start_time' => $start_date->modify('1 day')->format('Y-m-d'),
                     'holiday_type' => 'Cuti',
+                    'color' => $this->input->post('colour'),
                     'created_at' => (new DateTime())->format('Y-m-d H:i:s')
                 ];
 
@@ -141,6 +143,15 @@ class Holidays extends CI_Controller
             $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Fail to add data')]);
         }
         return redirect("schedule-holidays");
+    }
 
+    function delData() {
+        $del = $this->schedule_model->RemoveHoliday($this->input->post('id_delete'));
+        if ($del) {
+            $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('Success delete data')]);
+        } else {
+            $this->session->set_userdata('ses_notif',['type'=>'error','header'=>'Failed','msg'=> $this->gtrans->line('Failed to delete data')]);
+        }
+        return redirect("schedule-holidays");
     }
 }

@@ -202,11 +202,41 @@ class Institution_model extends CI_Model
         count(tbemployeeareacabang_temp.employeeareacabang_id)
         from
         tbemployeeareacabang_temp
+        join tbemployee_temp on tbemployeeareacabang_temp.employeeareacabang_employee_id =  tbemployee_temp.employee_id and tbemployee_temp.is_del = 0
         where
 		tbemployeeareacabang_temp.appid = tbcabang_temp.appid AND
         tbemployeeareacabang_temp.employee_cabang_id = tbcabang_temp.id
       ) as totalEmployee
       ");
+      $this->db->select("
+      (
+        select
+        IFNULL(COUNT(tbemployeeareacabang_temp.employeeareacabang_id), 0)
+        from
+        tbemployeeareacabang_temp
+        join tbemployee_temp on tbemployeeareacabang_temp.employeeareacabang_employee_id =  tbemployee_temp.employee_id and tbemployee_temp.is_del = 0
+        where
+        tbemployeeareacabang_temp.appid = tbcabang_temp.appid AND
+        tbemployeeareacabang_temp.employee_cabang_id = tbcabang_temp.id AND
+        tbemployee_temp.parent_order_id is null
+      ) as total_unpaid
+      ");
+      $this->db->select("
+      (
+        select
+        IFNULL(COUNT(tbemployeeareacabang_temp.employeeareacabang_id), 0)
+        from
+        tbemployeeareacabang_temp
+        join tbemployee_temp on tbemployeeareacabang_temp.employeeareacabang_employee_id =  tbemployee_temp.employee_id and tbemployee_temp.is_del = 0
+        join `order` as ord on tbemployee_temp.parent_order_id = ord.order_id
+        where
+        tbemployeeareacabang_temp.appid = tbcabang_temp.appid AND
+        tbemployeeareacabang_temp.employee_cabang_id = tbcabang_temp.id AND
+        tbemployee_temp.parent_order_id IS NOT NULL AND
+        ord.status = 'paid'
+      ) as total_paid
+      ");
+
 	  
 	  $this->db->select("
       (
@@ -565,5 +595,10 @@ class Institution_model extends CI_Model
       $result[] = createIdentification($row->cabang_name);
     }
     return $result;
+  }
+
+  function delInstitution($id) {
+    $this->db->where('id', $id);
+    return $this->db->update('tbcabang_temp', ['is_del' => 1]);
   }
 }

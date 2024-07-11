@@ -61,15 +61,19 @@
           <div class="form-group">
             <label for="institutioncode" class="col-sm-3 control-label"><?= $this->gtrans->line("Institution Code") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
-              <input onchange="checkExists('institutioncode','msg-code','check-cabang-code-exists','<?= $this->gtrans->line("Code was used by deleted or existing data") ?>','<?= $this->gtrans->line("Institution Code Is Available") ?>',$('#id').val())" name="institutioncode" data-validation-engine="validate[required,maxSize[50],custom[onlyLetterNumberSemiSpesial]]" type="text" class="form-control" id="institutioncode" placeholder="<?= $this->gtrans->line("Institution Code") ?>">
+              <input name="institutioncode" data-validation-engine="validate[required,maxSize[50],custom[onlyLetterNumberSemiSpesial]]" type="text" class="form-control" id="institutioncode" placeholder="<?= $this->gtrans->line("Institution Code") ?>">
               <div id="msg-code"></div>
+              <!-- <input onchange="checkExists('institutioncode','msg-code','check-cabang-code-exists','<?= $this->gtrans->line("Code was used by deleted or existing data") ?>','<?= $this->gtrans->line("Institution Code Is Available") ?>',$('#id').val())" name="institutioncode" data-validation-engine="validate[required,maxSize[50],custom[onlyLetterNumberSemiSpesial]]" type="text" class="form-control" id="institutioncode" placeholder="<?= $this->gtrans->line("Institution Code") ?>">
+              <div id="msg-code"></div> -->
             </div>
           </div>
           <div class="form-group">
             <label for="institutionname" class="col-sm-3 control-label"><?= $this->gtrans->line("Institution Name") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
-              <input onchange="checkExists('institutionname','msg-name','check-cabang-name-exists','<?= $this->gtrans->line("Institution Name was used by existing data") ?>','<?= $this->gtrans->line("Institution Name Is Available") ?>',$('#id').val())" name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
+              <input name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
               <div id="msg-name"></div>
+              <!-- <input onchange="checkExists('institutionname','msg-name','check-cabang-name-exists','<?= $this->gtrans->line("Institution Name was used by existing data") ?>','<?= $this->gtrans->line("Institution Name Is Available") ?>',$('#id').val())" name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
+              <div id="msg-name"></div> -->
             </div>
           </div>
           <div class="form-group">
@@ -96,7 +100,7 @@
             <label for="address" class="col-sm-3 control-label"><?= $this->gtrans->line("Address") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
               <input name="address" type="text" data-validation-engine="validate[required]" class="form-control" id="address" placeholder="<?= $this->gtrans->line("Address") ?>">
-			  <label style="color:#FF9800">nb: memilih rekomendasi lokasi dengan menggunakan arah panah, selanjutnya tekan tab untuk lokasi yang dipilih.</label>
+			  <!-- <label style="color:#FF9800">nb: memilih rekomendasi lokasi dengan menggunakan arah panah, selanjutnya tekan tab untuk lokasi yang dipilih.</label> -->
             </div>
           </div>
 		  <!-- <div class="form-group">
@@ -437,7 +441,7 @@
 	$("#loader").fadeOut(1);
   }
   function delInstitution(idcabang,totalDevice,totalEmployee){
-    if(totalDevice == 0 && totalEmployee== 0){
+    if(totalEmployee== 0){
       Swal.fire({
         title: '<?= $this->gtrans->line("Are you sure") ?>?',
         text: "<?= $this->gtrans->line("You won't be able to revert this") ?>!",

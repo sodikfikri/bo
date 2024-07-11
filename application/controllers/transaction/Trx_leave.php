@@ -52,46 +52,43 @@ class Trx_leave extends CI_Controller
 
         $params = [];
         if ($this->input->post()) {
-            if ($this->input->post('category') == 0) {
-                # code...
-                $is_filter = false;
-            } else {
+            if ($this->input->post('category') != 0) {
+                $params['category'] = $this->input->post('category');
+            } 
+            
+            if ($this->input->post('start_date') && $this->input->post('end_date')) {
                 $params['start_date'] = $this->input->post('start_date');
                 $params['end_date'] = $this->input->post('end_date');
-                $params['category'] = $this->input->post('category');
-    
-                $is_filter = true;
             }
         }
         $data_cats = $this->leave_model->getcategoryList($this->appid);
 
-        $data_leave = $this->leave_model->leaveList($this->appid, $is_filter, $params);
+        $data_leave = $this->leave_model->leaveList($this->appid, $params);
 
-        // print_r($data_leave); die;
-
+        
         foreach($data_leave as $key => $items) {
             $encId = $this->encryption_org->encode($items->id);
             $this->table->add_row(
                 [
                     'data' => '<div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name id="checkid[]" value="'.$encId.'">
-                                    <label class="form-check-label" for="checkid[]"></label>
+                                    <input class="form-check-input checkid" type="checkbox" name="checkid" id="checkid" value="'.$encId.'">
+                                    <label class="form-check-label" for="checkid"></label>
                                 </div>',
                     'style' => 'text-align: center;'
                 ],
                 $items->employee_full_name,
                 $items->category_name,
                 [
-                    'data' => $items->category_id == 1 || $items->category_id == 3 ? $items->start_date : (new DateTime($items->created_at))->format('Y-m-d') .' '. $items->start_time,
+                    'data' => $items->category_id == 1 || $items->category_id == 3 ? $items->start_date : $items->start_date .' '. $items->start_time,
                     'style' => 'text-align:center;'
                 ],
                 [
-                    'data' => $items->category_id == 1 || $items->category_id == 3 ? $items->end_date : (new DateTime($items->created_at))->format('Y-m-d') .' '.  $items->end_time,
+                    'data' => $items->category_id == 1 || $items->category_id == 3 ? $items->end_date : $items->end_date .' '.  $items->end_time,
                     'style' => 'text-align:center;'
                 ],
                 $items->reason,
                 [
-                    'data' => '<span style="cursor:pointer" data-id="'.$this->encryption_org->encode($items->id).'" class="text-blue btn-download"><i  class="fa fa-download fa-lg"></i></span>',
+                    'data' => '<span style="cursor:pointer" data-id="'.$this->encryption_org->encode($items->id).'" data-name="'.$items->doc_name.'" class="text-blue btn-show-files"><i  class="fa fa-file fa-lg"></i></span>',
                     'style' => 'text-align:center;'
                 ],
                 [
@@ -144,7 +141,7 @@ class Trx_leave extends CI_Controller
 
     function toxlsx() {
 
-        $data = $this->leave_model->leaveList($this->appid);
+        $data = $this->leave_model->leaveList($this->appid,[]);
 
         echo json_encode($data);
     }

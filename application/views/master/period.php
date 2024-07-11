@@ -44,12 +44,21 @@
           <form action="<?= base_url('active-period/submit') ?>" method="post">
             <input type="hidden" name="id" id="id" value="0">
             <div class="mb-3">
-              <label for="start_date" class="form-label">Start Date</label>
+              <label for="start_date" class="form-label">Start</label>
               <input type="text" class="form-control" name="start_date" id="start_date" required>
             </div>
             <div class="mb-3">
-              <label for="end_date" class="form-label">End Date</label>
+              <label for="end_date" class="form-label">End</label>
               <input type="text" class="form-control" name="end_date" id="end_date" required>
+            </div>
+            <div class="mb-3">
+              <label for="type" class="form-label">Type</label>
+              <!-- <input type="text" class="form-control" name="end_date" id="end_date" required> -->
+               <select class="form-control" name="type" id="type" required>
+                <option value="">Select Type</option>
+                <option value="1">Monthly</option>
+                <option value="2">Weekly</option>
+               </select>
             </div>
             <div class="mb-3">
               <label for="status" class="form-label">Status</label>
@@ -76,6 +85,7 @@
             $('.modal-title').html('Add Data')
             $('#id').val('0')
             $('#start_date').val('')
+            $('#type').val('')
             $('#end_date').val('')
             $('#status').val('0').change()
             $('#exampleModal').modal('show')
@@ -86,6 +96,7 @@
             $('#id').val($(this).data('id'))
             $('#start_date').val($(this).data('sdate'))
             $('#end_date').val($(this).data('edate'))
+            $('#type').val($(this).data('type')).change()
             $('#status').val($(this).data('status')).change()
 
             $('#exampleModal').modal('show')

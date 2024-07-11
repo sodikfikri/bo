@@ -36,14 +36,10 @@ class Leave_categories extends CI_Controller
 
     public function index() {
 
-        // print_r('masuk'); die;
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
-            ["data"=> '<div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="" id="head-check">
-                            <label class="form-check-label" for="head-check"></label>
-                        </div>', "class"=>"text-center"],
-            ["data"=> $this->gtrans->line("Name"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Name"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Icon"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Created At"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
@@ -55,18 +51,18 @@ class Leave_categories extends CI_Controller
             $encId = $this->encryption_org->encode($items->id);
             $this->table->add_row(
                 [
-                    'data' => '<div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name id="checkid[]" value="'.$encId.'">
-                                    <label class="form-check-label" for="checkid[]"></label>
-                                </div>',
-                    'style' => 'text-align: center;'
+                    'data' => $key+1,
+                    'style' => 'text-align:center;'
                 ],
                 $items->name,
                 [
                     'data' => $items->icon ? '<img style="height: 30px;" src="'.base_url() . ltrim($items->icon, '.').'">' : '',
                     'style' => 'text-align:center;'
                 ],
-                $items->created_at,
+                [
+                    'data' => $items->created_at,
+                    'style' => 'text-align:center;'
+                ],
                 [
                     'data' => '<span style="cursor:pointer" data-id="'.$encId.'" data-name="'.$items->name.'" data-imgname="'.basename($items->icon).'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
                                 <span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',

@@ -28,12 +28,12 @@ class Period_model extends CI_Model
         return $this->db->update('tbperiod', ['is_delete' => 1]);
     }
 
-    function validateStoreData($appid, $id = null) {
+    function validateStoreData($appid, $id = null, $type = null) {
         $parmas_update = '';
         if ($id) {
             $parmas_update = ' AND id <> ' . $id;
         } 
-        $sql = "select * from db_inact.tbperiod where appid = '$appid' and is_active = 1 and is_delete = 0 $parmas_update";
+        $sql = "select * from db_inact.tbperiod where appid = '$appid' and is_active = 1 and is_delete = 0 and type = $type $parmas_update";
         $response = $this->db->query($sql);
 
         return $response->result();

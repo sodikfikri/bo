@@ -557,7 +557,7 @@ class Employeeareacabang_model extends CI_Model
     unset($where["employeeareacabang_date_create"]);
     unset($where["employeeareacabang_user_add"]);
 
-    $sqlCheck = $this->db->get_where($this->tableName,$where);
+    $sqlCheck = $this->db->get_where('tbemployeeareacabang_temp',$where);
     if($sqlCheck->num_rows()>0){
       $rows = $sqlCheck->row();
       $loc_id = $rows->employeeareacabang_id;

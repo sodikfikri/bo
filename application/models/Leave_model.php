@@ -105,17 +105,15 @@ class Leave_model extends CI_Model
     }
 
     // ======================== Transaction Leave ======================== //
-    function leaveList($appid, $is_filter, $params) {
+    function leaveList($appid, $params) {
         $sql_filter = '';
         
-        if ($is_filter) {
-            if ($params['start_date']) {
-                $sql_filter = ' DATE_FORMAT(lv.start_date, "%Y-%m-%d") >= "'.$params['start_date'].'" AND DATE_FORMAT(lv.end_date, "%Y-%m-%d")  <= "' .$params['end_date']. '"';
-            }
+        if ($params['start_date']) {
+            $sql_filter .= ' AND DATE_FORMAT(lv.start_date, "%Y-%m-%d") >= "'.$params['start_date'].'" AND DATE_FORMAT(lv.end_date, "%Y-%m-%d")  <= "' .$params['end_date']. '"';
+        }
 
-            if ($params['category']) {
-                $sql_filter = ' AND cats.id = ' . $params['category'];       
-            }
+        if ($params['category']) {
+            $sql_filter .= ' AND cats.id = ' . $params['category'];       
         }
         $sql = "SELECT 
                     lv.*, emp.employee_full_name, cats.name category_name FROM tbleaveclass lv 

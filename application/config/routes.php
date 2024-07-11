@@ -223,6 +223,12 @@ $route['employee-leave-file/(:any)'] = 'transaction/trx_leave/download_file/$1';
 $route['employee-leave/export'] = 'transaction/trx_leave/toxlsx';
 $route['employee-leave/delete'] = 'transaction/trx_leave/deleteData';
 
+$route['departement'] = 'master/departement';
+$route['departement-parent'] = 'master/departement/getparent';
+$route['departement-submit'] = 'master/departement/savedepartement';
+$route['departement-detail'] = 'master/departement/detaildata';
+$route['departement-delete/(:any)'] = 'master/departement/deletedata/$1';
+
 $route['active-period'] = 'master/period';
 $route['active-period/submit'] = 'master/period/submitdata';
 $route['active-period/delete/(:any)'] = 'master/period/deldata/$1';

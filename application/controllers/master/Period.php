@@ -39,8 +39,9 @@ class Period extends CI_Controller
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
             // ["data"=> $this->gtrans->line("#"), "class"=>"text-center"],
-            ["data"=> $this->gtrans->line("Start Date"), "class"=>"text-right"],
-            ["data"=> $this->gtrans->line("End Date"), "class"=>"text-right"],
+            ["data"=> $this->gtrans->line("Start"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("End"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Type"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Status"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Created At"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
@@ -52,12 +53,16 @@ class Period extends CI_Controller
             $encId = $this->encryption_org->encode($items->id);
             $this->table->add_row(
                 [
-                    'data' => $items->start_date < 10 ? '0'.$items->start_date:$items->start_date,
-                    'style' => 'text-align:right'
+                    'data' => $items->start < 10 ? '0'.$items->start:$items->start,
+                    'style' => 'text-align:center'
                 ],
                 [
-                    'data' => $items->end_date < 10 ? '0'.$items->end_date:$items->end_date,
-                    'style' => 'text-align:right' 
+                    'data' => $items->end < 10 ? '0'.$items->end:$items->end,
+                    'style' => 'text-align:center' 
+                ],
+                [
+                    'data' => $items->type == 1 ? 'Monthly' : 'Weekly',
+                    'style' => 'text-align:center' 
                 ],
                 [
                     'data' => $items->is_active != 0 ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>',
@@ -68,7 +73,7 @@ class Period extends CI_Controller
                     'style' => 'text-align:center'
                 ],
                 [
-                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" data-sdate="'.$items->start_date.'" data-edate="'.$items->end_date.'" data-status="'.$items->is_active.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" data-sdate="'.$items->start.'" data-edate="'.$items->end.'" data-status="'.$items->is_active.'" data-type="'.$items->type.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
                                 <span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
                     'style' => 'text-align:center;'
                 ]
@@ -110,14 +115,15 @@ class Period extends CI_Controller
         $id = $this->input->post('id');
         $params = [
             'appid' => $this->appid,
-            'start_date' => $this->input->post('start_date'),
-            'end_date' => $this->input->post('end_date'),
+            'start' => $this->input->post('start_date'),
+            'end' => $this->input->post('end_date'),
+            'type' => $this->input->post('type'),
             'is_active' => $this->input->post('status'),
         ];
 
         if ($id == 0) {
             if ($this->input->post('status') == 1) {
-                $validate = $this->period_model->validateStoreData($this->appid);
+                $validate = $this->period_model->validateStoreData($this->appid, null, $params['type']);
                 if (count($validate) != 0) {
                     $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Cannot add data with active status')]);
                     return redirect("active-period");
@@ -135,7 +141,7 @@ class Period extends CI_Controller
             $this->load->library("encryption_org");
             $pid = $this->encryption_org->decode($id);
             if ($this->input->post('status') == 1) {
-                $validate = $this->period_model->validateStoreData($this->appid, $pid);
+                $validate = $this->period_model->validateStoreData($this->appid, $pid, $params['type']);
                 if (count($validate) != 0) {
                     $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Cannot change data with active status')]);
                     return redirect("active-period");

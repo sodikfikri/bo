@@ -852,6 +852,8 @@ class Prospective_employees_model extends CI_Model
 
     $this->db->group_by("A.employee_id");
     $sql = $this->db->get();
+    // $sql = $this->db->get_compiled_select();
+    // return $sql;
     return $sql;
   }
   function getAvailable($areaid,$cabangid,$record_start,$record_length,$appid,$dataUrl)

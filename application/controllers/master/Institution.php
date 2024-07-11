@@ -67,14 +67,15 @@ class Institution extends CI_Controller
     $this->table->set_heading(
       ["data" => "No","class" => "text-center"],
       ["data" => $this->gtrans->line("Institution Code"),"class" => ""],
-      ["data" => $this->gtrans->line("Timezone"),"class" => "text-center"],
+      // ["data" => $this->gtrans->line("Timezone"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Name"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Address"),"class" => "text-center"],
-      ["data" => $this->gtrans->line("Longitude"),"class" => "text-center"],
-      ["data" => $this->gtrans->line("Latitude"),"class" => "text-center"],
+      // ["data" => $this->gtrans->line("Longitude"),"class" => "text-center"],
+      // ["data" => $this->gtrans->line("Latitude"),"class" => "text-center"],
       ["data" => $this->gtrans->line("NPWP"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Description"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Total Employee"),"class" => "text-center"],
+      ["data" => $this->gtrans->line("Status"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Option"),"class" => "text-center"]
     );
 	
@@ -90,6 +91,7 @@ class Institution extends CI_Controller
 	  if($this->session->userdata("ses_status")=="admin_area"){
 		$arrArea = explode("|",$this->session->userdata("ses_area"));
 		if(in_array($row->cabang_area_id, $arrArea)){
+      $id = $this->encryption_org->encode($row->id);
 		  $no++;
 		  $encId = $this->encryption_org->encode($row->cabang_id);
 		  $encArea = base64_encode($row->cabang_area_id);
@@ -119,7 +121,7 @@ class Institution extends CI_Controller
 		  )"></i>';
 		  
 		  $delete  = '<span class="text-red" style="cursor:pointer" onclick="delInstitution(\''.$encId.'\','.$row->totalDevice.','.$row->totalEmployee.')"><i class="fa fa-trash fa-lg "></i></span>';
-		  $detailEmployee  = '<span class="text-blue" style="cursor:pointer" onclick="detail(\''.$row->cabang_id.'\')">'.$row->waitingToPay.'</span>';
+		  $detailEmployee  = '<span class="text-blue" style="cursor:pointer" onclick="detail(\''.$row->id.'\')">'.$row->waitingToPay.'</span>';
 		  $option  = $btnEdit.' '.$delete;
 		  $this->table->add_row(
 			["data" => $no,"class" => "text-center"],
@@ -132,6 +134,7 @@ class Institution extends CI_Controller
 			$row->cabang_contactnumber,
 			$row->cabang_keterangan,
 			["data" => $detailEmployee,"class" => "text-center"],
+			['data' => '<span class="text-green">Paid: '.$row->total_paid.'</span></br><span class="text-red">Unpaid: '.$row->total_unpaid.'</span>', 'class' => 'text-center'],
 			$option
 		  );
 		}
@@ -172,14 +175,15 @@ class Institution extends CI_Controller
       $this->table->add_row(
         ["data" => $no,"class" => "text-center"],
         ["data" => $row->cabang_code, "class" => ""],
-        $row->cabang_timezone." (".$row->cabang_utc.")",
+        // $row->cabang_timezone." (".$row->cabang_utc.")",
         $row->cabang_name,
         $row->cabang_address,
-        $row->longitude,
-        $row->latitude,
+        // $row->longitude,
+        // $row->latitude,
         $row->cabang_contactnumber,
         $row->cabang_keterangan,
-		["data" => $detailEmployee,"class" => "text-center"],
+        ["data" => $detailEmployee,"class" => "text-center"],
+        ['data' => '<span class="text-green">Paid: '.$row->total_paid.'</span></br><span class="text-red">Unpaid: '.$row->total_unpaid.'</span>', 'class' => 'text-center'],
         $option
       );
 	  }
@@ -392,5 +396,21 @@ class Institution extends CI_Controller
     }else{
       echo "notExists";
     }
+  }
+
+  function deleteInstitution($encId) {
+    $id = $this->encryption_org->decode($encId);
+
+    $del = $this->institution_model->delInstitution($id);
+    if ($del) {
+        setActivity("master institution","delete");
+        $this->session->set_userdata("ses_msg",["type"=>"success","header"=>"Success","msg"=> $this->gtrans->line("Success delete institution")."!"]);
+        $this->gtrans->saveNewWords();
+    } else {
+      $this->session->set_userdata("ses_msg",["type"=>"error","header"=>"Failed","msg"=> $this->gtrans->line("Failed to delete instituion")."!"]);
+      $this->gtrans->saveNewWords();
+    }
+
+    redirect("master-institution");
   }
 }

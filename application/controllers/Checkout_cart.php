@@ -74,7 +74,7 @@ class Checkout_cart extends CI_Controller
     $amount = 0;
     $amount += remove_decimal($price);
     $amount = $this->session->userdata("ses_appid") == "IA01M6858F20210906256" ? 100 : $amount;
-
+	// print_r($amount); die;
 	$activeOrder = $this->checkout_cart_model->getActiveOrder($subs_id);
 	if($activeOrder==false){
 		$data = array(

@@ -884,11 +884,11 @@ class Prospective_employees extends CI_Controller
 			  }*/
 			  // ok
 			  // $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
-			  $getEmail = $this->employee_model->getEmailAvailable_temp($appid,$row["email"]);
+			  // $getEmail = $this->employee_model->getEmailAvailable_temp($appid,$row["email"]);
 			  // pengecekan format email
 			  if(filter_var($row["email"], FILTER_VALIDATE_EMAIL)){
 				  // cek available email
-				  if($getEmail==0) {
+				  // if($getEmail==0) {
 					  // pengecekan karakter spesial
 					  $spCharCode     = isSpecialCharExists($row["employeeCode"],["-","."]);
 					  $spCharName     = isSpecialCharExists($row["employeeName"],["-","`",".","(",")"]);
@@ -989,9 +989,9 @@ class Prospective_employees extends CI_Controller
 						  $error[] = 'Special Character "'.$spCharName.'" found on field "NAMA KARYAWAN" line '.$line;
 						}
 					  }
-				  } else {
-					$error[] = 'There is error email unavailable on line '.$line;
-				  }
+				  // } else {
+					// $error[] = 'There is error email unavailable on line '.$line;
+				  // }
 			  }else{
 				 $error[] = 'There is error format email on line '.$line;
 			  }

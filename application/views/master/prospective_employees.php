@@ -776,18 +776,6 @@
     });
   }
 
-  function check() {
-    $.ajax({
-	  url: url + "checkQris",
-	  type: "POST",
-	  data: {invoiceId:'INV77900101388',refNo:'ewm0z9tXLCg1PnDQ7hTbxcJMK6AId3kj'},
-	  success: function (res) {
-        result = JSON.parse(res);
-	  },
-	});
-  }
-  check()
-
   $(document).ready(function(){
     $("#frm-push").submit(function(){
       return false;

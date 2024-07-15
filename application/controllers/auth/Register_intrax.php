@@ -258,7 +258,8 @@ class Register_intrax extends CI_Controller
       </body>
     </html>';
     $this->load->library("intermailer");
-    $this->intermailer->initialize();
+    // $this->intermailer->initialize();
+    $this->intermailer->initialize_allin();
     $this->intermailer->to([$email=>$userName]);
     $this->intermailer->set_content("OTP Code for InAct Registration",$body_msg,"Alt Body tes");
     if($this->intermailer->send())

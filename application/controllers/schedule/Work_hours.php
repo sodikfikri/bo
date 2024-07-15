@@ -34,9 +34,42 @@ class Work_hours extends CI_Controller
     }
 
     function index() {
+        $this->table->set_template($this->tabel_template);
+        $this->table->set_heading(
+            ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Name"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Location"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Unit"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
+        );
+
+        $data['dataTable'] = $this->table->generate();
         $parentViewData = [
             "title"   => "Jam Kerja",  // title page
             "content" => "schedule/work_hours",  // content view
+            "viewData"=> $data,
+            "listMenu"=> $this->listMenu,
+            "varJS" => ["url" => base_url()],
+            "externalCSS" => [
+                base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
+            ],
+            "externalJS" => [
+                base_url("asset/template/bower_components/datatables.net/js/jquery.dataTables.min.js"),
+                base_url("asset/template/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"),
+                "https://cdn.jsdelivr.net/npm/sweetalert2@8",
+                base_url("asset/js/checkCode.js"),
+                base_url("asset/js/user.js")
+        
+            ]
+        ];
+        $this->load->view("layouts/main",$parentViewData);
+        $this->gtrans->saveNewWords();
+    }
+
+    function saveData() {
+        $parentViewData = [
+            "title"   => "Jam Kerja",  // title page
+            "content" => "schedule/work_hours_add",  // content view
             "viewData"=> [],
             "listMenu"=> $this->listMenu,
             "varJS" => ["url" => base_url()],

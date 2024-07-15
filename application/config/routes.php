@@ -90,6 +90,7 @@ $route['master-user'] = 'master/user';
 $route['save-user']   = 'master/user/save_user';
 
 $route['schedule-work-hours'] = 'schedule/work_hours';
+$route['schedule-work-hours-submit'] = 'schedule/work_hours/savedata';
 
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';

@@ -353,7 +353,8 @@ class Intrax extends CI_Controller{
         </body>
         </html>';
         $this->load->library("intermailer");
-        $this->intermailer->initialize();
+        // $this->intermailer->initialize();
+        $this->intermailer->initialize_allin();
         $this->intermailer->to([$mailData->pic_email=>$mailData->pic_email]);
         $this->intermailer->set_content("InTrax Activation Information",$body_msg,"Alt Body tes");
         if($this->intermailer->send())

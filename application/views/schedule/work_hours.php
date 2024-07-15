@@ -16,11 +16,11 @@
           <div class="row">
             <div class="col-md-12">
               <!-- <?= !empty($notif) ? $notif : "" ?> -->
-              <!-- <a href="<?= base_url("add-user") ?>" class="btn btn-primary"><i class="fa  fa-user-plus"></i> <?= $this->gtrans->line('Add Data') ?></a> -->
+              <a href="<?= base_url("schedule-work-hours-submit") ?>" class="btn btn-primary"><i class="fa fa-clock-o" style="padding-right: 5px"></i> <?= $this->gtrans->line('Add Data') ?></a>
 
             </div>
             <div class="col-md-12" style="margin-top:10px">
-              <?= !empty($userTable) ? $userTable : "" ?>
+              <?= !empty($dataTable) ? $dataTable : "" ?>
             </div>
           </div>
         </div>

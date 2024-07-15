@@ -126,7 +126,8 @@ class Error_log extends CI_Controller
       $logPath  = FCPATH.DIRECTORY_SEPARATOR."application".DIRECTORY_SEPARATOR."logs".DIRECTORY_SEPARATOR.$fileName;
       if(file_exists($logPath)){
         $this->load->library("intermailer");
-        $this->intermailer->initialize();
+        // $this->intermailer->initialize();
+        $this->intermailer->initialize_allin();
 
         $this->intermailer->to([
             "ronyelkahfidev@gmail.com"=>"Rony Dev",

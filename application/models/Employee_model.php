@@ -1122,26 +1122,26 @@ class Employee_model extends CI_Model
       $employeeID   = $rows->employee_id;
       $insertStatus = "skipped";
     }else{
-      if(!in_array(createIdentification($dataInsert['employee_account_no']),$checker)){
+      // if(!in_array(createIdentification($dataInsert['employee_account_no']),$checker)){
         $insert_query = $this->db->insert_string('tbemployee_temp', $dataInsert);
         $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
         $this->db->query($insert_query);
         $employeeID   = $this->db->insert_id();
         $insertStatus = "inserted";
-      }else{
-        $where = [
-          "employee_account_no" => $dataInsert["employee_account_no"],
-          "appid" => $dataInsert["appid"]
-        ];
-        $this->db->select("employee_id");
-        $this->db->where($where);
-        $sql = $this->db->get('tbemployee_temp');
-        $updatedData = $sql->row();
-        $this->db->where($where);
-        $this->db->update('tbemployee_temp',$dataInsert);
-        $insertStatus = "updated";
-        $employeeID   = !empty($updatedData->employee_id) ? $updatedData->employee_id : 0;
-      }
+      // }else{
+      //   $where = [
+      //     "employee_account_no" => $dataInsert["employee_account_no"],
+      //     "appid" => $dataInsert["appid"]
+      //   ];
+      //   $this->db->select("employee_id");
+      //   $this->db->where($where);
+      //   $sql = $this->db->get('tbemployee_temp');
+      //   $updatedData = $sql->row();
+      //   $this->db->where($where);
+      //   $this->db->update('tbemployee_temp',$dataInsert);
+      //   $insertStatus = "updated";
+      //   $employeeID   = !empty($updatedData->employee_id) ? $updatedData->employee_id : 0;
+      // }
     }
 
     $output = [

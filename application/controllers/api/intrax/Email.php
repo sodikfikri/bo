@@ -145,7 +145,8 @@ class Email extends REST_Controller{
                 </body>
                 </html>';
                 $this->load->library("intermailer");
-                $this->intermailer->initialize();
+                // $this->intermailer->initialize();
+                $this->intermailer->initialize_allin();
                 $this->intermailer->to([$mailData->email=>$mailData->email]);
                 $this->intermailer->set_content("InTrax Employee OTP",$body_msg,"Alt Body tes");
                 if($this->intermailer->send())
@@ -315,7 +316,8 @@ class Email extends REST_Controller{
                 </body>
                 </html>';
                 $this->load->library("intermailer");
-                $this->intermailer->initialize();
+                // $this->intermailer->initialize();
+                $this->intermailer->initialize_allin();
                 $this->intermailer->to([$mailData->email=>$mailData->email]);
                 $this->intermailer->set_content("InTrax Reset PIN",$body_msg,"Alt Body tes");
                 if($this->intermailer->send())

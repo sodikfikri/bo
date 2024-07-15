@@ -26,7 +26,9 @@
               </button>
             </div>
             <div class="col-md-12" style="margin-top:10px">
-                <div id="hierarchy-departement"></div>
+                <!-- <div id="hierarchy-departement"></div> -->
+                <?= !empty($listTable) ? $listTable : "" ?>
+
             </div>
           </div>
         </div>
@@ -49,7 +51,7 @@
                         <label for="icon" class="form-label">Name</label>
                         <input type="text" class="form-control" name="name" id="name" required>
                     </div>
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                         <label for="icon" class="form-label">Label</label>
                         <select class="form-control" name="label" id="label">
                             <option value="">Select Label</option>
@@ -62,10 +64,10 @@
                          <select class="form-control" name="parent" id="parent" style="width: 100%">
                             <option value="">Select parent ...</option>
                          </select>
-                    </div>
+                    </div> -->
                     <div style="margin-top: 17px;">
-                        <button type="submit" class="btn btn-danger btn-delete" style="display:none;">Delete</button>
-                        <button type="button" class="btn btn-danger dismis-close" data-dismiss="modal">Close</button>
+                        <!-- <button type="submit" class="btn btn-danger btn-delete" style="display:none;">Delete</button> -->
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
@@ -75,49 +77,50 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/apextree"></script>
 <script>
-    $(document).ready(function() {
+    $("#datatable").DataTable();
+    // $(document).ready(function() {
         
-        let departement = <?php echo json_encode($departement); ?>
+    //     let departement = <?php echo json_encode($departement); ?>
 
-        const Hierarchy = (datax) => {
+    //     const Hierarchy = (datax) => {
 
-            const options = {
-                contentKey: 'data',
-                width: 1000,
-                height: 600,
-                nodeWidth: 200,
-                nodeHeight: 70,
-                childrenSpacing: 70,
-                siblingSpacing: 30,
-                direction: 'top',
-                nodeTemplate: (content) => {
-                    return `<div style="display: flex; flex-direction: column; height: 100%;">
-                                <div style='display: flex;flex-direction: row;justify-content: center;align-items: center;height: 100%; box-shadow: 1px 2px 4px #ccc; padding: 0 7px;'>
-                                    <div>
-                                        <span style="font-weight: bold; font-family: Arial; font-size: 14px;">${content.name}</span><br>
-                                        <span style="font-family: Arial; font-size: 11px;display: flex;flex-direction: row;justify-content: center;align-items: center;">${content.label ?? ''}</span>
-                                    </div>
-                                </div>
-                                <div style='margin-top: auto; border-bottom: 10px solid ${content.borderColor}'></div>
-                            </div>`;
-                },
-                enableToolbar: true,
-            };
-            const tree = new ApexTree(document.getElementById('hierarchy-departement'), options);
-            tree.render(datax[0]);
-        }
+    //         const options = {
+    //             contentKey: 'data',
+    //             width: 1000,
+    //             height: 600,
+    //             nodeWidth: 200,
+    //             nodeHeight: 70,
+    //             childrenSpacing: 70,
+    //             siblingSpacing: 30,
+    //             direction: 'top',
+    //             nodeTemplate: (content) => {
+    //                 return `<div style="display: flex; flex-direction: column; height: 100%;">
+    //                             <div style='display: flex;flex-direction: row;justify-content: center;align-items: center;height: 100%; box-shadow: 1px 2px 4px #ccc; padding: 0 7px;'>
+    //                                 <div>
+    //                                     <span style="font-weight: bold; font-family: Arial; font-size: 14px;">${content.name}</span><br>
+    //                                     <span style="font-family: Arial; font-size: 11px;display: flex;flex-direction: row;justify-content: center;align-items: center;">${content.label ?? ''}</span>
+    //                                 </div>
+    //                             </div>
+    //                             <div style='margin-top: auto; border-bottom: 10px solid ${content.borderColor}'></div>
+    //                         </div>`;
+    //             },
+    //             enableToolbar: true,
+    //         };
+    //         const tree = new ApexTree(document.getElementById('hierarchy-departement'), options);
+    //         tree.render(datax[0]);
+    //     }
 
-        setTimeout(() => {
-            Hierarchy(departement)
-        }, 100);
+    //     setTimeout(() => {
+    //         Hierarchy(departement)
+    //     }, 100);
 
-        $('#show_modal_add').on('click', function() {
-            $('.modal-title').html('Add Departement')
-            $('#exampleModal').modal('show')
-            $('.btn-delete').css('display', 'none')
-            $('.dismis-close').css('display', '')
-            $('#id').val('0')
-        })
+    // })
+    $('#show_modal_add').on('click', function() {
+        $('.modal-title').html('Add Departement')
+        $('#exampleModal').modal('show')
+        $('#id').val('0')
+        // $('.btn-delete').css('display', 'none')
+        // $('.dismis-close').css('display', '')
     })
 
     var BASE_URL = "<?php echo base_url(); ?>";
@@ -144,7 +147,7 @@
 
     $('#parent').select2()
 
-    getParent()
+    // getParent()
 
     const detailData = (idx) => {
         $.ajax({
@@ -157,8 +160,8 @@
                 let response = JSON.parse(res)
                 $('#id').val(response.data[0].id)
                 $('#name').val(response.data[0].name)
-                $('#label').val(response.data[0].label).change()
-                $('#parent').val(response.data[0].parent).change()
+                // $('#label').val(response.data[0].label).change()
+                // $('#parent').val(response.data[0].parent).change()
             },
             complete: function() {
                 $('.modal-title').html('Detail Departement')
@@ -169,22 +172,26 @@
         })
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('hierarchy-departement').addEventListener('click', (event) => {
-            const node = event.target.closest('.apextree-node');
-            if (node) {
-                const parentG = node.closest('g');
-                if (parentG) {
-                    const dataSelf = parentG.getAttribute('data-self'); // get id
-                    detailData(dataSelf)
-                }
-            }
-        });
-    });
+    $('#datatable tbody').on('click', '.btn-detail', function() {
+        detailData($(this).data('id'))
+    })
 
-    $('.btn-delete').on('click', function(e) {
-        e.preventDefault()
-        let id = $('#id').val()
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     document.getElementById('hierarchy-departement').addEventListener('click', (event) => {
+    //         const node = event.target.closest('.apextree-node');
+    //         if (node) {
+    //             const parentG = node.closest('g');
+    //             if (parentG) {
+    //                 const dataSelf = parentG.getAttribute('data-self'); // get id
+    //                 detailData(dataSelf)
+    //             }
+    //         }
+    //     });
+    // });
+
+    $('#datatable tbody').on('click', '.btn-del', function(e) {
+        // e.preventDefault()
+        let id = $(this).data('id')
         Swal.fire({
             title: 'Are you sure?',
             text: "You won't be able to revert this!",
@@ -196,7 +203,7 @@
         }).then((result) => {
             if (result.value) {
                 // console.log('masuk');
-                window.open(url + 'departement-delete/' + $('#id').val(),'_self');
+                window.open(url + 'departement-delete/' + id,'_self');
                 // $.ajax({
                 //     url: BASE_URL + 'departement-delete',
                 //     method: 'post',

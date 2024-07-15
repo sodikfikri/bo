@@ -92,7 +92,8 @@ class Trx_leave extends CI_Controller
                     'style' => 'text-align:center;'
                 ],
                 [
-                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                    // 'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>',
                     'style' => 'text-align:center;'
                 ]
             );

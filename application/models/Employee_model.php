@@ -1104,10 +1104,67 @@ class Employee_model extends CI_Model
     return $output;
   }
 
+  function saveIgnoreDuplicate_temp($dataInsert,$checker=""){
+    $this->db->select("employee_id");
+    $where = $dataInsert;
+
+    if(!empty($dataInsert["employee_account_no"])){
+      unset($where["employee_account_no"]);
+      $where[" REPLACE(LOWER(employee_account_no), ' ', '') ="] = createIdentification($dataInsert["employee_account_no"]);
+    }
+
+    unset($where["employee_user_add"]);
+    unset($where["employee_date_create"]);
+
+    $sqlCheck = $this->db->get_where('tbemployee_temp',$where);
+    if($sqlCheck->num_rows()>0){
+      $rows = $sqlCheck->row();
+      $employeeID   = $rows->employee_id;
+      $insertStatus = "skipped";
+    }else{
+      if(!in_array(createIdentification($dataInsert['employee_account_no']),$checker)){
+        $insert_query = $this->db->insert_string('tbemployee_temp', $dataInsert);
+        $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
+        $this->db->query($insert_query);
+        $employeeID   = $this->db->insert_id();
+        $insertStatus = "inserted";
+      }else{
+        $where = [
+          "employee_account_no" => $dataInsert["employee_account_no"],
+          "appid" => $dataInsert["appid"]
+        ];
+        $this->db->select("employee_id");
+        $this->db->where($where);
+        $sql = $this->db->get('tbemployee_temp');
+        $updatedData = $sql->row();
+        $this->db->where($where);
+        $this->db->update('tbemployee_temp',$dataInsert);
+        $insertStatus = "updated";
+        $employeeID   = !empty($updatedData->employee_id) ? $updatedData->employee_id : 0;
+      }
+    }
+
+    $output = [
+      "employee_id" => $employeeID,
+      "insertStatus"  => $insertStatus
+    ];
+    return $output;
+  }
+
   function getEmployeeCode($appid){
     $this->db->select("employee_account_no");
     $this->db->where("appid",$appid);
     $sql = $this->db->get($this->tableName);
+    $result = [];
+    foreach ($sql->result() as $row) {
+      $result[] = createIdentification($row->employee_account_no);
+    }
+    return $result;
+  }
+  function getEmployeeCode_temp($appid){
+    $this->db->select("employee_account_no");
+    $this->db->where("appid",$appid);
+    $sql = $this->db->get('tbemployee_temp');
     $result = [];
     foreach ($sql->result() as $row) {
       $result[] = createIdentification($row->employee_account_no);
@@ -1132,6 +1189,14 @@ class Employee_model extends CI_Model
     $this->db->where("appid",$appid);
     $this->db->where("email",$email);
     $res = $this->db->get($this->tableName);
+    return $res->num_rows();
+  }
+
+  function getEmailAvailable_temp($appid,$email){
+    $this->db->select("email");
+    $this->db->where("appid",$appid);
+    $this->db->where("email",$email);
+    $res = $this->db->get('tbemployee_temp');
     return $res->num_rows();
   }
 

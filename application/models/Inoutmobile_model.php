@@ -110,4 +110,13 @@ class Inoutmobile_model extends CI_Model{
 		$sql = $this->db->get();
 		return $sql->num_rows();
 	}
+
+	function getEmployeeById($emloyee_id) {
+		$this->db->select('*');
+		$this->db->from("tbemployee");
+		$this->db->where('employee_id = ', $emloyee_id);
+
+		$query = $this->db->get();
+		return $query->result();
+	}
 }

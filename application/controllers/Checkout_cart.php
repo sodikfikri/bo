@@ -175,7 +175,7 @@ class Checkout_cart extends CI_Controller
       "invoiceId" => $invoiceId,
       "refNo" => $refNo
     );
-
+	
     $curl = curl_init();
     curl_setopt_array($curl, array(
       CURLOPT_URL => "https://m.qris.online/restapi/backend/v2/check-transaction-qris1.php",
@@ -194,6 +194,7 @@ class Checkout_cart extends CI_Controller
     $response = curl_exec($curl);
     curl_close($curl);
     $response = json_decode($response, TRUE);
+	
     $res = array(
       'statusCheck' => $response['status']
     );
@@ -208,7 +209,10 @@ class Checkout_cart extends CI_Controller
 		];
 		$this->checkout_cart_model->activeOrder($invoiceId,$data_update);
 		
-		$arrDataOrder = $this->checkout_cart_model->getDetailOrder($invoiceId);
+		// $arrDataOrder = $this->checkout_cart_model->getDetailOrder($invoiceId);
+		$arrDataOrder = $this->checkout_cart_model->getDetailOrder_temp($invoiceId);
+		// echo json_encode($arrDataOrder);
+		// return;
 		
 		$token = md5("InterActiveAPI".date('Ymd'));
 		$datane = array(

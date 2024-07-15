@@ -354,7 +354,6 @@
 	  e.preventDefault();
 	  $("#employee-progress").css("width","0%");
 	  $("#employee-progress-text").html("0%");
-
 	  $.ajax({
 		url:url +'import-employee-intrax/<?= $this->uri->segment(2); ?>', //URL submit
 		type:"post",
@@ -368,6 +367,7 @@
 		cache:false,
 		//async:false,
 		success: function(data){
+      // return console.log(data);
 		  var result = jQuery.parseJSON(data);
 		  var error  = arraylength(result.error);
 		  if(result.file_error==""){
@@ -775,6 +775,18 @@
       }
     });
   }
+
+  function check() {
+    $.ajax({
+	  url: url + "checkQris",
+	  type: "POST",
+	  data: {invoiceId:'INV77900101388',refNo:'ewm0z9tXLCg1PnDQ7hTbxcJMK6AId3kj'},
+	  success: function (res) {
+        result = JSON.parse(res);
+	  },
+	});
+  }
+  check()
 
   $(document).ready(function(){
     $("#frm-push").submit(function(){

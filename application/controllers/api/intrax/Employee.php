@@ -271,7 +271,8 @@ class Employee extends REST_Controller
 						</body>
 						</html>';
 						$this->load->library("intermailer");
-						$this->intermailer->initialize();
+						// $this->intermailer->initialize();
+						$this->intermailer->initialize_allin();
 						$this->intermailer->to([$email=>$email]);
 						$this->intermailer->set_content($appName." Employee OTP",$body_msg,"Alt Body tes");
 						if($this->intermailer->send())
@@ -452,7 +453,8 @@ class Employee extends REST_Controller
 						</body>
 						</html>';
 						$this->load->library("intermailer");
-						$this->intermailer->initialize();
+						// $this->intermailer->initialize();
+						$this->intermailer->initialize_allin();
 						$this->intermailer->to([$email=>$email]);
 						$this->intermailer->set_content($appName." Employee OTP",$body_msg,"Alt Body tes");
 						if($this->intermailer->send())
@@ -762,7 +764,8 @@ class Employee extends REST_Controller
 						</body>
 						</html>';
 					$this->load->library("intermailer");
-					$this->intermailer->initialize();
+					// $this->intermailer->initialize();
+					$this->intermailer->initialize_allin();
 					$this->intermailer->to([$resultPasswordPin->email=>$resultPasswordPin->email]);
 					$this->intermailer->set_content("InAct HRIS Employee PIN",$body_msg,"Alt Body tes");
 					if($this->intermailer->send())
@@ -952,7 +955,8 @@ class Employee extends REST_Controller
 						</body>
 						</html>';
 					$this->load->library("intermailer");
-					$this->intermailer->initialize();
+					// $this->intermailer->initialize();
+					$this->intermailer->initialize_allin();
 					$this->intermailer->to([$resultPasswordPin->email=>$resultPasswordPin->email]);
 					$this->intermailer->set_content("InTrax Employee Password",$body_msg,"Alt Body tes");
 					if($this->intermailer->send())

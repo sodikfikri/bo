@@ -165,6 +165,28 @@ class Attendance extends REST_Controller{
 		$apikey  = !empty($headers["Apikey"]) ? $headers["Apikey"] : null;
         $this->load->model("inoutmobile_model");
         $this->load->model("employee_model");
+
+        $cekLicence = $this->inoutmobile_model->getEmployeeById($data['employee_id']);
+        if (count($cekLicence) == 0) {
+            $arrOutput = [
+                'result' 		=> false,
+                'message' 		=> "Account Not Found!",
+            ];
+            header("Content-Type:application/json");
+            echo json_encode($arrOutput);
+            return;
+        }
+
+        if ($cekLicence[0]->employee_license == 'notactive') {
+            $arrOutput = [
+                'result' 		=> false,
+                'message' 		=> "This account's license is inactive!",
+            ];
+            header("Content-Type:application/json");
+            echo json_encode($arrOutput);
+            return;
+        }
+
 		function get_nearest_timezone($cur_lat, $cur_long, $country_code = '') {
 			$timezone_ids = ($country_code) ? DateTimeZone::listIdentifiers(DateTimeZone::PER_COUNTRY, $country_code)
 											: DateTimeZone::listIdentifiers();

@@ -112,6 +112,11 @@ define('SMTP_PORT',587);
 define('SMTP_EMAIL','intrax'.rand(1,3).'@interactive.co.id');
 define('SMTP_PASSWORD','INTRAX++99z');
 
+define('SMTP_HOST_ALLIN','mail.indeo.id');
+define('SMTP_PORT_ALLIN',587);
+define('SMTP_EMAIL_ALLIN','service_allin1@indeo.id');
+define('SMTP_PASSWORD_ALLIN','Inter20240715');
+
 /** Sandbox Identification **/
 define('SANDBOX_IDENTIFICATION', '');
 

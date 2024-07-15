@@ -853,7 +853,8 @@ class Prospective_employees extends CI_Controller
       if(in_array("KARYAWAN",$sheetOnFile)){
         $arrEmployee = $this->readEmployeeIntrax($fileName);
         if(count($arrEmployee)>0){
-          $listEmployeeCode = $this->employee_model->getEmployeeCode($appid);
+          // $listEmployeeCode = $this->employee_model->getEmployeeCode($appid);
+          $listEmployeeCode = $this->employee_model->getEmployeeCode_temp($appid);
           $dataSubscription = $this->employee_model->getSubscription($appid);
           foreach ($arrEmployee as $index => $row) {
             // filter 1
@@ -882,7 +883,8 @@ class Prospective_employees extends CI_Controller
 
 			  }*/
 			  // ok
-			  $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
+			  // $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
+			  $getEmail = $this->employee_model->getEmailAvailable_temp($appid,$row["email"]);
 			  // pengecekan format email
 			  if(filter_var($row["email"], FILTER_VALIDATE_EMAIL)){
 				  // cek available email
@@ -917,7 +919,8 @@ class Prospective_employees extends CI_Controller
 							  if($pinIntrax!=123456){
 								 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
 									// add employee
-									$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									// $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									$insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
 								} else {
 									$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
 								}
@@ -929,11 +932,13 @@ class Prospective_employees extends CI_Controller
 							  if($pinIntrax!=123456){
 								  if($pinIntrax==0){
 									 // add employee
-									$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									// $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+									$insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
 								  } else {
 									 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
 										// add employee
-										$insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+										// $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+										$insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
 									} else {
 										$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
 									}
@@ -958,7 +963,8 @@ class Prospective_employees extends CI_Controller
 							"employeeareacabang_user_add" => $userID,
 							"status" => "pending"
 						  ];
-						  $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+						  // $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+						  $this->employeeareacabang_model->saveIgnoreDuplicate_temp($dataInsertLocation);
 						  $inserted++;
 						}elseif ($insertResult["insertStatus"]=="skipped") {
 						  $skipped++;

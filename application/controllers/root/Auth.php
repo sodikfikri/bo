@@ -12,7 +12,6 @@ class Auth extends CI_Controller
 	function login(){
 		$this->load->helper("form_helper");
 		$this->load->library("form_validation");
-
 		$this->form_validation->set_rules("submit","submit","required");
 		$data = [];
 		if($this->form_validation->run()==true){

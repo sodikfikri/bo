@@ -134,6 +134,37 @@ class Checkout_cart_model extends CI_Model
       return false;
     }
   }
+  function getDetailOrder_temp($invoiceId,$appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+    
+    if(!empty($appid)){
+	  $this->db->select([
+        "A.license_count",
+        "A.gtotal",
+        "A.price",
+        "B.user_emailaddr",
+        "B.user_fullname",
+        "C.cabang_name"
+      ]);
+	  $this->db->from("order A");
+	  $this->db->join("iauser B","B.userid = A.user_add");
+	  $this->db->join("tbcabang_temp C","C.cabang_id = A.cabang_id");
+      $this->db->where("A.appid",$appid);
+	  $this->db->where("A.qris_invoiceid",$invoiceId);
+    // $query = $this->db->get_compiled_select();
+    // return $query;
+      $sql = $this->db->get();
+      if ($sql->num_rows()>0) {
+        return $sql->row();
+      }else{
+        return false;
+      }
+    }else {
+      return false;
+    }
+  }
 
   function update($dataUpdate,$id){
     $appid = $this->session->userdata("ses_appid");

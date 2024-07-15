@@ -6,7 +6,7 @@ class Departement_model extends CI_Model
 {
     function list_departement($appid, $column = null, $value = null) {
         $this->db->select('id, name, parent, label');
-        $this->db->from('tbdepartements');
+        $this->db->from('tbhierarchydepartements');
         $this->db->where('appid', $appid);
         $this->db->where('is_delete', '0');
 
@@ -46,7 +46,7 @@ class Departement_model extends CI_Model
     function getDetail($id) {
         $result = $this->db->select('*')->from('tbdepartements')->where('id', $id)->get();
 
-        return $result->result_array();
+        return $result->result();
     }
 
     function updateData($id, $data) {
@@ -55,10 +55,22 @@ class Departement_model extends CI_Model
     }
 
     function validateDelete($id) {
-        $sql = 'select * from tbdepartements where parent = '.$id;
+        $sql = 'select * from tbhierarchydepartements where parent = '.$id;
 
         $response = $this->db->query($sql);
 
         return $response->result();
     }
+
+    function listTable($appid) {
+        $this->db->select('*');
+        $this->db->from('tbdepartements');
+        $this->db->where('appid', $appid);
+        $this->db->where('is_delete', '0');
+        
+        $query = $this->db->get();
+
+        return $query->result();
+    }
+    
 }

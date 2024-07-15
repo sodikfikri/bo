@@ -53,10 +53,40 @@ class Departement extends CI_Controller
 	}
 
     function index() {
-        $departement = $this->departement_model->list_departement($this->appid);
-		$hierarchy = $this->buildHierarchy($departement);
-        $data['departement'] = $hierarchy;
+        // $departement = $this->departement_model->list_departement($this->appid);
+		// $hierarchy = $this->buildHierarchy($departement);
+        // $data['departement'] = $hierarchy;
 
+        $this->table->set_template($this->tabel_template);
+        $this->table->set_heading(
+            ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Name"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Created At"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
+        );
+
+        $list = $this->departement_model->listTable($this->appid);
+        foreach($list as $key => $items) {
+            $encId = $this->encryption_org->encode($items->id);
+            $this->table->add_row(
+                [
+                    'data' => $key+1,
+                    'style' => 'text-align:center;'
+                ],
+                $items->name,
+                [
+                    'data' => $items->created_at,
+                    'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" data-name="'.$items->name.'"  class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
+                                <span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                    'style' => 'text-align:center;'
+                ]
+            );
+        }
+
+        $data['listTable'] = $this->table->generate();
         if(!empty($this->session->userdata("ses_notif"))){
             $arrNotif = $this->session->userdata("ses_notif");
       
@@ -118,15 +148,15 @@ class Departement extends CI_Controller
 
     function saveDepartement() {
         $id = $this->input->post('id');
-        $parent = $this->input->post('parent');
+        // $parent = $this->input->post('parent');
         $name = $this->input->post('name');
-        $label = $this->input->post('label');
+        // $label = $this->input->post('label');
 
         $params = [
             'appid' => $this->appid,
             'name' => $name,
-            'parent' => $parent,
-            'label' => $label
+            // 'parent' => $parent,
+            // 'label' => $label
         ];
 
         if ($id == 0) {
@@ -155,12 +185,11 @@ class Departement extends CI_Controller
     }
 
     function detailData() {
-        $id = $this->input->get('id');
-
+        $this->load->library("encryption_org");
+        $id = $this->encryption_org->decode($this->input->get('id'));
         $data = $this->departement_model->getDetail($id);
         // print_r($data[0]['id']); return;
-        $this->load->library("encryption_org");
-        $data[0]['id'] = $this->encryption_org->encode($data[0]['id']);
+        // $data[0]['id'] = $this->encryption_org->encode($data[0]['id']);
 
         echo json_encode([
             'meta' => [
@@ -175,17 +204,16 @@ class Departement extends CI_Controller
     function deleteData($encId) {
         $this->load->library("encryption_org");
         $id = $this->encryption_org->decode($encId);
-
-        $validate = $this->departement_model->validateDelete($id);
+        // $validate = $this->departement_model->validateDelete($id); // cek apakah departement ini di terhubung dengan pegawai atau tidak
         
-        if (count($validate) != 0) {
-            # code...
-            $this->session->set_userdata('ses_notif',['type'=>'error','header'=>'Failed','msg'=> $this->gtrans->line('Parent has been used')]);
-            redirect("departement");
-            return;
-        }
+        // if (count($validate) != 0) {
+        //     # code...
+        //     $this->session->set_userdata('ses_notif',['type'=>'error','header'=>'Failed','msg'=> $this->gtrans->line('Parent has been used')]);
+        //     redirect("departement");
+        //     return;
+        // }
 
-        $del = $this->departement_model->updateData($id, ['is_delete' => 0]);
+        $del = $this->departement_model->updateData($id, ['is_delete' => 1]);
 
         $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('Success delete departement')]);
         setActivity("master departement","delete");

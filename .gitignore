@@ -6,7 +6,7 @@ application/cache/*
 system/cache
 sys_upload
 storage
-asset
+# asset
 berkas
 node_modules
 application backup

@@ -13,6 +13,8 @@ class Work_hours extends CI_Controller
         'table_close'           => '</table>'
     );
 
+    public $response = [];
+
     function __construct()
     {
         parent::__construct();
@@ -30,7 +32,19 @@ class Work_hours extends CI_Controller
         $this->listMenu = $this->menu_model->list_menu();
         $this->now = date("Y-m-d H:i:s");
         $this->appid = $this->session->userdata("ses_appid");
-        // bahasa
+        
+        $this->load->library("form_validation");
+        $this->load->library("encryption_org");
+    }
+
+    public function SetRespose($code, $message, $data = '') {
+        $this->response['meta']['code'] = $code;
+        $this->response['meta']['message'] = $message;
+        if ($data) {
+            $this->response['data'] = $data;
+        }
+
+        return $this->response;
     }
 
     function index() {
@@ -43,36 +57,49 @@ class Work_hours extends CI_Controller
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
         );
 
-        $this->table->add_row(
-            [
-                'data' => '1',
-                'style' => 'text-align:center'
-            ],
-            [
-                'data' => 'Jam Pagi',
-                'style' => 'text-align:left'
-            ],
-            [
-                'data' => 'Jl. Ambengan, Surabaya',
-                'style' => 'text-align:left'
-            ],
-            [
-                'data' => '1',
-                'style' => 'text-align:center'
-            ],
-            [
-                'data' => '<span style="cursor:pointer" data-id="1" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
-                            <span style="cursor:pointer" data-id="1" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
-                'style' => 'text-align:center;'
-            ]
-        );
+        $data = $this->schedule_model->listHour($this->appid);
+        foreach($data as $key => $items) {
+            $encId = $this->encryption_org->encode($items->id);
+            $workday = $items->workday == 1 ? 'Hari' : 'Minggu';
+            $this->table->add_row(
+                [
+                    'data' => $key+1,
+                    'style' => 'text-align:center'
+                ],
+                [
+                    'data' => $items->name,
+                    'style' => 'text-align:left'
+                ],
+                [
+                    'data' => $items->cabang_name,
+                    'style' => 'text-align:left'
+                ],
+                [
+                    'data' => $items->unit . ' ' . $workday,
+                    'style' => 'text-align:center'
+                ],
+                [
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
+                                <span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                    'style' => 'text-align:center;'
+                ]
+            );
+        }
 
         $data['dataTable'] = $this->table->generate();
+        $branchData = $this->schedule_model->getBranch($this->appid);
+
+        if(!empty($this->session->userdata("ses_notif"))){
+            $notif    = $this->session->userdata("ses_notif");
+            $data['notif'] = $notif;
+            $this->session->unset_userdata("ses_notif");
+        }
         $parentViewData = [
             "title"   => "Jam Kerja",  // title page
             "content" => "schedule/work_hours",  // content view
             "viewData"=> $data,
             "listMenu"=> $this->listMenu,
+            "branchData"=> $branchData,
             "varJS" => ["url" => base_url()],
             "externalCSS" => [
                 base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
@@ -91,26 +118,39 @@ class Work_hours extends CI_Controller
     }
 
     function saveData() {
-        $parentViewData = [
-            "title"   => "Jam Kerja",  // title page
-            "content" => "schedule/work_hours_add",  // content view
-            "viewData"=> [],
-            "listMenu"=> $this->listMenu,
-            "varJS" => ["url" => base_url()],
-            "externalCSS" => [
-                base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
-            ],
-            "externalJS" => [
-                base_url("asset/template/bower_components/datatables.net/js/jquery.dataTables.min.js"),
-                base_url("asset/template/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"),
-                "https://cdn.jsdelivr.net/npm/sweetalert2@8",
-                base_url("asset/js/checkCode.js"),
-                base_url("asset/js/user.js")
-        
-            ]
+
+        $params = [
+            'appid' => $this->appid,
+            'name' => $this->input->post('name'),
+            'location' => $this->input->post('location'),
+            'start_time' => $this->input->post('start_work'),
+            'end_time' => $this->input->post('end_work'),
+            'start_checkin_time' => $this->input->post('start_checkin_time'),
+            'end_checkin_time' => $this->input->post('end_checkin_time'),
+            'start_checkout_time' => $this->input->post('start_checkout_time'),
+            'end_checkout_time' => $this->input->post('end_checkout_time'),
+            'break_type' => $this->input->post('break_type'),
+            'late_minutes' => $this->input->post('late_tolerance'),
+            'early_minutes' => $this->input->post('early_leave_tolerance'),
+            'color' => $this->input->post('colour'),
         ];
-        $this->load->view("layouts/main",$parentViewData);
-        $this->gtrans->saveNewWords();
+
+        if ($this->input->post('break_type') == '1') {
+            $params['break_duration'] = $this->input->post('break_duration');
+        } elseif ($this->input->post('break_type') == '2') {
+            $params['break_in'] = $this->input->post('break_hour_start');
+            $params['break_out'] = $this->input->post('break_hour_end');
+        }
+
+        $params['created_at'] = (new DateTime())->format('Y-m-d H:i:s');
+
+        $ins = $this->schedule_model->insHour($params);
+        
+        if ($ins) {
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
+            setActivity("schedule working hours","add");
+        } 
+        return redirect("schedule-work-hours");
     }
 
 }

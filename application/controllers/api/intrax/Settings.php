@@ -44,7 +44,7 @@ class Settings extends REST_Controller
 		if (!empty($dataSetting->access_presence) && in_array(3, $accessPres)){$breakout = '1';}
 		if (!empty($dataSetting->access_presence) && in_array(4, $accessPres)){$checkout = '1';}
 		if (!empty($dataSetting->access_presence) && in_array(5, $accessPres)){$leave = '1';}
-		if (!empty($dataSetting->company_photo)){$photo = "https://inact.interactiveholic.net/bo/sys_upload/company_profile/".$dataSetting->company_photo;} else { $photo = "https://inact.interactiveholic.net/bo/sys_upload/company_profile/img_avatar_company.png";}
+		if (!empty($dataSetting->company_photo)){$photo = "https://inact.azurewebsites.net/sys_upload/company_profile/".$dataSetting->company_photo;} else { $photo = "https://inact.azurewebsites.net/sys_upload/company_profile/img_avatar_company.png";}
         $arrOutput = [
 		  'result'	=> true,
 		  'logo' => $photo,

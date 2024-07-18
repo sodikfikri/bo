@@ -135,7 +135,7 @@ class Employee extends REST_Controller
 				if($company_id!="" or $company_id==""){
 					if ($company_id==""){
 						$sqlGetAppid = $this->employee_model->getAppIdByEmail($email);
-						$imageHeader = '<img src="https://inact.interactiveholic.net/bo/asset/images/Logo_inact.png" style="width: 200px;">';
+						$imageHeader = '<img src="https://inact.azurewebsites.net/asset/images/Logo_inact.png" style="width: 200px;">';
 						$appName = 'InAct HRIS';
 					} else {
 						$sqlGetAppid = $this->subscription_model->getAppIdByCompanyID($company_id);
@@ -316,7 +316,7 @@ class Employee extends REST_Controller
 				if($company_id!="" or $company_id==""){
 					if ($company_id==""){
 						$sqlGetAppid = $this->employee_model->getAppIdByEmail($email);
-						$imageHeader = '<img src="https://inact.interactiveholic.net/bo/asset/images/Logo_inact.png" style="width: 200px;">';
+						$imageHeader = '<img src="https://inact.azurewebsites.net/asset/images/Logo_inact.png" style="width: 200px;">';
 						$appName = 'InAct HRIS';
 					} else {
 						$sqlGetAppid = $this->subscription_model->getAppIdByCompanyID($company_id);
@@ -665,7 +665,7 @@ class Employee extends REST_Controller
 						</style>
 						<body style="font-family: \'Roboto\', sans-serif;">
 							<div class="main-page">
-							<img src="https://inact.interactiveholic.net/bo/asset/images/Logo_inact.png" style="width: 200px;">
+							<img src="https://inact.azurewebsites.net/asset/images/Logo_inact.png" style="width: 200px;">
 							<div style="max-width:653px; background-color:#ffffff;margin-left:auto; margin-right:auto; margin-top:40px; margin-bottom:40px;" >
 								<div style="vertical-align: middle; padding:30px 30px 30px 30px;">
 								<center style="padding-bottom:30px"></center>
@@ -1409,7 +1409,7 @@ class Employee extends REST_Controller
 			if($employee_id!=""){
 				$dataEmployee = $this->employee_model->getEmployeeById($employee_id);
 				if($dataEmployee){
-					if (!empty($dataEmployee->employee_photo)){$photo = "https://inact.interactiveholic.net/bo/sys_upload/user_profile/".$dataEmployee->employee_photo;} else { if ($dataEmployee->gender=='male'){$photo = "https://inact.interactiveholic.net/bo/img_employee/img_avatar_boy.png";} else {$photo = "https://inact.interactiveholic.net/bo/img_employee/img_avatar_girl.png";}}
+					if (!empty($dataEmployee->employee_photo)){$photo = "https://inact.azurewebsites.net/sys_upload/user_profile/".$dataEmployee->employee_photo;} else { if ($dataEmployee->gender=='male'){$photo = "https://inact.azurewebsites.net/sys_upload/img_employee/img_avatar_boy.png";} else {$photo = "https://inact.azurewebsites.net/sys_upload/img_employee/img_avatar_girl.png";}}
 					$pin = '0';
 					$finger = '0';
 					$face = '0';

@@ -5,6 +5,28 @@
 class Schedule_model extends CI_Model
 {
 
+    //============================ Jam Kerja ============================//
+    function listHour($appid) {
+        $sql = "SELECT sch.*, cb.cabang_name FROM tbschclass sch JOIN tbcabang cb ON sch.location = cb.cabang_id WHERE sch.appid = '$appid' AND sch.is_delete = 0";
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function insHour($data) {
+        $ins = $this->db->insert('tbschclass', $data);
+
+        return $ins;
+    }
+
+    function getBranch($appid) {
+        $sql = "SELECT * FROM tbcabang WHERE appid = '$appid' AND is_del = 0";
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    //============================ Hari Libur ============================//
     function SaveDataHoliday($data) {
         $ins = $this->db->insert_batch('tbholidays', $data);
 

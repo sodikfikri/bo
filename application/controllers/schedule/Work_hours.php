@@ -43,6 +43,30 @@ class Work_hours extends CI_Controller
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
         );
 
+        $this->table->add_row(
+            [
+                'data' => '1',
+                'style' => 'text-align:center'
+            ],
+            [
+                'data' => 'Jam Pagi',
+                'style' => 'text-align:left'
+            ],
+            [
+                'data' => 'Jl. Ambengan, Surabaya',
+                'style' => 'text-align:left'
+            ],
+            [
+                'data' => '1',
+                'style' => 'text-align:center'
+            ],
+            [
+                'data' => '<span style="cursor:pointer" data-id="1" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
+                            <span style="cursor:pointer" data-id="1" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                'style' => 'text-align:center;'
+            ]
+        );
+
         $data['dataTable'] = $this->table->generate();
         $parentViewData = [
             "title"   => "Jam Kerja",  // title page

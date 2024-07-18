@@ -38,7 +38,7 @@ class Holidays extends CI_Controller
         // $curl = curl_init();
 
 		// curl_setopt_array($curl, array(
-		// 	CURLOPT_URL => 'https://dayoffapi.vercel.app/api?year=2017',
+		// 	CURLOPT_URL => 'https://dayoffapi.vercel.app/api?year=2024',
 		// 	CURLOPT_RETURNTRANSFER => true,
 		// 	CURLOPT_ENCODING => '',
 		// 	CURLOPT_MAXREDIRS => 10,
@@ -61,6 +61,7 @@ class Holidays extends CI_Controller
         //         'start_time' => (new DateTime($items->tanggal))->format('Y-m-d'),
         //         'name' => $items->keterangan,
         //         'holiday_type' => $items->is_cuti ? 'Cuti' : 'Libur Nasional',
+        //         'color' => $items->is_cuti ? '#FF6347' : '#DC143C',
         //         'created_at' => (new DateTime())->format('Y-m-d H:i:s')
         //     ];
 
@@ -68,7 +69,7 @@ class Holidays extends CI_Controller
         // }
 
         // $add = $this->schedule_model->SaveDataHoliday($Arr);
-        // $data = [];
+        $data = [];
         if(!empty($this->session->userdata("ses_notif"))){
             $arrNotif = $this->session->userdata("ses_notif");
       

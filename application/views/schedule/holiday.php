@@ -60,6 +60,7 @@
               <label for="colour" class="form-label">Colour</label>
               <select class="form-control" name="colour" id="colour">
                 <option value="#DC143C">Red</option>
+                <option value="#FF6347">Orange</option>
                 <option value="#00a65a">Green</option>
                 <option value="#039be5">Blue</option>
               </select>
@@ -119,7 +120,7 @@ $(document).ready(function() {
                 right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,list'  // dayGridMonth,timeGridWeek,listWeek
             },
             // initialView: 'dayGridMonth',
-            initialDate: '2017-06-01',
+            // initialDate: '2017-06-01',
             eventDidMount: function(info) {
                 $(info.el).tooltip({ 
                     title: info.event._def.title,
@@ -182,7 +183,7 @@ $(document).ready(function() {
             val.start = sdate.format('YYYY-MM-DD')
             val.end = edate.format('YYYY-MM-DD')
         })
-
+        console.log(mergedData);
         RenderFullCalendar(mergedData)
     }
 

@@ -126,8 +126,8 @@ class Cabang_model extends CI_Model
     }
   }
 
-  function getDataSelectBranch(){
-    $sql = "SELECT * FROM tbcabang WHERE is_del = 0";
+  function getDataSelectBranch($appid){
+    $sql = "SELECT * FROM tbcabang WHERE is_del = 0 AND appid = '$appid'";
 
     $response = $this->db->query($sql);
 

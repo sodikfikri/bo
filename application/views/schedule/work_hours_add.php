@@ -110,7 +110,7 @@
                                     </div>
                                 </div>
                                 <button class="btn btn-primary" style="float: right; margin-left: 8px;">Save</button>
-                                <button class="btn btn-danger" style="float: right">Cancel</button>
+                                <a href="<?= base_url('schedule-work-hours'); ?>" class="btn btn-danger" style="float: right">Cancel</a>
                             </div>
                             <div class="col-md-4">
                                 <span style="font-weight: bold; padding-left: 20px;">Langkah Mudah Membuat Jam Kerja</span>

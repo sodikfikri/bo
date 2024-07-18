@@ -34,7 +34,9 @@ class Institution extends CI_Controller
     $this->load->helper("timezone");
     $this->load->library("encryption_org");
     $sqlArea = $this->area_model->getAll();
-    $dropdown_cabang = $this->cabang_model->getDataSelectBranch();
+    // $appid = $this->session->userdata("ses_appid");
+    $dropdown_cabang = $this->cabang_model->getDataSelectBranch($this->session->userdata("ses_appid"));
+    // print_r($dropdown_cabang); die;
     
     $cmbArea = '<select data-validation-engine="validate[]" name="area" id="area" class="form-control"><option value="0" />';
     $arrArea = explode("|",$this->session->userdata("ses_area"));
@@ -82,10 +84,7 @@ class Institution extends CI_Controller
 	$areaid  = !empty($this->input->post("areaid"))? $this->input->post("areaid"): "";
   // $sql = $this->institution_model->getAll();
   $sql = $this->institution_model->getAll_temp();
-  // print_r("<pre>");
-  // print_r($sql);
-  // print_r("</pre>");
-  // die;
+  
     $no = 0;
     foreach ($sql as $row) {
 	  if($this->session->userdata("ses_status")=="admin_area"){
@@ -200,6 +199,10 @@ class Institution extends CI_Controller
     $data['institutionTable'] = $this->table->generate();
     $data['cmbArea']     = $cmbArea;
     $data['dropdownCabang']     = $dropdown_cabang;
+    // print_r("<pre>");
+    // print_r($dropdownCabang);
+    // print_r("</pre>");
+    // die;
     $data['cmbTimezone'] = $cmbTimezone;
     $parentViewData = [
       "title"   => $this->gtrans->line("Master Institution"),  // title page

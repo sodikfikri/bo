@@ -7,7 +7,7 @@ class Schedule_model extends CI_Model
 
     //============================ Jam Kerja ============================//
     function listHour($appid) {
-        $sql = "SELECT sch.*, cb.cabang_name FROM tbschclass sch JOIN tbcabang cb ON sch.location = cb.cabang_id WHERE sch.appid = '$appid' AND sch.is_delete = 0";
+        $sql = "SELECT * FROM tbschclass WHERE appid = '$appid' AND is_delete = 0";
         $response = $this->db->query($sql);
 
         return $response->result();
@@ -17,6 +17,20 @@ class Schedule_model extends CI_Model
         $ins = $this->db->insert('tbschclass', $data);
 
         return $ins;
+    }
+
+    function uptHour($id, $data) {
+        $this->db->where('id', $id);
+        
+        return $this->db->update('tbschclass', $data);
+    }
+
+    function getDetailHour($id) {
+        $sql = "SELECT * FROM tbschclass WHERE id = $id";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
     }
 
     function getBranch($appid) {

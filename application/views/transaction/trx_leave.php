@@ -126,12 +126,12 @@ $(document).ready(function() {
     // return console.log(cats);
     Swal.fire({
       title: 'Are you sure?',
-      text: "You won't be able to revert this!",
+      text: "You will export this data!",
       type: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonText: 'Yes, Continue!'
     }).then((result) => {
       if (result.value) {
         $.ajax({

@@ -104,7 +104,6 @@ class Leave_categories extends CI_Controller
     function save_act() {
         $id = $this->input->post('id');
         $name = $this->input->post('name');
-
         $params = [
             'name' => $name,
             'appid' => $this->appid
@@ -145,8 +144,12 @@ class Leave_categories extends CI_Controller
             $this->load->library("encryption_org");
             $catsid = $this->encryption_org->decode($id);
             
-            // remove file
-            unlink('./sys_upload/leave/icon/'.$this->input->post('icon_name'));
+            $params['updated_at'] = (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!empty($_FILES['icon']['name'])) {
+                // remove file
+                unlink('./sys_upload/leave/icon/'.$this->input->post('icon_name'));
+            }
             
             $upt = $this->leave_model->updateCats($catsid, $params);
             if ($upt) {

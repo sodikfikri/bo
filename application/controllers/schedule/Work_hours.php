@@ -52,7 +52,7 @@ class Work_hours extends CI_Controller
         $this->table->set_heading(
             ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Name"), "class"=>"text-left"],
-            ["data"=> $this->gtrans->line("Location"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Effective Date"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Unit"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
         );
@@ -71,7 +71,7 @@ class Work_hours extends CI_Controller
                     'style' => 'text-align:left'
                 ],
                 [
-                    'data' => $items->cabang_name,
+                    'data' => (new DateTime($items->created_at))->format('Y-m-d'),
                     'style' => 'text-align:left'
                 ],
                 [
@@ -102,12 +102,14 @@ class Work_hours extends CI_Controller
             "branchData"=> $branchData,
             "varJS" => ["url" => base_url()],
             "externalCSS" => [
-                base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
+                base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"),
+                base_url("asset/template/bower_components/select2/dist/css/select2.min.css"),
             ],
             "externalJS" => [
                 base_url("asset/template/bower_components/datatables.net/js/jquery.dataTables.min.js"),
                 base_url("asset/template/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"),
                 "https://cdn.jsdelivr.net/npm/sweetalert2@8",
+                base_url("asset/template/bower_components/select2/dist/js/select2.full.min.js"),
                 base_url("asset/js/checkCode.js"),
                 base_url("asset/js/user.js")
         
@@ -119,10 +121,11 @@ class Work_hours extends CI_Controller
 
     function saveData() {
 
+        $idx = $this->input->post('id_hidden');
         $params = [
             'appid' => $this->appid,
             'name' => $this->input->post('name'),
-            'location' => $this->input->post('location'),
+            'location' => json_encode($this->input->post('location')),
             'start_time' => $this->input->post('start_work'),
             'end_time' => $this->input->post('end_work'),
             'start_checkin_time' => $this->input->post('start_checkin_time'),
@@ -134,7 +137,7 @@ class Work_hours extends CI_Controller
             'early_minutes' => $this->input->post('early_leave_tolerance'),
             'color' => $this->input->post('colour'),
         ];
-
+        
         if ($this->input->post('break_type') == '1') {
             $params['break_duration'] = $this->input->post('break_duration');
         } elseif ($this->input->post('break_type') == '2') {
@@ -142,14 +145,72 @@ class Work_hours extends CI_Controller
             $params['break_out'] = $this->input->post('break_hour_end');
         }
 
-        $params['created_at'] = (new DateTime())->format('Y-m-d H:i:s');
+        if ($idx == '0') {
+            # code...
+            $params['created_at'] = (new DateTime())->format('Y-m-d H:i:s');
+    
+            $ins = $this->schedule_model->insHour($params);
+            
+            if ($ins) {
+                $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
+                setActivity("schedule working hours","add");
+            } 
+        } else {
+            $this->load->library("encryption_org");
+            $uptid = $this->encryption_org->decode($idx);
+            $params['updated_at'] = (new DateTime())->format('Y-m-d H:i:s');
+    
+            $upt = $this->schedule_model->uptHour($uptid, $params);
+            
+            if ($upt) {
+                $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Update data has success full')]);
+                setActivity("schedule working hours","update");
+            } 
+        }
 
-        $ins = $this->schedule_model->insHour($params);
+        return redirect("schedule-work-hours");
+    }
+
+    function getDetailData() {
+        $this->load->library("encryption_org");
+        $id = $this->encryption_org->decode($this->input->get('id'));
+
+        $data = $this->schedule_model->getDetailHour($id);
+        if (count($data) == 0) {
+            # code...
+            echo json_encode([
+                'meta' => [
+                    'code' => 404,
+                    'message' => 'Data not found'
+                ],
+                'data' => $data
+            ]); return;
+        }
+
+        $data[0]->id = $this->encryption_org->encode($data[0]->id);
         
-        if ($ins) {
-            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
-            setActivity("schedule working hours","add");
+        echo json_encode([
+            'meta' => [
+                'code' => 200,
+                'message' => 'Success'
+            ],
+            'data' => $data[0]
+        ]); return;
+    }
+
+    function delData($encId) {
+        $this->load->library("encryption_org");
+        $idx = $this->encryption_org->decode($encId);
+
+        $upt = $this->schedule_model->uptHour($idx, [
+            'is_delete' => 1
+        ]);
+
+        if ($upt) {
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Delete data has success full')]);
+            setActivity("schedule working hours","delete");
         } 
+
         return redirect("schedule-work-hours");
     }
 

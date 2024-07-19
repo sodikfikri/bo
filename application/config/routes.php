@@ -91,6 +91,8 @@ $route['save-user']   = 'master/user/save_user';
 
 $route['schedule-work-hours'] = 'schedule/work_hours';
 $route['schedule-work-hours-submit'] = 'schedule/work_hours/savedata';
+$route['schedule-work-hours-detail'] = 'schedule/work_hours/getDetailData';
+$route['schedule-work-hours-delete/(:any)'] = 'schedule/work_hours/delData/$1';
 
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';

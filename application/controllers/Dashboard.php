@@ -47,9 +47,13 @@ class Dashboard extends CI_controller
     $infoSubscription = $this->session->userdata("sessSubscription");
 	$deviceLicense = '';
 	foreach ($arrAddons as $rows) {
-		if (strpos($rows['name'], "InAct") !== false) {
-			$deviceLicense += $rows['qty'];
-		}
+    try {
+      if (strpos($rows['name'], "InAct") !== false) {
+        $deviceLicense += $rows['qty'];
+      }
+    } catch (\Throwable $th) {
+      continue;
+    }
 	}
     if(empty($addons['machinelicense']) AND empty($addons['machinelicenseflash']) AND empty($deviceLicense)){
       $addonsAlert = '<a href="'.base_url('addons').'" ><div class="callout callout-danger">

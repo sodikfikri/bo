@@ -46,8 +46,8 @@ class Leave_model extends CI_Model
 
         $ins = $this->db->insert('tbleaveclass', $datax);
         // kurangi kuota leave
-        $sql = "UPDATE tbemployee SET leave_count = leave_count-1 WHERE employee_id = $employee_id AND appid = '$appid'";
-        $this->db->query($sql);
+        // $sql = "UPDATE tbemployee SET leave_count = leave_count-1 WHERE employee_id = $employee_id AND appid = '$appid'";
+        // $this->db->query($sql);
 
         if ($this->db->trans_status() === FALSE) {
             // Jika ada kesalahan, rollback transaksi

@@ -2,12 +2,24 @@
   .form-rounded {
     border-radius: 6px;
   }
+  .modal.right .modal-dialog {
+      position: absolute;
+      right: 0;
+      margin: 0;
+      padding-right: 20px;
+      /* width: 30%; */
+  }
+  .modal.right .modal-content {
+      height: 100vh;
+      border: 0;
+  }
 </style>
 <!-- Content Header (Page header) -->
 <section class="content-header">
   <h1>
     <?= $this->gtrans->line('Working Hours') ?>
   </h1>
+  <small>Create and manage your employee's working hours</small>
 </section>
 <!-- Main content -->
 <section class="content">
@@ -22,7 +34,9 @@
             <div class="col-md-12">
               <!-- <?= !empty($notif) ? $notif : "" ?> -->
               <!-- <a href="<?= base_url("schedule-work-hours-submit") ?>" class="btn btn-primary"><i class="fa fa-clock-o" style="padding-right: 5px"></i> <?= $this->gtrans->line('Add Data') ?></a> -->
-              <button class="btn btn-primary" id="btn-add"><i class="fa fa-clock-o" style="padding-right: 5px"></i> <?= $this->gtrans->line('Add Data') ?></button>
+              <button class="btn btn-primary" id="btn-add" style="float: right;">
+                <i class="fa fa-clock-o" style="padding-right: 5px;"></i> <?= $this->gtrans->line('Add Data') ?>
+              </button>
 
             </div>
             <div class="col-md-12" style="margin-top:10px">
@@ -53,53 +67,86 @@
                           <small>Create working hours for your employees</small>
                       <!-- </div> -->
                       <!-- <div class=""> -->
-                        <hr style="margin: 10px 0px 0px 0px">
+                        <hr style="margin: 10px 0px 0px 0px; border: 0.5px solid #DCDCDC;">
                           <form action="<?= base_url('schedule-work-hours-submit'); ?>" method="post" style="margin-top: 12px;">
                               <div class="row">
                                   <div class="col-md-12">
-                                      <div class="row">
+                                    <span style="font-size: 16px; font-weight: bold;">Name and location</span>
+                                      <div class="row" style="margin-top: 10px;">
                                           <div class="col-md-6">
+                                            <input type="hidden" id="id_hidden" name="id_hidden" value="0">
                                               <label for="name" class="form-label">Name</label>
                                               <input type="text" class="form-control form-rounded" name="name" id="name" >
                                           </div>
                                           <div class="col-md-6">
                                               <label for="location" class="form-label">Location</label>
-                                              <select class="form-control form-rounded" name="location" id="location">
+                                              <select class="form-control form-rounded" multiple="multiple" name="location[]" id="location" style="width: 100%;">
                                                   <?php foreach($branchData as $branch): ?>
                                                     <option value="<?= $branch->cabang_id ?>"><?= $branch->cabang_name ?></option>
                                                   <?php endforeach; ?>
                                               </select>
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
+                                      </div>
+                                      <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
+                                      <span style="font-size: 16px; font-weight: bold;">Working hours</span>
+                                      <div class="row">
+                                          <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="start_work" class="form-label">Start Work Time</label>
                                               <input type="time" class="form-control form-rounded" name="start_work" id="start_work" >
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
+                                          <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="end_work" class="form-label">End Work Time</label>
                                               <input type="time" class="form-control form-rounded" name="end_work" id="end_work" >
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
+                                          <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="start_checkin_time" class="form-label">Earliest Start Work Time</label>
                                               <input type="time" class="form-control form-rounded" name="start_checkin_time" id="start_checkin_time" >
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
+                                          <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="end_checkin_time" class="form-label">Latest Start Work Time</label>
                                               <input type="time" class="form-control form-rounded" name="end_checkin_time" id="end_checkin_time" >
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
+                                          <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="start_checkout_time" class="form-label">Earliest End Work Time</label>
                                               <input type="time" class="form-control form-rounded" name="start_checkout_time" id="start_checkout_time" >
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
+                                          <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="end_checkout_time" class="form-label">Latest End Work Time</label>
                                               <input type="time" class="form-control form-rounded" name="end_checkout_time" id="end_checkout_time" >
                                           </div>
-                                          <div class="col-md-12" style="margin-top: 15px;">
+                                      </div>
+                                      <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
+                                      <span style="font-size: 16px; font-weight: bold;">Late tolerance</span>
+                                      <div class="row">
+                                          <div class="col-md-6" style="margin-top: 10px;">
+                                              <label for="late_tolerance" class="form-label">Late Tolerance (minutes)</label>
+                                              <input type="number" class="form-control form-rounded" name="late_tolerance" id="late_tolerance" >
+                                          </div>
+                                          <div class="col-md-6" style="margin-top: 10px;">
+                                              <label for="early_leave_tolerance" class="form-label">Early Leave Tolerance (minutes)</label>
+                                              <input type="number" class="form-control form-rounded" name="early_leave_tolerance" id="early_leave_tolerance" >
+                                          </div>
+                                      </div>
+                                      <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
+                                      <span style="font-size: 16px; font-weight: bold;">Break Time</span>
+                                      <div class="row">
+                                          <div class="col-md-12" style="margin-top: 10px;">
                                               <label for="" class="form-label">Break Time</label><br>
                                               <div class="form-check">
+                                                
                                                   <input class="form-check-input" type="radio" name="break_type" id="exampleRadios1" value="1" checked>
-                                                  <label class="form-check-label" for="exampleRadios1" style="color: grey; font-weight: 400;">
+                                                  <label class="form-check-label" for="exampleRadios1" style="color: grey; font-weight: 400; margin-right: 10px;">
                                                       Break based on duration
+                                                  </label>
+
+                                                  <input class="form-check-input" type="radio" name="break_type" id="exampleRadios2" value="2">
+                                                  <label class="form-check-label" for="exampleRadios2" style="color: grey; font-weight: 400; margin-right: 10px;">
+                                                      Break time based hours
+                                                  </label>
+
+                                                  <input class="form-check-input" type="radio" name="break_type" id="exampleRadios3" value="0">
+                                                  <label class="form-check-label" for="exampleRadios3" style="color: grey; font-weight: 400; margin-right: 10px;">
+                                                      Without rest
                                                   </label>
                                               </div>
                                               <div class="row" id="opt_break_by_duration">
@@ -112,12 +159,6 @@
                                                       </select>
                                                   </div>
                                               </div>
-                                              <div class="form-check">
-                                                  <input class="form-check-input" type="radio" name="break_type" id="exampleRadios2" value="2">
-                                                  <label class="form-check-label" for="exampleRadios2" style="color: grey; font-weight: 400;">
-                                                      Break time based hours
-                                                  </label>
-                                              </div>
                                               <div class="row" id="opt_break_by_hour" style="display: none;">
                                                   <div class="col-md-6">
                                                       <label for="break_hour_start" class="form-label">Break time start</label>
@@ -128,23 +169,13 @@
                                                       <input type="time" class="form-control form-rounded" name="break_hour_end" id="break_hour_end" >
                                                   </div>
                                               </div>
-                                              <div class="form-check">
-                                                  <input class="form-check-input" type="radio" name="break_type" id="exampleRadios3" value="0">
-                                                  <label class="form-check-label" for="exampleRadios3" style="color: grey; font-weight: 400;">
-                                                      Without rest
-                                                  </label>
-                                              </div>
                                           </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
-                                              <label for="late_tolerance" class="form-label">Late Tolerance (minutes)</label>
-                                              <input type="number" class="form-control form-rounded" name="late_tolerance" id="late_tolerance" >
-                                          </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
-                                              <label for="early_leave_tolerance" class="form-label">Early Leave Tolerance (minutes)</label>
-                                              <input type="number" class="form-control form-rounded" name="early_leave_tolerance" id="early_leave_tolerance" >
-                                          </div>
-                                          <div class="col-md-6" style="margin-top: 15px;">
-                                              <label for="colour" class="form-label">Label</label>
+                                      </div>
+                                      <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
+                                      <span style="font-size: 16px; font-weight: bold;">Setting label</span>
+                                      <div class="row">
+                                          <div class="col-md-6" style="margin-top: 10px;">
+                                              <label for="colour" class="form-label">Work schedule background color</label>
                                               <input type="text" class="form-control form-rounded" name="colour" id="colour" >
                                           </div>
                                       </div>
@@ -164,6 +195,7 @@
 
 <script>
   $(document).ready(function() {
+    var url = "<?= base_url() ?>";
     var notif = '<?php echo json_encode($notif); ?>';
     $("#datatable").DataTable();
 
@@ -171,8 +203,80 @@
       $('#exampleModal').modal('show')
     })
 
+    $("#datatable tbody").on('click', '.btn-del', function() {
+      let idx = $(this).data('id')
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.value) {
+          window.open(url + 'schedule-work-hours-delete/' + idx,'_self');
+        }
+      })
+    })
+
     $("#datatable tbody").on('click', '.btn-detail', function() {
-      $('#exampleModal').modal('show')
+      let idx = $(this).data('id')
+      let thisX = $(this)
+      $.ajax({
+        url: url + 'schedule-work-hours-detail',
+        method: 'GET',
+        data: {
+          id: idx
+        },
+        beforeSend: function() {
+          thisX.html('<i class="fa fa-circle-o-notch fa-spin"></i>')
+        },
+        success: function(res) {
+          let response = JSON.parse(res)
+          let data = response.data
+          console.log(data);
+
+          $('#id_hidden').val(data.id)
+          $('#name').val(data.name)
+          $('#location').val(JSON.parse(data.location)).change()
+          $('#start_work').val(data.start_time)
+          $('#end_work').val(data.end_time)
+          $('#start_checkin_time').val(data.start_checkin_time)
+          $('#end_checkin_time').val(data.end_checkin_time)
+          $('#start_checkout_time').val(data.start_checkout_time)
+          $('#end_checkout_time').val(data.end_checkout_time)
+          $('#late_tolerance').val(data.late_minutes)
+          $('#early_leave_tolerance').val(data.early_minutes)
+          $('#colour').val(data.color)
+
+          $('input[name="break_type"][value="'+data.break_type+'"]').prop('checked', true)
+
+          if (data.break_type == '1') {
+            $('#opt_break_by_hour').css('display', 'none')
+            $('#opt_break_by_duration').css('display', '')
+
+            $('#break_duration').val(data.break_duration).change()
+          } else if (data.break_type == '2') {
+              $('#opt_break_by_duration').css('display', 'none')
+              $('#opt_break_by_hour').css('display', '')
+
+              $('#break_hour_start').val(data.break_in)
+              $('#break_hour_end').val(data.break_out)
+          } else {
+              $('#opt_break_by_duration').css('display', 'none')
+              $('#opt_break_by_hour').css('display', 'none')
+          }
+        },
+        complete: function(){
+          $('#exampleModal').modal('show')
+          thisX.html('<i class="fa fa-edit fa-lg"></i>')
+        }
+      })
+    })
+
+    $('#location').select2({
+        theme: 'bootstrap4'
     })
 
     $('input[name="break_type"]').on('click', function() {

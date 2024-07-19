@@ -9,7 +9,7 @@ class Leave extends REST_Controller
     var $now;
     var $apikey = "IAdev-apikey3fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9ed48151b389apikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9e7b7c2f8d891dfc9b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
 
-    public $ngrok = 'https://f877-36-90-57-45.ngrok-free.app/inact/bo';
+    public $prefix = 'https://f877-36-90-57-45.prefix-free.app/inact/bo';
     public $response = [];
 
     function __construct()
@@ -52,7 +52,7 @@ class Leave extends REST_Controller
         $leave_data = $this->leave_model->getcategoryList($appid);
 
         foreach($leave_data as $items) {
-            $items->icon = $this->ngrok . ltrim($items->icon, '.');
+            $items->icon = $this->prefix . ltrim($items->icon, '.');
         }
         if (count($leave_data) == 0) {
             $response = $this->SetRespose(404, 'Data not found!');
@@ -178,7 +178,7 @@ class Leave extends REST_Controller
                 "end_date" => $items->end_date,
                 "end_time" => $items->end_time,
                 "reason" => $items->reason,
-                "doc" => $items->doc_path ? $this->ngrok . ltrim($items->doc_path, '.') : '',
+                "doc" => $items->doc_path ? $this->prefix . ltrim($items->doc_path, '.') : '',
                 "created_at" => $items->created_at
             ];
 

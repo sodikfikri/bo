@@ -439,7 +439,7 @@ class Attendance extends REST_Controller{
 									"checklog_latitude"			=> $row->checklog_latitude,
 									"checklog_longitude"		=> $row->checklog_longitude,
 									"checklog_address"			=> $row->checklog_address,
-									"checklog_path_image"		=> 'https://inact.interactiveholic.net/bo/sys_upload/absen_image/'.$row->image,
+									"checklog_path_image"		=> URL_APPSERVICE . '/sys_upload/absen_image/'.$row->image,
 									"mood"						=> $row->mood
 								];
 							}else{

@@ -60,8 +60,10 @@ class Departement extends CI_Controller
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
             ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
-            ["data"=> $this->gtrans->line("Name"), "class"=>"text-left"],
-            ["data"=> $this->gtrans->line("Created At"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Deaprtement Name"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Employee"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Manager"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Telepon"), "class"=>"text-right"],
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
         );
 
@@ -73,10 +75,21 @@ class Departement extends CI_Controller
                     'data' => $key+1,
                     'style' => 'text-align:center;'
                 ],
-                $items->name,
                 [
-                    'data' => $items->created_at,
+                    'data' => $items->name,
+                    'style' => 'text-align:left;'
+                ],
+                [
+                    'data' => $items->total_emp . ' employee',
                     'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => $items->pic,
+                    'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => $items->telepon,
+                    'style' => 'text-align:right;'
                 ],
                 [
                     'data' => '<span style="cursor:pointer" data-id="'.$encId.'" data-name="'.$items->name.'"  class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
@@ -87,6 +100,7 @@ class Departement extends CI_Controller
         }
 
         $data['listTable'] = $this->table->generate();
+        $parent = $this->departement_model->getParent($this->appid);
         if(!empty($this->session->userdata("ses_notif"))){
             $arrNotif = $this->session->userdata("ses_notif");
       
@@ -100,6 +114,7 @@ class Departement extends CI_Controller
             "content" => "master/departement",  // content view
             "viewData"=> $data,
             "listMenu"=> $this->listMenu,
+            "parentData" => $parent,
             "varJS" => ["url" => base_url()],
             "externalCSS" => [
                 base_url("asset/template/bower_components/select2/dist/css/select2.min.css"),
@@ -119,16 +134,28 @@ class Departement extends CI_Controller
         $this->gtrans->saveNewWords();
     }
 
-    function getParent() {
-        $departement = $this->departement_model->list_departement($this->appid);
+    function getTree() {
+        $company = $this->departement_model->getCompany($this->appid);
 
-        if (count($departement) == 0) {
+        $departement = $this->departement_model->getDataTree($this->appid);
+        $hierarchy = $this->buildHierarchy($departement);
+
+        $datax = [
+            'id' => '0',
+            'data' => [
+                'name' => $company[0]->company_name,
+                'borderColor' => '#039be5',
+            ],
+            'children' => $hierarchy
+        ];
+        
+        if (count($hierarchy) == 0) {
             $response = [
                 'meta' => [
                     'code' => 404,
                     'message' => 'Data not found!'
                 ],
-                'data' => $departement
+                'data' => $datax
             ];
 
             echo json_encode($response);
@@ -140,7 +167,7 @@ class Departement extends CI_Controller
                 'code' => 200,
                 'message' => 'Success get data'
             ],
-            'data' => $departement
+            'data' => $datax
         ];
 
         echo json_encode($response);
@@ -148,17 +175,18 @@ class Departement extends CI_Controller
 
     function saveDepartement() {
         $id = $this->input->post('id');
-        // $parent = $this->input->post('parent');
+        $parent = $this->input->post('parent');
         $name = $this->input->post('name');
-        // $label = $this->input->post('label');
+        $telepon = $this->input->post('telepon');
+        $manager_name = $this->input->post('manager_name');
 
         $params = [
             'appid' => $this->appid,
             'name' => $name,
-            // 'parent' => $parent,
-            // 'label' => $label
+            'telepon' => $telepon,
+            'pic' => $manager_name,
+            'parent' => $parent ? $parent : 0,
         ];
-
         if ($id == 0) {
             $params['created_at'] = (new DateTime())->format('Y-m-d H:i:s');
 

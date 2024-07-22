@@ -3,6 +3,7 @@
   <h1>
     <?= $this->gtrans->line('Leave Categories') ?>
   </h1>
+  <small>Set the list of off day categories</small>
 </section>
 <!-- Main content -->
 <section class="content">

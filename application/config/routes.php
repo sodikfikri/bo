@@ -227,7 +227,7 @@ $route['employee-leave/export'] = 'transaction/trx_leave/toxlsx';
 $route['employee-leave/delete'] = 'transaction/trx_leave/deleteData';
 
 $route['departement'] = 'master/departement';
-$route['departement-parent'] = 'master/departement/getparent';
+$route['departement-tree'] = 'master/departement/getTree';
 $route['departement-submit'] = 'master/departement/savedepartement';
 $route['departement-detail'] = 'master/departement/detaildata';
 $route['departement-delete/(:any)'] = 'master/departement/deletedata/$1';

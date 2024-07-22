@@ -9,7 +9,7 @@ class Leave extends REST_Controller
     var $now;
     var $apikey = "IAdev-apikey3fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9ed48151b389apikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fapikey3fed48151b389b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9e7b7c2f8d891dfc9b691898cc2a046772bfa040dadb49aac02fe7b7c2f8d891dfc9";
 
-    public $prefix = 'https://f877-36-90-57-45.prefix-free.app/inact/bo';
+    public $prefix = 'https://inact.azurewebsites.net';
     public $response = [];
 
     function __construct()
@@ -232,137 +232,13 @@ class Leave extends REST_Controller
     }
 
     function apiTest_post() {
-        $body_msg = '
-        <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-        <html>
-        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <head>
-            <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        </head>
-        <style type="text/css" data-hse-inline-css="true">
-            @media only screen and (max-width: 385px) {
-            .main-page{
-            background-color:#dfdfdf;
-            padding:5px;"
-            }
-            @media only screen and (min-width: 386px) {
-            .main-page{
-            background-color:#dfdfdf;
-            padding:40px;"
-            }
-        </style>
-        <body style="font-family: \'Roboto\', sans-serif;">
-            <div class="main-page"  >
-            <img src="https://inact.interactiveholic.net/bo/asset/images/Logo_inact.png" style="width: 200px;">
-            <div style="max-width:653px; background-color:#ffffff;margin-left:auto; margin-right:auto; margin-top:40px; margin-bottom:40px;" >
-                <div style="vertical-align: middle; padding:30px 30px 30px 30px;">
-                <center style="padding-bottom:30px"></center>
-                    <hr style="height: 1px;color: #dee0e3;background-color: #dee0e3;border: none;">
-                    <p style="font-family: Roboto;
-                        font-size: 24px;
-                        font-weight: bold;
-                        font-style: normal;
-                        font-stretch: normal;
-                        line-height: 1.17;
-                        letter-spacing: normal;
-                        text-align: left;
-                        color: rgba(0, 0, 0, 0.7);
-                        ">
-                        Hello Sodik,</p>
-                        <p style="font-family: Roboto;
-                        font-size: 15px;
-                        font-weight: normal;
-                        font-style: normal;
-                        font-stretch: normal;
-                        line-height: 1.67;
-                        letter-spacing: normal;
-                        text-align: left;
-                        color: rgba(0, 0, 0, 0.7);
-                        ">
-                        You are doing login on INTRAX123534534522 app. 
-                        Here is the One-Time Password that must be entered</p>
-                        <p style="font-family: Roboto;
-                        font-size: 20px;
-                        font-weight: normal;
-                        font-style: normal;
-                        font-stretch: normal;
-                        line-height: 1.67;
-                        letter-spacing: normal;
-                        text-align: left;
-                        color: rgba(0, 0, 0, 0.7);
-                        "><strong>One Time Password: </strong>
-                            112233
-                        </p>
-                        
-                        <p style="font-family: Roboto;
-                        font-size: 15px;
-                        font-weight: normal;
-                        font-style: normal;
-                        font-stretch: normal;
-                        line-height: 1.67;
-                        letter-spacing: normal;
-                        text-align: left;
-                        color: rgba(0, 0, 0, 0.7);">
-                            If you experience problems using InterActive Products, please contact our Customer Support team through  <font style="font-weight: bold;color: #00cbce;">(031) 535 5353</font> <b>Ext. 16 or <a href="https://wa.me/6285879123123" target="_blank">+62 858-79-123-123</a></b>
-                        </p>
-                        <br>
-                        <p style="font-family: Roboto;
-                        font-size: 15px;
-                        font-weight: normal;
-                        font-style: normal;
-                        font-stretch: normal;
-                        line-height: 1.67;
-                        letter-spacing: normal;
-                        text-align: left;
-                        color: rgba(0, 0, 0, 0.7);">Greetings,</p>
-                        <p style="font-family: Roboto;
-                        font-size: 15px;
-                        font-weight: normal;
-                        font-style: normal;
-                        font-stretch: normal;
-                        line-height: 1.67;
-                        letter-spacing: normal;
-                        text-align: left;
-                        color: rgba(0, 0, 0, 0.7);">Interactive Team,</p>
-                    </div>
-                </div>
-                <center>
-                    <img src="https://cloud.interactive.co.id/mybilling/asset/img/interactive.png" height="15px" />
-                    <p style="font-family: Roboto;
-                    font-size: 12px;
-                    font-weight: 500;
-                    font-style: normal;
-                    font-stretch: normal;
-                    line-height: 1.67;
-                    letter-spacing: normal;
-                    text-align: center;
-                    color: rgba(0, 0, 0, 0.38);">Jl. Ambengan No. 85, Surabaya 60136, Indonesia <br>
-                    @ '.date('Y').', InterActive Technologies Corp. All rights reserved.</p>
-                    <p style="font-family: Roboto;
-                    font-size: 12px;
-                    font-weight: 500;
-                    font-style: normal;
-                    font-stretch: normal;
-                    line-height: 1.83;
-                    letter-spacing: normal;
-                    text-align: center;
-                    color: rgba(0, 0, 0, 0.38);"><a href="https://www.youtube.com/user/interactivecorp">Youtube</a> - <a href="https://www.instagram.com/interactive_tech/">Instagram</a> -  <a href="https://www.facebook.com/InteractiveTec/">Facebook</a> - <a href="https://www.interactive.co.id">Website</a></p>
-                </center>
-            </div>
-        </body>
-        </html>';
-        // echo $body_msg;
-        // return;
-        $this->load->library("intermailer");
-        $init = $this->intermailer->initialize_allin();
-        // header("Content-Type:application/json");
-        // echo json_encode($init); return;
-        $this->intermailer->to(['sodikfikri.job@gmail.com'=>'sodikfikri.job@gmail.com']);
-        $this->intermailer->set_content("Employee OTP",$body_msg,"Alt Body tes");
-        $this->intermailer->send();
+        $this->load->model("checkout_cart_model");
+        
+        $arrDataOrder = $this->checkout_cart_model->getDetailOrder_temp('INV77900111837');
+        print_r($arrDataOrder); return;
 
-        $response = $this->SetRespose(200, 'Success send email', []);
+
+        $response = $this->SetRespose(200, 'Success send email', $arrDataOrder);
         header("Content-Type:application/json");
         echo json_encode($response); return;
     }

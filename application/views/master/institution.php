@@ -576,6 +576,20 @@
 			} );
 		});
 	}
+  
+  function check() {
+    $.ajax({
+	  url: url + "checkQris",
+	  type: "POST",
+	  data: {invoiceId:'INV77900111837',refNo:'XJVFdiLW79yPZezIuQMKjvtp6sY3TUNw'},
+	  success: function (res) {
+      result = JSON.parse(res);
+
+      console.log('result check: ', result);
+	  },
+	});
+  }
+  check()
 	
 	$(document).ready(function() {
 	  $(window).keydown(function(event){

@@ -3,6 +3,7 @@
   <h1>
     <?= $this->gtrans->line('Transaction Leave') ?>
   </h1>
+  <small>Manage access for your employees.</small>
 </section>
 <!-- Main content -->
 <section class="content">

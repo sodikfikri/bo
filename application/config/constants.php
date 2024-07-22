@@ -117,6 +117,8 @@ define('SMTP_PORT_ALLIN',587);
 define('SMTP_EMAIL_ALLIN','service_allin1@indeo.id');
 define('SMTP_PASSWORD_ALLIN','Inter20240715');
 
+define('URL_APPSERVICE','https://inact.azurewebsites.net');
+
 /** Sandbox Identification **/
 define('SANDBOX_IDENTIFICATION', '');
 

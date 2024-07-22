@@ -4,9 +4,9 @@
  */
 class Departement_model extends CI_Model
 {
-    function list_departement($appid, $column = null, $value = null) {
-        $this->db->select('id, name, parent, label');
-        $this->db->from('tbhierarchydepartements');
+    function getDataTree($appid, $column = null, $value = null) {
+        $this->db->select('id, name, parent');
+        $this->db->from('tbdepartements');
         $this->db->where('appid', $appid);
         $this->db->where('is_delete', '0');
 
@@ -23,9 +23,7 @@ class Departement_model extends CI_Model
                     'id' => $item->id,
                     'data' => [
                         'name' =>$item->name,
-                        'label' =>$item->label,
                         'borderColor' => '#039be5',
-                        // 'nodeWidth' => 150,
                     ],
                     'parent' => $item->parent
                 ];
@@ -35,6 +33,14 @@ class Departement_model extends CI_Model
         }
 
         return $data;
+    }
+
+    function getParent($appid) {
+        $sql = "SELECT id, name FROM tbdepartements WHERE is_delete = 0 AND appid = '$appid'";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
     }
 
     function saveData($params) {
@@ -63,14 +69,24 @@ class Departement_model extends CI_Model
     }
 
     function listTable($appid) {
-        $this->db->select('*');
-        $this->db->from('tbdepartements');
-        $this->db->where('appid', $appid);
-        $this->db->where('is_delete', '0');
-        
-        $query = $this->db->get();
 
-        return $query->result();
+        $sql = "select *, (
+                    select IFNULL(COUNT(*), 0) from db_inact.tbemployee where departement_id = tbdepartements.id
+                ) as total_emp
+                from db_inact.tbdepartements 
+                where appid = '$appid' and is_delete = 0";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function getCompany($appid) {
+        $sql = "select * from iasubscription where appid = '$appid'";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
     }
     
 }

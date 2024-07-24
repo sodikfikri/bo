@@ -30,6 +30,7 @@ class Holidays extends CI_Controller
         $this->listMenu = $this->menu_model->list_menu();
         $this->now = date("Y-m-d H:i:s");
         $this->appid = $this->session->userdata("ses_appid");
+        $this->load->library("encryption_org");
         // bahasa
     }
 
@@ -57,8 +58,16 @@ class Holidays extends CI_Controller
         // $Arr = [];
 
         // foreach($response as $key => $items) {
+
+        //     // $search_name = $items->keterangan;
+
+        //     // $result = array_filter($Arr, function($item) use ($search_name) {
+        //     //     return $item['name'] === $search_name;
+        //     // });
+            
         //     $dt = [
-        //         'start_time' => (new DateTime($items->tanggal))->format('Y-m-d'),
+        //         'appid' => $this->appid,
+        //         'start_date' => (new DateTime($items->tanggal))->format('Y-m-d'),
         //         'name' => $items->keterangan,
         //         'holiday_type' => $items->is_cuti ? 'Cuti' : 'Libur Nasional',
         //         'color' => $items->is_cuti ? '#FF6347' : '#DC143C',
@@ -69,23 +78,73 @@ class Holidays extends CI_Controller
         // }
 
         // $add = $this->schedule_model->SaveDataHoliday($Arr);
-        $data = [];
-        if(!empty($this->session->userdata("ses_notif"))){
-            $arrNotif = $this->session->userdata("ses_notif");
-      
-            $notif    = createNotif($arrNotif['type'],$arrNotif['header'],$arrNotif['msg']);
-            $data['notif'] = $notif;
+        // echo 'masuk'; return;
+        $this->table->set_template($this->tabel_template);
+        $this->table->set_heading(
+            ["data"=> $this->gtrans->line("#"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Holiday Name"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Holiday Date"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Notes"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
+        );
 
+        $data = [];
+
+        $list_hoilday = $this->schedule_model->HolidayList();
+
+        $data_holiday = [];
+        foreach($list_hoilday as $key => $item) {
+            $encId = $this->encryption_org->encode($item->id);
+
+            $this->table->add_row(
+                [
+                    'data' => $key+1,
+                    'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => $item->name,
+                    'style' => 'text-align:left;'
+                ],
+                [
+                    'data' => $item->start_date,
+                    'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => $item->notes,
+                    'style' => 'text-align:left;'
+                ],
+                [
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
+                                <span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
+                    'style' => 'text-align:center;'
+                ]
+            );
+
+            $obj = [
+                'id' => $encId,
+                'title' => $item->name,
+                'start' => (new DateTime($item->start_date))->format('Y-m-d'),
+                'end' => (new DateTime($item->start_date))->modify('+1 day')->format('Y-m-d'),
+                'color' => $item->color
+            ];
+
+            array_push($data_holiday, $obj);
+        }
+
+        $data['dataTable'] = $this->table->generate();
+
+        if(!empty($this->session->userdata("ses_notif"))){
+            $notif    = $this->session->userdata("ses_notif");
+            $data['notif'] = $notif;
             $this->session->unset_userdata("ses_notif");
         }
 
-        $list_hoilday = $this->schedule_model->HolidayList();
         $parentViewData = [
             "title"   => "Holidays",  // title page
             "content" => "schedule/holiday",  // content view
             "viewData"=> $data,
             "listMenu"=> $this->listMenu,
-            "holidays" => json_encode($list_hoilday),
+            "holidays" => json_encode($data_holiday),
             "varJS" => ["url" => base_url()],
             "externalCSS" => [
                 base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css")
@@ -108,27 +167,29 @@ class Holidays extends CI_Controller
         $end_date = new DateTime($this->input->post('end_date'));
         $diff = $start_date->diff($end_date);
 
-        
-
         $data = [];
 
         for($n = 0; $n <= $diff->days; $n++) {
             if ($n == 0) {
                 $dt = [
+                    'appid' => $this->appid,
                     'name' => $this->input->post('holiday_name'),
-                    'start_time' => $start_date->format('Y-m-d'),
+                    'start_date' => $start_date->format('Y-m-d'),
                     'holiday_type' => 'Cuti',
                     'color' => $this->input->post('colour'),
+                    'notes' => $this->input->post('notes'),
                     'created_at' => (new DateTime())->format('Y-m-d H:i:s')
                 ];
 
                 array_push($data, $dt);
             } else {
                 $dt = [
+                    'appid' => $this->appid,
                     'name' => $this->input->post('holiday_name'),
-                    'start_time' => $start_date->modify('1 day')->format('Y-m-d'),
+                    'start_date' => $start_date->modify('1 day')->format('Y-m-d'),
                     'holiday_type' => 'Cuti',
                     'color' => $this->input->post('colour'),
+                    'notes' => $this->input->post('notes'),
                     'created_at' => (new DateTime())->format('Y-m-d H:i:s')
                 ];
 
@@ -138,20 +199,27 @@ class Holidays extends CI_Controller
         $ins = $this->schedule_model->SaveDataHoliday($data);
 
         if ($ins) {
-            $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('Success add data')]);
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
             setActivity("master holiday","add");
         } else {
-            $this->session->set_userdata('ses_notif',['type'=>'danger','header'=>'Failed','msg'=> $this->gtrans->line('Fail to add data')]);
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Fail to add data')]);
         }
         return redirect("schedule-holidays");
     }
 
     function delData() {
-        $del = $this->schedule_model->RemoveHoliday($this->input->post('id_delete'));
+        $this->load->library("encryption_org");
+
+        $id = [];
+        foreach($this->input->post('id_delete') as $val) {
+            array_push($id, $this->encryption_org->decode($val));
+        }
+
+        $del = $this->schedule_model->RemoveHoliday($id);
         if ($del) {
-            $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('Success delete data')]);
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
         } else {
-            $this->session->set_userdata('ses_notif',['type'=>'error','header'=>'Failed','msg'=> $this->gtrans->line('Failed to delete data')]);
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Fail to delete data')]);
         }
         return redirect("schedule-holidays");
     }

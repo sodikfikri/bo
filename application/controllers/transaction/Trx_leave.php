@@ -37,10 +37,11 @@ class Trx_leave extends CI_Controller
         $is_filter = false;
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
-            ["data"=> '<div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="" id="head-check">
-                            <label class="form-check-label" for="head-check"></label>
-                        </div>', "class"=>"text-center"],
+            // ["data"=> '<div class="form-check">
+            //                 <input class="form-check-input" type="checkbox" value="" id="head-check">
+            //                 <label class="form-check-label" for="head-check"></label>
+            //             </div>', "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Employee Name"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Category"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Start Time"), "class"=>"text-center"],
@@ -64,16 +65,17 @@ class Trx_leave extends CI_Controller
         $data_cats = $this->leave_model->getcategoryList($this->appid);
 
         $data_leave = $this->leave_model->leaveList($this->appid, $params);
-
+        // print_r($data_leave); die;
         
         foreach($data_leave as $key => $items) {
             $encId = $this->encryption_org->encode($items->id);
             $this->table->add_row(
                 [
-                    'data' => '<div class="form-check">
-                                    <input class="form-check-input checkid" type="checkbox" name="checkid" id="checkid" value="'.$encId.'">
-                                    <label class="form-check-label" for="checkid"></label>
-                                </div>',
+                    // 'data' => '<div class="form-check">
+                    //                 <input class="form-check-input checkid" type="checkbox" name="checkid" id="checkid" value="'.$encId.'">
+                    //                 <label class="form-check-label" for="checkid"></label>
+                    //             </div>',
+                    'data' => $key+1,
                     'style' => 'text-align: center;'
                 ],
                 $items->employee_full_name,
@@ -93,7 +95,8 @@ class Trx_leave extends CI_Controller
                 ],
                 [
                     // 'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
-                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>',
+                    'data' => '<span style="cursor:pointer" data-id="'.$encId.'" class="text-blue btn-detail"><i  class="fa fa-edit fa-lg"></i></span>
+                                <span style="cursor:pointer" data-id="'.$encId.'" class="text-red btn-del"><i  class="fa fa-trash fa-lg"></i></span>',
                     'style' => 'text-align:center;'
                 ]
             );
@@ -145,6 +148,23 @@ class Trx_leave extends CI_Controller
         $data = $this->leave_model->leaveList($this->appid,[]);
 
         echo json_encode($data);
+    }
+
+    function detailData() {
+        $this->load->library("encryption_org");
+        $id = $this->encryption_org->decode($this->input->get('id'));
+        
+        $data = $this->leave_model->detailTrx($id);
+
+        $response = [
+            'meta' => [
+                'code' => 200,
+                'message' => 'success get data'
+            ],
+            'data' => $data[0]
+        ];
+
+        echo json_encode($response);
     }
 
     function deleteData() {

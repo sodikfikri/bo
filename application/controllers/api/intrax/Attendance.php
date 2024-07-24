@@ -258,8 +258,8 @@ class Attendance extends REST_Controller{
 
 				$checkDataAbsen = $this->inoutmobile_model->checkDataInOutMobile($checklog_date,$employee_id,$checklog_event);
 				if($checkDataAbsen==0){
-					if($company_id!=null && $checklog_id!=null && $employee_id!=null && $checklog_event !=null && $checklog_date !=null && $address !=null){
-                    $employeeData = $this->employee_model->getEmployeeIntrax($company_id,$checklog_id,$employee_id);
+					if($checklog_id!=null && $employee_id!=null && $checklog_event !=null && $checklog_date !=null && $address !=null){
+                    $employeeData = $this->employee_model->getEmployeeIntrax($checklog_id,$employee_id);
 						if($employeeData!=false){
 							if(!empty($data['image'])){
 								$img = $data['image'];

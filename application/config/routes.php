@@ -221,10 +221,11 @@ $route['report-user-activity/print']  = 'report/user_activity/reportPrint';
 
 $route['report-employee-resign'] = 'report/employee_resign';
 
-$route['employee-leave'] = 'transaction/trx_leave';
-$route['employee-leave-file/(:any)'] = 'transaction/trx_leave/download_file/$1';
-$route['employee-leave/export'] = 'transaction/trx_leave/toxlsx';
-$route['employee-leave/delete'] = 'transaction/trx_leave/deleteData';
+$route['transaction-leave'] = 'transaction/trx_leave';
+$route['transaction-leave-file/(:any)'] = 'transaction/trx_leave/download_file/$1';
+$route['transaction-leave/export'] = 'transaction/trx_leave/toxlsx';
+$route['transaction-leave/delete'] = 'transaction/trx_leave/deleteData';
+$route['transaction-leave/detail'] = 'transaction/trx_leave/detailData';
 
 $route['departement'] = 'master/departement';
 $route['departement-tree'] = 'master/departement/getTree';

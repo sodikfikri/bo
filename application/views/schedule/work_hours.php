@@ -200,6 +200,21 @@
     $("#datatable").DataTable();
 
     $('#btn-add').on('click', function() {
+      $('#id_hidden').val('0')
+      $('#name').val('')
+      $('#location').val('').change()
+      $('#start_work').val('')
+      $('#end_work').val('')
+      $('#start_checkin_time').val('')
+      $('#end_checkin_time').val('')
+      $('#start_checkout_time').val('')
+      $('#end_checkout_time').val('')
+      $('#late_tolerance').val('')
+      $('#early_leave_tolerance').val('')
+      $('#colour').val('')
+      $('#opt_break_by_hour').css('display', 'none')
+      $('#opt_break_by_duration').css('display', '')
+      $('input[name="break_type"][value="1"]').prop('checked', true)
       $('#exampleModal').modal('show')
     })
 

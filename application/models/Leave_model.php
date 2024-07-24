@@ -144,4 +144,20 @@ class Leave_model extends CI_Model
         $res = $this->db->query($sql);
         return $res;
     }
+
+    function detailTrx($id) {
+        $sql = "SELECT 
+                    tbleaveclass.*, tbemployee.employee_full_name AS employee_name, tbleavecategories.name AS category_name
+                FROM 
+                    tbleaveclass 
+                JOIN 
+                    tbemployee ON tbleaveclass.employee_id = tbemployee.employee_id 
+                JOIN 
+                    tbleavecategories ON tbleaveclass.category_id = tbleavecategories.id
+                WHERE 
+                tbleaveclass.id = $id";
+        
+        $res = $this->db->query($sql);
+        return $res->result();
+    }
 }

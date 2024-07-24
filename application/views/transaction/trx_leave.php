@@ -4,6 +4,12 @@
     <?= $this->gtrans->line('Transaction Leave') ?>
   </h1>
   <small>Manage access for your employees.</small>
+
+  <style>
+    .form-rounded {
+        border-radius: 6px;
+    }
+  </style>
 </section>
 <!-- Main content -->
 <section class="content">
@@ -23,21 +29,22 @@
                     <div class="col-md-4">
                       <div class="form-group">
                         <label for="f-start-date">Start Date</label>
-                        <input type="date" class="form-control" id="f-start-date" name="f-start-date" placeholder="2024-01-01">
+                        <input type="date" class="form-control form-rounded" id="f-start-date" name="f-start-date" placeholder="2024-01-01">
                       </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" style="padding-left: 0;">
                       <div class="form-group">
                         <label for="f-end-date">End Date</label>
-                        <input type="date" class="form-control" id="f-end-date" placeholder="2024-01-31">
+                        <input type="date" class="form-control form-rounded" id="f-end-date" placeholder="2024-01-31">
                       </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" style="padding-left: 0;">
                       <!-- <div class="form-group"> -->
                         
-                        <span class="btn btn-primary" id="btn-arrow-down" style="margin-top: 24px">
+                        <span class="btn btn-primary" id="btn-arrow-down" style="margin-top: 24px; display: none;">
                           <i class="fa fa-arrow-down"></i>
                         </span>
+                        <button class="btn btn-primary" id="btn-reset" style="margin-top: 24px" title="Reset filter"><i class="fa fa-refresh" aria-hidden="true"></i></button>
                         <button class="btn btn-primary" id="btn-search" style="margin-top: 24px">Search</button>
                       <!-- </div> -->
                     </div>
@@ -74,7 +81,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-md-12" style="margin-top:30px">
+            <div class="col-md-12" style="margin-top:10px">
               <?= !empty($datatable) ? $datatable : "" ?>
             </div>
           </div>
@@ -85,30 +92,66 @@
 </section>
 
 <div class="modal fade" id="showFile" tabindex="-1" aria-labelledby="showFileLabel" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">Detail File</h4>
+  <div class="modal-dialog modal-md">
+    <div class="modal-content" style="border-radius: 10px;">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Detail File</h4>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <input type="hidden" id="file-id">
+          <img src="" id="show-file-image" alt="show-file" style="width:100%; max-height: 600px;">
+          <p id="show-file-document" style="display: none">6683638a6c1bc.pdf</p>
+          <button class="btn btn-primary" id="btn-download-file" style="width: 100%; margin-top: 20px;">Download</button>
         </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <input type="hidden" id="file-id">
-            <img src="" id="show-file-image" alt="show-file" style="width:100%">
-            <p id="show-file-document" style="display: none">6683638a6c1bc.pdf</p>
-            <button class="btn btn-primary" id="btn-download-file" style="width: 100%; margin-top: 20px;">Download</button>
-          </div>
-        </div>
-        <!-- <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Save</button>
-        </div> -->
       </div>
     </div>
   </div>
+</div>
+<div class="modal fade" id="modalDetail" tabindex="-1" aria-labelledby="detailLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content" style="border-radius: 10px; width: 80%;">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Detail Data</h4>
+      </div>
+      <div class="modal-body">
+        <span style="font-size: 16px; font-weight: bold;">General info</span>
+        <div class="row" style="margin-top: 10px;">
+            <div class="col-md-6">
+                <label for="name" class="form-label" style="color: grey; font-weight: 500;">Employee Name</label> <br>
+                <span style="color: black; font-weight: bold;" id="employee-name">Sodik FIkri</span>
+            </div>
+            <div class="col-md-6">
+                <label for="name" class="form-label" style="color: grey; font-weight: 500;">Category</label> <br>
+                <span style="color: black; font-weight: bold;" id="category">Sakit</span>
+            </div>
+            <div class="col-md-6">
+                <label for="name" class="form-label" style="color: grey; font-weight: 500;">Start Time</label> <br>
+                <span style="color: black; font-weight: bold;" id="start-time">2024-07-01</span>
+            </div>
+            <div class="col-md-6">
+                <label for="name" class="form-label" style="color: grey; font-weight: 500;">End Time</label> <br>
+                <span style="color: black; font-weight: bold;" id="end-time">2024-07-02</span>
+            </div>
+            <div class="col-md-12">
+                <label for="name" class="form-label" style="color: grey; font-weight: 500;">Reason</label> <br>
+                <span style="color: black; font-weight: bold;" id="reason">Sakit Gigi</span>
+            </div>
+            <div class="col-md-12" style="padding-top: 10px;">
+              <label for="name" class="form-label" style="color: grey; font-weight: 500;">Document</label> <br>
+              <img src="" id="document" alt="img" style="width: 100%; max-height: 500px;">
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<form id="filter-form" action="<?= base_url('employee-leave') ?>" method="post" style="display: none;">
+<form id="filter-form" action="<?= base_url('transaction-leave') ?>" method="post" style="display: none;">
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -136,7 +179,7 @@ $(document).ready(function() {
     }).then((result) => {
       if (result.value) {
         $.ajax({
-          url: `${BASE_URL}employee-leave/export`,
+          url: `${BASE_URL}transaction-leave/export`,
           method: 'GET',
           success: function(res) {
             let response = JSON.parse(res)
@@ -212,14 +255,14 @@ $(document).ready(function() {
       confirmButtonText: 'Yes, Continue!'
     }).then((result) => {
       if (result.value) {
-        window.open(url + 'employee-leave-file/'+idx,'_self');
+        window.open(url + 'transaction-leave-file/'+idx,'_self');
       }
     })
   })
 
   const delete_data = (idx) => {
     $.ajax({
-      url: BASE_URL + 'employee-leave/delete',
+      url: BASE_URL + 'transaction-leave/delete',
       method: 'POST',
       data: {
         id: idx
@@ -249,6 +292,44 @@ $(document).ready(function() {
         delete_data([data_id])
       }
     })
+  })
+
+  $('#datatable tbody').on('click', '.btn-detail', function() {
+    let thisX = $(this)
+    let idx = $(this).data('id')
+    $.ajax({
+      url: BASE_URL + 'transaction-leave/detail',
+      method: 'GET',
+      data: {
+        id: idx
+      }, 
+      beforeSend: function() {
+        thisX.html('<i class="fa fa-circle-o-notch fa-spin"></i>')
+      },
+      success: function(res) {
+        let response = JSON.parse(res)
+        
+        $('#employee-name').html(response.data.employee_name)
+        $('#category').html(response.data.category_name)
+        $('#start-time').html(response.data.start_date + response.data.start_time)
+        $('#end-time').html(response.data.end_date + response.data.end_time)
+        $('#reason').html(response.data.reason)
+        $('#document').attr('src', BASE_URL + 'sys_upload/leave/doc/' +response.data.doc_name)
+      },
+      complete: function() {
+        thisX.html('<i class="fa fa-edit fa-lg"></i>')
+        $('#modalDetail').modal('show')
+      }
+    })
+  })
+
+  $('#btn-reset').on('click', function() {
+      $('#filter-form').append(
+        '<input name="category" value="0">' +
+        '<input name="start_date" value="">'
+      )
+    
+      $('#filter-form').submit()
   })
 
   $('#dropdown-menu-cats').on('click', '.dropdown-item', function(event) {

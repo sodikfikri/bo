@@ -18,6 +18,7 @@ class Leave extends REST_Controller
         $this->now = date("Y-m-d H:i:s");
         $this->load->model("ijin_model");
         $this->load->model("leave_model");
+        $this->load->library('upload');
 
         $this->response = [
             'meta' => [
@@ -65,11 +66,15 @@ class Leave extends REST_Controller
     }
 
     function Submit_leave_post() {
-        // $this->load->library("encryption_org");
-        // $catsid = $this->encryption_org->decode('QmlBbDRzNzcvbTR0TFFJWjU0L29Ddz09');
-        // print_r($catsid); return;
+       
+        $config['upload_path']          = './sys_upload/leave/doc/';
+        $config['allowed_types']        = 'gif|jpg|jpeg|png|pdf';
+        $config['file_name']            = uniqid();
+        $config['overwrite']            = true;
+
+        $this->upload->initialize($config);
+
         $headers = getRequestHeaders();
-        // $data = json_decode(file_get_contents('php://input'), true);
         $apikey  = !empty($headers["Apikey"]) ? $headers["Apikey"] : null;
 
         if(empty($apikey)){
@@ -97,21 +102,21 @@ class Leave extends REST_Controller
         $params['end_time'] = $this->input->post('end_time');
         
         $params['reason'] = $this->input->post('reason');
-        if ($this->input->post('doc')) {
-            $doc = $this->input->post('doc');
-
-            $decode = base64_decode($doc);
-            $doc_name = uniqid().'.'.$this->input->post('doc_extension');
-            $file = "./sys_upload/leave/doc/".$doc_name;
-            $success = file_put_contents($file, $decode);
-
-            $params['doc_name'] = $doc_name;
-            $params['doc_path'] = $file;
+        
+        if (!empty($_FILES['doc']['name'])) {
+            if (!$this->upload->do_upload('doc')) {
+                $response = $this->SetRespose(400, 'Fail to upload document', []);
+                header("Content-Type:application/json");
+                echo json_encode($response); return;
+            }
+            $uploaded_data = $this->upload->data();
+            $params['doc_path'] = $config['upload_path'].$uploaded_data['file_name'];
+            $params['doc_name'] = $uploaded_data['file_name'];
         }
 
         $add = $this->leave_model->addLeave($params, $this->input->post('appid'), $this->input->post('employee_id'));
         
-        $response = $this->SetRespose(200, 'Success submit leave', $data);
+        $response = $this->SetRespose(200, 'Success submit leave', []);
         header("Content-Type:application/json");
         echo json_encode($response); return;
         

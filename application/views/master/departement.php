@@ -55,7 +55,7 @@
 <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-md">
-        <div class="modal-content">
+        <div class="modal-content" style="border-radius: 10px;">
             <div class="modal-body">
                 <span style="font-size: 20px; color: black">Departements <i class="fa fa-info-circle" aria-hidden="true" style="color: #039BE5; font-size: 16px;"></i>
                 </span><br>

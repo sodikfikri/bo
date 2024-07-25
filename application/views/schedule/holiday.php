@@ -124,7 +124,7 @@
 <script>
 $(document).ready(function() {
     $("#datatable").DataTable();
-
+    let BASE_URL = "<?= base_url() ?>";
     let notif = '<?php echo json_encode($notif); ?>';
     let data_holiday = <?php echo $holidays; ?>
 
@@ -156,7 +156,7 @@ $(document).ready(function() {
         var calendarEl = document.getElementById('calendar');
         let calendar = new FullCalendar.Calendar(calendarEl, {
             headerToolbar: {
-                left: 'prev,next today',
+                left: 'prev,next',
                 center: 'title',
                 right: 'multiMonthYear,dayGridMonth,timeGridWeek,timeGridDay,list'  // dayGridMonth,timeGridWeek,listWeek
             },
@@ -236,12 +236,60 @@ $(document).ready(function() {
     }, 300);
 
     $('#btn-add-data').on('click', function() {
-        $('#exampleModal').modal('show')
+      $('#id').val('0')
+      $('#holiday_name').val('')
+      $('#start_date').val('')
+      $('#end_date').val('')
+      $('#notes').val('')
+      $('#colour').val('#DC143C').change()
+      $('#start_date').removeAttr('disabled')
+      $('#end_date').removeAttr('disabled')
+      $('#exampleModal').modal('show')
     })
 
     $('#datatable tbody').on('click', '.btn-del', function() {
       let id = $(this).data('id')
       delete_data([id])
+    })
+
+    $('#datatable tbody').on('click', '.btn-detail', function() {
+      let idx = $(this).data('id')
+      let thisX = $(this)
+      $.ajax({
+        url: BASE_URL + 'schedule-holidays/detail',
+        method: 'GET',
+        data: {
+          id: idx
+        },
+        beforeSend: function() {
+          thisX.html('<i class="fa fa-circle-o-notch fa-spin"></i>')
+        },
+        success: function(res) {
+          let response = JSON.parse(res)
+          
+          if (response.meta.code != 200) {
+            Swal.fire({
+              title: 'Error',
+              text: response.meta.message,
+              type: 'error'
+            });
+          } else {
+            $('#id').val(response.data.id)
+            $('#holiday_name').val(response.data.name)
+            $('#start_date').val(response.data.start_date)
+            $('#end_date').val(response.data.start_date)
+            $('#notes').val(response.data.notes)
+            $('#colour').val(response.data.color).change()
+
+            $('#start_date').attr('disabled', true)
+            $('#end_date').attr('disabled', true)
+            $('#exampleModal').modal('show')
+          }
+        },
+        complete: function() {
+          thisX.html('<i class="fa fa-edit fa-lg"></i>')
+        }
+      })
     })
 
     if (notif != 'null') {

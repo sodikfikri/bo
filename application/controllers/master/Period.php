@@ -151,7 +151,7 @@ class Period extends CI_Controller
             $params['updated_at'] = (new DateTime())->format('Y-m-d H:i:s');
             
             $upt = $this->period_model->updateData($pid, $params);
-
+            
             if ($upt) {
                 $this->session->set_userdata('ses_notif',['type'=>'success','header'=>'Success','msg'=> $this->gtrans->line('Success update data')]);
                 setActivity("master active periode","update");

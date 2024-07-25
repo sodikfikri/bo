@@ -78,7 +78,7 @@ class Holidays extends CI_Controller
         // }
 
         // $add = $this->schedule_model->SaveDataHoliday($Arr);
-        // echo 'masuk'; return;
+        // echo 'masuk'; die;
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
             ["data"=> $this->gtrans->line("#"), "class"=>"text-center"],
@@ -196,15 +196,56 @@ class Holidays extends CI_Controller
                 array_push($data, $dt);
             }
         }
-        $ins = $this->schedule_model->SaveDataHoliday($data);
-
-        if ($ins) {
-            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
-            setActivity("master holiday","add");
+        if ($this->input->post('id') == '0') {
+            $ins = $this->schedule_model->SaveDataHoliday($data);
+    
+            if ($ins) {
+                $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
+                setActivity("master holiday","add");
+            } else {
+                $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Fail to add data')]);
+            }
         } else {
-            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Fail to add data')]);
+            unset($data[0]['created_at']);
+            $data[0]['updated_at'] = (new DateTime())->format('Y-m-d H:i:s');
+            
+            $upt = $this->schedule_model->UpdateHoliday($this->input->post('id'), $data[0]);
+
+            if ($upt) {
+                $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Update data has success full')]);
+                setActivity("master holiday","update");
+            } else {
+                $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Fail to update data')]);
+            }
         }
         return redirect("schedule-holidays");
+    }
+
+    function getDetailData() {
+        $this->load->library("encryption_org");
+        $id = $this->encryption_org->decode($this->input->get('id'));
+
+        $data = $this->schedule_model->DetailHoliday($id);
+
+        if (count($data) == 0) {
+            $response = [
+                'meta' => [
+                    'code' => 404,
+                    'message' => 'Data not found'
+                ],
+                'data' => $data
+            ];
+            echo json_encode($response); return;
+        }
+
+        $response = [
+            'meta' => [
+                'code' => 200,
+                'message' => 'Success get data'
+            ],
+            'data' => $data[0]
+        ];
+        echo json_encode($response); return;
     }
 
     function delData() {

@@ -97,6 +97,7 @@ $route['schedule-work-hours-delete/(:any)'] = 'schedule/work_hours/delData/$1';
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';
 $route['schedule-holidays/delete'] = 'schedule/holidays/deldata';
+$route['schedule-holidays/detail'] = 'schedule/holidays/getDetailData';
 
 $route['check-email-exists'] = 'master/user/checkEmail';
 $route['check-phone-exists'] = 'master/user/checkPhone';

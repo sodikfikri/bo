@@ -128,6 +128,14 @@
                                           </div>
                                       </div>
                                       <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
+                                      <span style="font-size: 16px; font-weight: bold;">Working days count</span>
+                                      <div class="row">
+                                          <div class="col-md-12" style="margin-top: 10px;">
+                                              <label for="workday" class="form-label" style="color: grey; font-weight: 500;">Count</label>
+                                              <input type="number" class="form-control form-rounded" step="0.5" min="0" max="100" name="workday" id="workday" >
+                                          </div>
+                                      </div>
+                                      <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
                                       <span style="font-size: 16px; font-weight: bold;">Break Time</span>
                                       <div class="row">
                                           <div class="col-md-12" style="margin-top: 10px;">
@@ -212,6 +220,7 @@
       $('#late_tolerance').val('')
       $('#early_leave_tolerance').val('')
       $('#colour').val('')
+      $('#workday').val('')
       $('#opt_break_by_hour').css('display', 'none')
       $('#opt_break_by_duration').css('display', '')
       $('input[name="break_type"][value="1"]').prop('checked', true)
@@ -264,6 +273,7 @@
           $('#late_tolerance').val(data.late_minutes)
           $('#early_leave_tolerance').val(data.early_minutes)
           $('#colour').val(data.color)
+          $('#workday').val(data.workday)
 
           $('input[name="break_type"][value="'+data.break_type+'"]').prop('checked', true)
 

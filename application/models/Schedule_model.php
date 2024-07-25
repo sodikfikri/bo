@@ -47,6 +47,13 @@ class Schedule_model extends CI_Model
         return $ins;
     }
 
+    function UpdateHoliday($id, $data) {
+
+        $this->db->where('id', $id);
+        
+        return $this->db->update('tbholidays', $data);
+    }
+
     function HolidayList() {
         $sql = "SELECT * FROM tbholidays";
         $response = $this->db->query($sql);
@@ -59,6 +66,14 @@ class Schedule_model extends CI_Model
         $this->db->delete('tbholidays');
 
         return $this->db->affected_rows();
+    }
+
+    function DetailHoliday($id) {
+        $sql = "SELECT * FROM tbholidays WHERE id = $id";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
     }
 
 }

@@ -37,16 +37,6 @@ class Work_hours extends CI_Controller
         $this->load->library("encryption_org");
     }
 
-    public function SetRespose($code, $message, $data = '') {
-        $this->response['meta']['code'] = $code;
-        $this->response['meta']['message'] = $message;
-        if ($data) {
-            $this->response['data'] = $data;
-        }
-
-        return $this->response;
-    }
-
     function index() {
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
@@ -136,6 +126,7 @@ class Work_hours extends CI_Controller
             'late_minutes' => $this->input->post('late_tolerance'),
             'early_minutes' => $this->input->post('early_leave_tolerance'),
             'color' => $this->input->post('colour'),
+            'workday' => $this->input->post('workday'),
         ];
         
         if ($this->input->post('break_type') == '1') {

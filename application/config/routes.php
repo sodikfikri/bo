@@ -94,6 +94,9 @@ $route['schedule-work-hours-submit'] = 'schedule/work_hours/savedata';
 $route['schedule-work-hours-detail'] = 'schedule/work_hours/getDetailData';
 $route['schedule-work-hours-delete/(:any)'] = 'schedule/work_hours/delData/$1';
 
+$route['schedule-shift'] = 'schedule/shift';
+$route['schedule-shift-submit'] = 'schedule/shift/submitShift';
+
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';
 $route['schedule-holidays/delete'] = 'schedule/holidays/deldata';

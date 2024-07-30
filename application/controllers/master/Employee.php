@@ -402,7 +402,7 @@ style="cursor:pointer"><i class="fa fa-user-times"></i> Set Resign</span>';
       $email        = $this->input->post("email");
       $address      = $this->input->post("address");
       $intraxPin    = $this->input->post("intrax-pin");
-	  $method   = $this->input->post(method);
+	  $method   = $this->input->post('method');
 	  $strMethod= !empty($method) ? implode("|", $method) : "";
       $presenceMode    = $this->input->post("presence_mode");
       $presenceLocation    = $this->input->post("presence_location");

@@ -571,12 +571,12 @@
         $("#intrax-pin").val(obj.intrax_pin);
 		if(!obj.employee_photo){
 			if (obj.gender=='male') {
-				$('#srcImg').attr('src', 'https://inact.interactiveholic.net/bo/img_employee/img_avatar_boy.png');
+				$('#srcImg').attr('src', 'https://inact.azurewebsites.net/img_employee/img_avatar_boy.png');
 			} else {
-				$('#srcImg').attr('src', 'https://inact.interactiveholic.net/bo/img_employee/img_avatar_girl.png');
+				$('#srcImg').attr('src', 'https://inact.azurewebsites.net/img_employee/img_avatar_girl.png');
 			}
 		} else {
-			$('#srcImg').attr('src', 'https://inact.interactiveholic.net/bo/sys_upload/user_profile/'+obj.employee_photo);
+			$('#srcImg').attr('src', 'https://inact.azurewebsites.net/sys_upload/user_profile/'+obj.employee_photo);
 		}
 		
         var arrMethod = obj.presence_method;

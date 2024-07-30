@@ -77,6 +77,7 @@ class Employee_model extends CI_Model
       return false;
     }
   }
+  
   function update($dataUpdate,$employeeID,$appid=null){
     if($appid==null){
       $appid = $this->session->userdata("ses_appid");
@@ -116,7 +117,6 @@ class Employee_model extends CI_Model
       $dataUpdate["employee_jenis_modif"]= "edit";
 
       $this->db->where("appid",$appid);
-      $this->db->where("parent_order_id",$orderid);
       $res = $this->db->update($this->tableName,$dataUpdate);
 
       if($res){
@@ -365,18 +365,16 @@ class Employee_model extends CI_Model
 
   function countAll(){
     $appid = $this->session->userdata("ses_appid");
-    
     if(!empty($appid)){
       $this->db->select("count(tbemployee.employee_id) as total");
 
       $this->db->from("tbemployee");
 
       $this->db->where("tbemployee.is_del !=","1");
-      $this->db->where("tbemployee.status_added","active");
+	  $this->db->where("tbemployee.status_added","active");
 
       $this->db->where("tbemployee.appid",$appid);
       $sql = $this->db->get();
-
       if($sql->num_rows()>0){
         return $sql->row()->total;
       }else{
@@ -427,6 +425,25 @@ class Employee_model extends CI_Model
       }else{
         return false;
       }
+    }else{
+      return false;
+    }
+  }
+  
+  function getByNoAccount($noAccount,$appid,$action){
+    if(!empty($noAccount)){
+      $this->db->select("tbemployee.*");
+      $this->db->from("tbemployee");
+	  $this->db->join("iasubscription","tbemployee.appid = iasubscription.appid");
+      $this->db->where("tbemployee.is_del !=","1");
+      $this->db->where("tbemployee.employee_account_no",$noAccount);
+      $this->db->where("tbemployee.appid",$appid);
+      $sql = $this->db->get();
+	  if($action=="check"){
+		  return $sql->num_rows();
+	  }else{
+		  return $sql->row();
+	  }
     }else{
       return false;
     }
@@ -492,10 +509,15 @@ class Employee_model extends CI_Model
   
   // non active license employee jika subscription_id expired
   function nonactiveLicenseExpired($sessSubscription){
-	$this->db->select("tbemployee.employee_id");
-	$this->db->where_not_in("subscription_id",$sessSubscription);
-	$sql = $this->getAll();
-	foreach ($sql as $row) {
+	// $this->db->select("tbemployee.employee_id");
+	// $this->db->where_not_in("subscription_id",$sessSubscription);
+  // $this->db->where('parent_order_id is null');
+	// $sql = $this->getAll();
+  $sql = "SELECT * FROM tbemployee WHERE subscription_id NOT IN (".implode(', ', $sessSubscription).") AND parent_order_id IS NULL";
+  $response = $this->db->query($sql);
+
+	foreach ($response->result() as $row) {
+    // return $response->result();
 	  $this->changeActiveIntrax("notactive",$row->employee_id);
 	}
   }
@@ -1103,7 +1125,7 @@ class Employee_model extends CI_Model
     ];
     return $output;
   }
-
+  
   function saveIgnoreDuplicate_temp($dataInsert,$checker=""){
     $this->db->select("employee_id");
     $where = $dataInsert;
@@ -1122,26 +1144,26 @@ class Employee_model extends CI_Model
       $employeeID   = $rows->employee_id;
       $insertStatus = "skipped";
     }else{
-      // if(!in_array(createIdentification($dataInsert['employee_account_no']),$checker)){
+      //if(!in_array(createIdentification($dataInsert['employee_account_no']),$checker)){
         $insert_query = $this->db->insert_string('tbemployee_temp', $dataInsert);
         $insert_query = str_replace('INSERT INTO','INSERT IGNORE INTO',$insert_query);
         $this->db->query($insert_query);
         $employeeID   = $this->db->insert_id();
         $insertStatus = "inserted";
-      // }else{
-      //   $where = [
-      //     "employee_account_no" => $dataInsert["employee_account_no"],
-      //     "appid" => $dataInsert["appid"]
-      //   ];
-      //   $this->db->select("employee_id");
-      //   $this->db->where($where);
-      //   $sql = $this->db->get('tbemployee_temp');
-      //   $updatedData = $sql->row();
-      //   $this->db->where($where);
-      //   $this->db->update('tbemployee_temp',$dataInsert);
-      //   $insertStatus = "updated";
-      //   $employeeID   = !empty($updatedData->employee_id) ? $updatedData->employee_id : 0;
-      // }
+      //}else{
+        //$where = [
+          //"employee_account_no" => $dataInsert["employee_account_no"],
+          //"appid" => $dataInsert["appid"]
+        //];
+        //$this->db->select("employee_id");
+        //$this->db->where($where);
+        //$sql = $this->db->get('tbemployee_temp');
+        //$updatedData = $sql->row();
+        //$this->db->where($where);
+        //$this->db->update('tbemployee_temp',$dataInsert);
+        //$insertStatus = "updated";
+        //$employeeID   = !empty($updatedData->employee_id) ? $updatedData->employee_id : 0;
+      //}
     }
 
     $output = [
@@ -1161,6 +1183,7 @@ class Employee_model extends CI_Model
     }
     return $result;
   }
+  
   function getEmployeeCode_temp($appid){
     $this->db->select("employee_account_no");
     $this->db->where("appid",$appid);
@@ -1191,7 +1214,7 @@ class Employee_model extends CI_Model
     $res = $this->db->get($this->tableName);
     return $res->num_rows();
   }
-
+  
   function getEmailAvailable_temp($appid,$email){
     $this->db->select("email");
     $this->db->where("appid",$appid);
@@ -1250,11 +1273,11 @@ class Employee_model extends CI_Model
     }
   }
 
-  function getEmployeeIntrax($companyId,$checklogID,$employeeID){
+  function getEmployeeIntrax($checklogID,$employeeID){
     $this->db->select("tbemployee.*");
     $this->db->from("tbemployee");
     $this->db->join("iasubscription","iasubscription.appid = tbemployee.appid");
-    $this->db->where("iasubscription.intrax_company_id",$companyId);
+    //$this->db->where("iasubscription.intrax_company_id",$companyId);
     $this->db->where("tbemployee.employee_id",$employeeID);
     $this->db->where("tbemployee.employee_account_no",$checklogID);
     $this->db->where("tbemployee.employee_license","active");

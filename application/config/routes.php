@@ -96,6 +96,10 @@ $route['schedule-work-hours-delete/(:any)'] = 'schedule/work_hours/delData/$1';
 
 $route['schedule-shift'] = 'schedule/shift';
 $route['schedule-shift-submit'] = 'schedule/shift/submitShift';
+$route['schedule-shift-update'] = 'schedule/shift/updateData';
+$route['schedule-shift-priview/(:any)'] = 'schedule/shift/priviewCalendar/$1';
+$route['schedule-shift-delete/(:any)'] = 'schedule/shift/delData/$1';
+$route['schedule-shift-detail'] = 'schedule/shift/detailData';
 
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';

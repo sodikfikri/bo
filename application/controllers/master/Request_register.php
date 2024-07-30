@@ -65,11 +65,8 @@ class Request_register extends CI_Controller
     $this->table->set_heading(
       ["data" => '<input type="checkbox" id="checkAll" onclick="if(this.checked) {$(\':checkbox\').each(function() {this.checked = true;});}else{$(\':checkbox\').each(function() {this.checked = false;});}"> All',"class" => "text-center"],
       ["data" => $this->gtrans->line("Institution Code"),"class" => ""],
-      ["data" => $this->gtrans->line("Timezone"),"class" => "text-center"],
-      ["data" => $this->gtrans->line("Name"),"class" => "text-center"],
+      ["data" => $this->gtrans->line("Institution Name"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Address"),"class" => "text-center"],
-      ["data" => $this->gtrans->line("Longitude"),"class" => "text-center"],
-      ["data" => $this->gtrans->line("Latitude"),"class" => "text-center"],
       ["data" => $this->gtrans->line("NPWP"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Description"),"class" => "text-center"],
       ["data" => $this->gtrans->line("Total Employee"),"class" => "text-center"],
@@ -82,7 +79,8 @@ class Request_register extends CI_Controller
     foreach ($sql as $row) {
 	  $no++;
       $encId = $this->encryption_org->encode($row->order_id);
-      $encBranchId = $this->encryption_org->encode($row->cabang_id);
+      $encTempId = $this->encryption_org->encode($row->id);
+      $encBranchId = base64_encode($row->cabang_id);
       $encArea = base64_encode($row->cabang_area_id);
       $encCode = base64_encode($row->cabang_code);
       $encName = base64_encode($row->cabang_name);
@@ -97,14 +95,12 @@ class Request_register extends CI_Controller
 
       $btnEdit = '<i style="cursor:pointer" class="fa fa-edit fa-lg color-primary"
       onclick="edit(
-        \''.$encBranchId.'\',
+        \''.$encTempId.'\',
         \''.$encArea.'\',
+        \''.$encBranchId.'\',
         \''.$encCode.'\',
         \''.$encName.'\',
-        \''.$encTimezone.'\',
         \''.$encAddress.'\',
-        \''.$encLongitude.'\',
-        \''.$encLatitude.'\',
         \''.$encContact.'\',
         \''.$encDescription.'\'
       )"></i>';
@@ -119,11 +115,8 @@ class Request_register extends CI_Controller
       $this->table->add_row(
 	    $chkbox,
         ["data" => $row->cabang_code, "class" => ""],
-        $row->cabang_timezone." (".$row->cabang_utc.")",
         $row->cabang_name,
         $row->cabang_address,
-        $row->longitude,
-        $row->latitude,
         $row->cabang_contactnumber,
         $row->cabang_keterangan,
 		["data" => $detailEmployee,"class" => "text-center"],
@@ -172,30 +165,79 @@ class Request_register extends CI_Controller
       "employee_model",
       "checkout_cart_model",
       "employeeareacabang_model",
-      "cabang_model"
+      "cabang_model",
+	  "institution_model"
     ]);
+	$appid = $this->session->userdata("ses_appid");
+	$userID = $this->session->userdata("ses_userid");
     $arrOrder = $this->input->post("order");
     foreach ($arrOrder as $rowID) {
 		$orderid = $this->encryption_org->decode($rowID);
 		//get expired date
 		$detailOrder = $this->checkout_cart_model->getPaidOrder($orderid);
-		foreach ($detailOrder as $rowOrder) {
-			$dateExpired = $rowOrder->dateend;
-			$cabangid = $rowOrder->cabang_id;
+		$dateExpired = $detailOrder->dateend;
+		$cabang_id_temp = $detailOrder->cabang_id_temp;
+		
+		// get area cabang
+		$dataAreaCabang = $this->institution_model->getAreaCabang($cabang_id_temp);
+		$cabangid = $dataAreaCabang->cabang_id;
+		$areaid = $dataAreaCabang->cabang_area_id;
+		
+		// add or update employee and license
+		$dataEmployeeOrder = $this->prospective_employees_model->getAllEmpCO($appid,$orderid);
+		foreach ($dataEmployeeOrder as $index => $row) {
+			$checkEmp = $this->employee_model->getByNoAccount($row->employee_account_no,$appid,"check");
+			if ($checkEmp>0){
+				$getEmp = $this->employee_model->getByNoAccount($row->employee_account_no,$appid,"get");
+				$newExpiredDate = date("Y-m-d H:i:s", strtotime($checkEmp->subscription_expired . "+365 days"));
+				$data_updateEmployee  = [
+					"intrax_license"  => "active",
+					"subscription_id"  => $orderid,
+					"subscription_expired"  => $newExpiredDate,
+					"status_added"  => "active",
+					"parent_order_id"  => $orderid,
+				];
+				$this->db->where("tbemployee.employee_id",$getEmp->employee_id);
+				$this->employee_model->updateEmp($data_updateEmployee,$orderid);
+			} else {
+				$dataSource= [
+					"appid" => $appid,
+					"employee_account_no" => $row->employee_account_no,
+					"employee_full_name" => $row->employee_full_name,
+					"employee_position" => $row->employee_position,
+					"gender" =>$row->gender,
+					"phone_number" => $row->phone_number,
+					"email" => $row->email,
+					"employee_user_add" => $userID,
+					"employee_join_date" => $this->timestamp,
+					"employee_date_create" => $this->timestamp,
+					"employee_license" => "active",
+					"employee_is_active" => "0",
+					"is_del" => "0",
+					"intrax_pin" => $row->intrax_pin,
+					"employee_level" => "0",
+					"intrax_license"  => "active",
+					"subscription_id"  => $orderid,
+					"subscription_expired"  => $detailOrder->dateend,
+					"parent_order_id"  => $orderid,
+					"status_added"  => "active"
+				];
+				$this->employee_model->insert($dataSource);
+				// add area cabang employee
+				$employeeID = $this->db->insert_id();
+				$dataInsertLocation = [
+					"appid" => $appid,
+					"employeeareacabang_employee_id" => $employeeID,
+					"employee_area_id" => $areaid,
+					"employee_cabang_id" => $cabangid,
+					"employeeareacabang_effdt" => $this->timestamp,
+					"employeeareacabang_date_create" => $this->timestamp,
+					"employeeareacabang_user_add" => $userID,
+					"status" => "pending"
+				];
+				$this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+			}
 		}
-		
-		//update area cabang employee
-		$getAreaID = $this->cabang_model->getById($cabangid);
-		$this->employeeareacabang_model->setAreaCabangAuto($cabangid,$getAreaID->cabang_area_id);
-		
-		//update employee license
-		$data_updateEmployee  = [
-		  "intrax_license"  => "active",
-		  "subscription_expired"  => $dateExpired,
-		  "status_added"  => "active"
-		];
-		$this->employee_model->updateEmp($data_updateEmployee,$orderid);
-		
 		//update data order
 		$data_updateOrder  = [
 		  "status"     		=> "active"
@@ -207,9 +249,10 @@ class Request_register extends CI_Controller
   
   function showEmployee(){
     $this->load->model("employee_model");
-	$orderId   = $this->encryption_org->decode($this->input->post(orderId));
+    $this->load->model("prospective_employees_model");
+	$orderId   = $this->encryption_org->decode($this->input->post('orderId'));
 	$appid = $this->session->userdata("ses_appid");
-	$sqlEmp = $this->employee_model->getDetailEmp($appid,$orderId);
+	$sqlEmp = $this->prospective_employees_model->getAllEmpCO($appid,$orderId);
 	$listEmployee = '<ol>';  
 	foreach ($sqlEmp as $rowEmp) {
 		$listEmployee .= '<li>'.$rowEmp->employee_full_name.'</li>';  
@@ -221,25 +264,19 @@ class Request_register extends CI_Controller
   function saveInstitution(){
     $encId = $this->input->post("id");
     $area = $this->input->post("area");
+    $branch = $this->input->post("branchname");
     $institutioncode  = $this->input->post("institutioncode");
     $institutionname  = $this->input->post("institutionname");
-    $strTimezone = $this->input->post("timezone");
-    $arrTimezone = explode("|",base64_decode($strTimezone));
     $address = $this->input->post("address");
-    $longitude = $this->input->post("longitude");
-    $latitude = $this->input->post("latitude");
     $contactnumber = $this->input->post("contactnumber");
     $description = $this->input->post("description");
 
     $dataSource = [
+      "cabang_id" => $branch,
       "cabang_area_id" => $area,
       "cabang_code" => $institutioncode,
-      "cabang_timezone" => $arrTimezone[0],
-      "cabang_utc" => $arrTimezone[1],
       "cabang_name" => $institutionname,
       "cabang_address" => $address,
-      "longitude" => $longitude,
-      "latitude" => $latitude,
       "cabang_contactnumber" => $contactnumber,
       "cabang_keterangan" => $description
     ];
@@ -261,13 +298,7 @@ class Request_register extends CI_Controller
       $this->load->library("encryption_org");
       $id = $this->encryption_org->decode($encId);
       $cabangId = $id;
-
       $res = $this->institution_model->update($dataSource,$id);
-      if(!empty($this->input->post("reboot")) && $this->input->post("reboot")=="yes"){
-        $this->device_model->setReboot("yes",$area,$cabangId,$appid);
-      }
-      
-
       if($res){
         setActivity("master institution","edit");
         $this->session->set_userdata("ses_msg",["type"=>"success","header"=>"Success","msg"=> $this->gtrans->line("Institution has been updated successfully")."!"]);

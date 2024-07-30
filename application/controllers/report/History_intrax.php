@@ -190,7 +190,7 @@ class History_intrax extends CI_Controller
 	foreach ($dataInout as $row) {
       $encId = $this->encryption_org->encode($row->id);
 	  if(!empty($row->image)){
-		  $photo = '<img src="https://inact.interactiveholic.net/bo/sys_upload/absen_image/'.$row->image.'" alt="absen-image" width="50px"></img>';
+		  $photo = '<img src="https://inact.azurewebsites.net/sys_upload/absen_image/'.$row->image.'" alt="absen-image" width="50px"></img>';
 	  }else{
 		  $photo = '';
 	  }

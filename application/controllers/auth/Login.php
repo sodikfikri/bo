@@ -63,6 +63,10 @@ class Login extends CI_Controller
               ];
 
             }
+            // $this->load->model("employee_model");
+            // $ck =$this->employee_model->nonactiveLicenseExpired($sessSubscription);
+            // print_r($ck);
+            // die;
 
             foreach ($arrTrialAddons as $index => $map) {
               

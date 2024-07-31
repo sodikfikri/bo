@@ -92,6 +92,7 @@ class Request_register extends CI_Controller
       $encDescription = base64_encode($row->cabang_keterangan);
       $encMethod = base64_encode($row->presence_method);
       $encMode = base64_encode($row->presence_mode);
+      $branchInstitution = base64_encode($row->tbcabang_name);
 
       $btnEdit = '<i style="cursor:pointer" class="fa fa-edit fa-lg color-primary"
       onclick="edit(
@@ -102,7 +103,8 @@ class Request_register extends CI_Controller
         \''.$encName.'\',
         \''.$encAddress.'\',
         \''.$encContact.'\',
-        \''.$encDescription.'\'
+        \''.$encDescription.'\',
+        \''.$branchInstitution.'\'
       )"></i>';
 	  
 	  $chkbox = '';

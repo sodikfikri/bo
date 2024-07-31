@@ -101,6 +101,8 @@ $route['schedule-shift-priview/(:any)'] = 'schedule/shift/priviewCalendar/$1';
 $route['schedule-shift-delete/(:any)'] = 'schedule/shift/delData/$1';
 $route['schedule-shift-detail'] = 'schedule/shift/detailData';
 
+$route['schedule-work'] = 'schedule/work_schedule';
+
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';
 $route['schedule-holidays/delete'] = 'schedule/holidays/deldata';

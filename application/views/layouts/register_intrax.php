@@ -66,7 +66,7 @@
   </style>
 </head>
 <body class="hold-transition register-page has-bg">
-<div class="register-box" style="width:800px">
+<div class="register-box" style="width: auto; max-width: 800px; box-sizing: border-box;">
 
   <div class="register-box-body">
     <div class="row">
@@ -78,12 +78,12 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-md-6" style="text-align:center">
+      <div class="col-md-6 col-sm-12" style="text-align:center">
 		<a href="<?= base_url() ?>"><img src="<?= base_url("asset/images/Logo_provinsi_maluku.png") ?>" width="150px"></a>
 		<h3>Daftarkan Akun Anda</h3>
 		<p>Memantau Pegawai lebih mudah dengan INTRAX X INACT. Kami membutuhkan layanan Anda sebagai PIC yang ditunjuk untuk mengawasi proses pendaftaran dan mengelola operasi Lembaga dalam pendaftaran ini.</p>
 	  </div>
-      <div class="col-md-6">
+      <div class="col-md-6 col-sm-12">
         <div class="registration-msg">
         </div>
         <div class="callout callout-info" id="divMayus" style="display:none">

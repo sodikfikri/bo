@@ -48,14 +48,14 @@
             <?= '<button data-toggle="tooltip" data-placement="top" title="Pay" type="button" class="btn btn-primary" data-toggle="modal" onclick="buyAddons(\''.$this->uri->segment(2).'\')"><i class="fa fa-money"></i> '.$this->gtrans->line("Pay").'</button>' ?>
             <br><br>
             <div class="row">
-              <div class="pull-right col-md-9">
+              <div class="pull-right col-md-9 col-sm-12">
                 <div class="row">
-                  <div class="col-md-6">
+                  <div class="col-md-6 col-sm-12">
                     <select onchange="draw_dt()" name="sCabang" id="sCabang" class="form-control">
                       <option value="" ><?= $this->gtrans->line("All Institution") ?></option>
                     </select>
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-6 col-sm-12">
                     <input onchange="draw_dt()" type="text" id="strCari" name="strCari" class="form-control" placeholder="<?= $this->gtrans->line("Name (type and press enter)") ?>">
                   </div>
                 </div>

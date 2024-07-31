@@ -94,7 +94,7 @@ class Area extends CI_Controller
     $areacode = $this->input->post("areacode");
     $areaname = $this->input->post("areaname");
     $areadesc = $this->input->post("areadesc");
-	$method   = $this->input->post(method);
+	$method   = $this->input->post("method");
 	$strMethod= !empty($method) ? implode("|", $method) : "";
     $mode = $this->input->post("presence_mode");
     $encId       = $this->input->post("id");

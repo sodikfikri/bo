@@ -55,7 +55,6 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger pull-left" data-dismiss="modal"><i class="fa fa-long-arrow-left"></i> <?= $this->gtrans->line("Close") ?></button>
-          <button type="submit" class="btn btn-primary"><div id="txtBtnApprove"></div></button>
         </div>
         <?= form_close() ?>
       </div>
@@ -76,64 +75,45 @@
         <input type="hidden" name="reboot" id="reboot">
         <div class="modal-body">
           <input type="hidden" name="id" id="id">
-          <div class="form-group" hidden>
-            <label for="area" class="col-sm-3 control-label"><?= $this->gtrans->line("Area Name") ?> <span class="text-red">*</span></label>
+          <div class="form-group">
+            <label for="area" class="col-sm-3 control-label"><?= $this->gtrans->line("Name Area") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
               <?= $cmbArea ?>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="branchname" class="col-sm-3 control-label"><?= $this->gtrans->line("Branch Name") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+              <select data-validation-engine="validate[required]" name="branchname" id="branchname" class="form-control">
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="branch_institution" class="col-sm-3 control-label"><?= $this->gtrans->line("Branch Institution") ?> <span class="text-red">*</span></label>
+            <div class="col-sm-9">
+            <input onchange="" readonly name="branch_institution" type="text" class="form-control" id="branch_institution" placeholder="<?= $this->gtrans->line("Branch Intitution") ?>">
             </div>
           </div>
           <div class="form-group">
             <label for="institutioncode" class="col-sm-3 control-label"><?= $this->gtrans->line("Institution Code") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
-              <input onchange="checkExists('institutioncode','msg-code','check-cabang-code-exists','<?= $this->gtrans->line("Code was used by deleted or existing data") ?>','<?= $this->gtrans->line("Institution Code Is Available") ?>',$('#id').val())" name="institutioncode" data-validation-engine="validate[required,maxSize[50],custom[onlyLetterNumberSemiSpesial]]" type="text" class="form-control" id="institutioncode" placeholder="<?= $this->gtrans->line("Institution Code") ?>">
+              <input onchange="" readonly name="institutioncode" data-validation-engine="validate[required,maxSize[50],custom[onlyLetterNumberSemiSpesial]]" type="text" class="form-control" id="institutioncode" placeholder="<?= $this->gtrans->line("Institution Code") ?>">
               <div id="msg-code"></div>
-            </div>
-          </div>
-		  <div class="form-group">
-            <label for="area" class="col-sm-3 control-label"><?= $this->gtrans->line("Area Name") ?> <span class="text-red">*</span></label>
-            <div class="col-sm-9">
-              <?= $cmbArea ?>
             </div>
           </div>
           <div class="form-group">
             <label for="institutionname" class="col-sm-3 control-label"><?= $this->gtrans->line("Institution Name") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
-              <input onchange="checkExists('institutionname','msg-name','check-cabang-name-exists','<?= $this->gtrans->line("Institution Name was used by existing data") ?>','<?= $this->gtrans->line("Institution Name Is Available") ?>',$('#id').val())" name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
+              <input onchange="" readonly name="institutionname" type="text" data-validation-engine="validate[required,maxSize[100],custom[onlyLetterNumberSemiSpesial]]" class="form-control" id="institutionname" placeholder="<?= $this->gtrans->line("Institution Name") ?>">
               <div id="msg-name"></div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="timezone" class="col-sm-3 control-label"><?= $this->gtrans->line("TimeZone") ?> <span class="text-red">*</span></label>
-            <div class="col-sm-9">
-              <?= $cmbTimezone ?>
             </div>
           </div>
           <div class="form-group">
             <label for="address" class="col-sm-3 control-label"><?= $this->gtrans->line("Address") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
-              <input name="address" type="text" data-validation-engine="validate[required]" class="form-control" id="address" placeholder="<?= $this->gtrans->line("Address") ?>">
-			  <label style="color:#FF9800">nb: memilih rekomendasi lokasi dengan menggunakan arah panah, selanjutnya tekan tab untuk lokasi yang dipilih.</label>
+              <input name="address" readonly type="text" data-validation-engine="validate[required]" class="form-control" id="address" placeholder="<?= $this->gtrans->line("Address") ?>">
             </div>
           </div>
-		  <div class="form-group">
-            <label for="longitude" class="col-sm-3 control-label"><?= $this->gtrans->line("Longitude") ?> <span class="text-red">*</span></label>
-            <div class="col-sm-9">
-              <input name="longitude" type="number" step=".00000000000000001" data-validation-engine="validate[maxSize[100]]" class="form-control longitude" id="longitude" placeholder="<?= $this->gtrans->line("Longitude") ?>">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="latitude" class="col-sm-3 control-label"><?= $this->gtrans->line("Latitude") ?> <span class="text-red">*</span></label>
-            <div class="col-sm-9">
-              <input name="latitude" type="number" step=".00000000000000001" data-validation-engine="validate[maxSize[100]]" class="form-control latitude" id="latitude" placeholder="<?= $this->gtrans->line("Latitude") ?>">
-            </div>
-          </div>
-		  <div class="form-group">
-			<label for="maps" class="col-sm-3 control-label"><?= $this->gtrans->line("Maps") ?> <span class="text-red">*</span></label>
-			<div class="col-sm-9">
-				<div id="map-canvas" style="height: 400px;width: 100%;"></div>
-				<input type="hidden" class="city" placeholder="City">
-			</div>
-		  </div>
           <div class="form-group">
             <label for="contactnumber" class="col-sm-3 control-label"><?= $this->gtrans->line("NPWP") ?> <span class="text-red">*</span></label>
             <div class="col-sm-9">
@@ -143,7 +123,7 @@
           <div class="form-group">
             <label for="description" class="col-sm-3 control-label"><?= $this->gtrans->line("Description") ?></label>
             <div class="col-sm-9">
-              <textarea data-validation-engine="validate[custom[onlyLetterNumberSemiSpesial]]" name="description" rows="4" cols="80" id="description" class="form-control" placeholder="<?= $this->gtrans->line("Description") ?>"></textarea>
+              <textarea data-validation-engine="validate[custom[onlyLetterNumberSemiSpesial]]" readonly name="description" rows="4" cols="80" id="description" class="form-control" placeholder="<?= $this->gtrans->line("Description") ?>"></textarea>
             </div>
           </div>
         </div>
@@ -160,6 +140,7 @@
 <script type="text/javascript">
   var url = "<?= base_url() ?>";
   var existingTimezone = '';
+  var existingDeviceBranch = '';
   stat = 0;
   function approveAll(){
 	let order = []; 
@@ -180,6 +161,29 @@
 	  });
 	}
   }
+  function loadBranch(area,selectedBranch=''){
+    $("#branchname").html("");
+    $.ajax({
+      method : 'POST',
+      url    : url + "load-cabang",
+      data   : {area,area},
+      success: function(res){
+        $("#branchname").html('<option value=""></option>');
+
+        var arrObj = jQuery.parseJSON(res);
+        arrObj.branchs.forEach(function(row,index){
+
+          var selected = '';
+          if(selectedBranch==row.id){
+            selected = 'selected';
+          }
+          
+
+          $("#branchname").append('<option '+selected+' value="'+row.id+'" >'+row.name+'</option>');
+        });
+      }
+    });
+  }
   function detail(encID){
     $("#loader").fadeIn(1);
 	$("#show-detail-employee").html('<?= $this->gtrans->line("Show New Employee Details at The Branch") ?>');
@@ -193,34 +197,34 @@
         success: function (res){
 			var obj = $.parseJSON(res);
 				//$("#txtBtnApprove").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line("Approve Employees") ?>');
-				$("#txtBtnApprove").html('');
+				//$("#txtBtnApprove").html('');
 				$("#list-detail-employee").html(obj);
 				$("#showDetailEmployee").modal('show');
 				$("#loader").fadeOut(1);
 			}
     });
   }
-  function edit(id,area,code,name,timezone,address,longitude,latitude,contact,description){
-    existingTimezone = atob(timezone);
+  function edit(id,area,cabang,code,name,address,contact,description,branchIntitution){
+	var deArea   = atob(area);
+    var deBranch = atob(cabang);
+    existingDeviceBranch = deBranch;
+    $("#area").val(deArea);
+
+    loadBranch(deArea,deBranch);
 
     $("#txtBtnSave").html('<i class="fa fa-check-circle"></i> <?= $this->gtrans->line("Save Changes") ?>');
     $("#frm-text").html('<?= $this->gtrans->line("Edit Institution") ?>');
     $("#id").val(id);
-    $("#area").val('0');
     $("#institutioncode").val(atob(code));
     $("#institutionname").val(atob(name));
     $("#timezone").select2('destroy');
-    $("#timezone").val(atob(timezone));
     $(".select2").select2({
       dropdownParent: $("#frm-text"),
       });
     $("#address").val(atob(address));
-    $("#longitude").val(atob(longitude));
-    $("#latitude").val(atob(latitude));
     $("#contactnumber").val(atob(contact));
     $("#description").val(atob(description));
-    // mengosongkan existing timezone
-    
+    $("#branch_institution").val(atob(branchIntitution));
     $("#frmCabang").modal('show');
   }
   
@@ -229,6 +233,10 @@
 		  //alert("clicked");
 			draw_dt();
 	  });
+	  $("#area").change(function(){
+      var area = $(this).val();
+        loadBranch(area);
+      });
 	});
 	
 	function draw_dt(){
@@ -253,114 +261,6 @@
     responsive: true
   });
 	
-	function initialize() {
-
-		var mapOptions, map, marker, searchBox, city,
-			infoWindow = '',
-			addressEl = document.querySelector( '#address' ),
-			latEl = document.querySelector( '.latitude' ),
-			longEl = document.querySelector( '.longitude' ),
-			element = document.getElementById( 'map-canvas' );
-			city = document.querySelector( '.city' );
-
-		mapOptions = {
-			zoom: 12,
-			center: new google.maps.LatLng( <?php echo $new_arr[0]['geoplugin_latitude']; ?>, <?php echo $new_arr[0]['geoplugin_longitude']; ?> ),
-			disableDefaultUI: false, 
-			scrollWheel: true, 
-			draggable: true,
-
-		};
-
-		map = new google.maps.Map( element, mapOptions ); 
-		marker = new google.maps.Marker({
-			position: mapOptions.center,
-			map: map,
-			// icon: 'http://pngimages.net/sites/default/files/google-maps-png-image-70164.png',
-			draggable: true
-		});
-
-		searchBox = new google.maps.places.SearchBox( addressEl );
-
-		google.maps.event.addListener( searchBox, 'places_changed', function () {
-			var places = searchBox.getPlaces(),
-				bounds = new google.maps.LatLngBounds(),
-				i, place, lat, long, resultArray,
-				addresss = places[0].formatted_address;
-
-			for( i = 0; place = places[i]; i++ ) {
-				bounds.extend( place.geometry.location );
-				marker.setPosition( place.geometry.location );  
-			}
-
-			map.fitBounds( bounds );
-			map.setZoom( 12 );
-
-			lat = marker.getPosition().lat();
-			long = marker.getPosition().lng();
-			latEl.value = lat;
-			longEl.value = long;
-
-			resultArray =  places[0].address_components;
-
-			for( var i = 0; i < resultArray.length; i++ ) {
-				if ( resultArray[ i ].types[0] && 'administrative_area_level_2' === resultArray[ i ].types[0] ) {
-					citi = resultArray[ i ].long_name;
-					city.value = citi;
-				}
-			}
-
-			if ( infoWindow ) {
-				infoWindow.close();
-			}
-			infoWindow = new google.maps.InfoWindow({
-				content: addresss
-			});
-
-			infoWindow.open( map, marker );
-		} );
-
-		google.maps.event.addListener( marker, "dragend", function ( event ) {
-			var lat, long, address, resultArray, citi;
-
-			console.log( 'i am dragged' );
-			lat = marker.getPosition().lat();
-			long = marker.getPosition().lng();
-
-			var geocoder = new google.maps.Geocoder();
-			geocoder.geocode( { latLng: marker.getPosition() }, function ( result, status ) {
-				if ( 'OK' === status ) {  
-					address = result[0].formatted_address;
-					resultArray =  result[0].address_components;
-
-					for( var i = 0; i < resultArray.length; i++ ) {
-						if ( resultArray[ i ].types[0] && 'administrative_area_level_2' === resultArray[ i ].types[0] ) {
-							citi = resultArray[ i ].long_name;
-							console.log( citi );
-							city.value = citi;
-						}
-					}
-					addressEl.value = address;
-					latEl.value = lat;
-					longEl.value = long;
-
-				} else {
-					console.log( 'Geocode was not successful for the following reason: ' + status );
-				}
-
-				if ( infoWindow ) {
-					infoWindow.close();
-				}
-
-				infoWindow = new google.maps.InfoWindow({
-					content: address
-				});
-
-				infoWindow.open( map, marker );
-			} );
-		});
-	}
-	
 	$(document).ready(function() {
 	  $(window).keydown(function(event){
 		if(event.keyCode == 13) {
@@ -370,4 +270,3 @@
 	  });
 	});
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkLKNQj9zEMKoCDj9lZKmG2CDi9ZVp8p0&libraries=places&callback=initialize"></script>

@@ -620,4 +620,18 @@ class Queue extends CI_Controller
 		}
 		$conn = null;
 	}
+
+	function updateStatusEmployeIsActive() {
+		load_model(['employee_model']);
+		$appid = $this->input->get('appid');
+
+		$upt = $this->employee_model->updateStatusEmployeIsActive($appid);
+
+		if ($upt) {
+			echo "Success update status";
+		} else {
+			echo "Failed to update status";
+		}
+		return;
+	}
 }

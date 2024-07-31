@@ -230,7 +230,7 @@ class Cabang extends CI_Controller
   
   function showEmployee(){
     $this->load->model("employee_model");
-	$cabangId   = $this->input->post(cabangId);
+	$cabangId   = $this->input->post("cabangId");
 	$appid = $this->session->userdata("ses_appid");
 	$sqlEmp = $this->employee_model->getAllEmpCabang($appid,$cabangId);
 	$listEmployee = '<ol>';  
@@ -242,8 +242,8 @@ class Cabang extends CI_Controller
   }
   
   function saveCabangMethod(){
-	$method   = $this->input->post(method);
-	$mode   = $this->input->post(presence_mode);
+	$method   = $this->input->post("method");
+	$mode   = $this->input->post("presence_mode");
 	$strMethod= !empty($method) ? implode("|", $method) : "1";
     $encId       = $this->input->post("idmethod");
 	$appid = $this->session->userdata("ses_appid");

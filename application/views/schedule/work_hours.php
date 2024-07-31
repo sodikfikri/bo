@@ -183,7 +183,7 @@
                                           </div>
                                       </div>
                                       <button type="submit" class="btn btn-primary" style="float: right; margin-left: 8px; margin-top: 10px;" id="btn-submit-data">Save</button>
-                                      <a href="<?= base_url('schedule-work-hours'); ?>" class="btn btn-danger" style="float: right; margin-top: 10px;">Cancel</a>
+                                      <button  class="btn btn-danger" style="float: right; margin-top: 10px;" data-dismiss="modal">Cancel</button>
                                   </div>
                               </div>
                           </form>

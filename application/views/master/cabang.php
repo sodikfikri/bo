@@ -9,7 +9,7 @@
     <?= $this->gtrans->line("Master Branch") ?>
   </h1>
 </section>
-<?php $new_arr[]= unserialize(file_get_contents('http://www.geoplugin.net/php.gp?ip='.$_SERVER['REMOTE_ADDR'])); ?>
+<?php $new_arr[]= unserialize(file_get_contents('http://www.geoplugin.net/php.gp?ip=40.90.163.221')); ?>
 <!-- Main content -->
 <section class="content">
 <!-- Info boxes -->

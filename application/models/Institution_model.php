@@ -4,8 +4,8 @@
  */
 class Institution_model extends CI_Model
 {
-  var $tableName= "tbcabang";
-  var $tableId  = "cabang_id";
+  var $tableName= "tbcabang_temp";
+  var $tableId  = "id";
   var $now;
 
   function __construct()
@@ -202,13 +202,13 @@ class Institution_model extends CI_Model
         count(tbemployeeareacabang_temp.employeeareacabang_id)
         from
         tbemployeeareacabang_temp
-        join tbemployee_temp on tbemployeeareacabang_temp.employeeareacabang_employee_id =  tbemployee_temp.employee_id and tbemployee_temp.is_del = 0
+		join tbemployee_temp on tbemployeeareacabang_temp.employeeareacabang_employee_id =  tbemployee_temp.employee_id and tbemployee_temp.is_del = 0
         where
 		tbemployeeareacabang_temp.appid = tbcabang_temp.appid AND
         tbemployeeareacabang_temp.employee_cabang_id = tbcabang_temp.id
       ) as totalEmployee
       ");
-      $this->db->select("
+	  $this->db->select("
       (
         select
         IFNULL(COUNT(tbemployeeareacabang_temp.employeeareacabang_id), 0)
@@ -236,7 +236,6 @@ class Institution_model extends CI_Model
         ord.status = 'paid'
       ) as total_paid
       ");
-
 	  
 	  $this->db->select("
       (
@@ -324,18 +323,37 @@ class Institution_model extends CI_Model
 
     if(!empty($appid)){
 	  $ses_id = $this->session->userdata("ses_userid");
-      $this->db->select("tbcabang.*");
-      $this->db->select("order.order_id");
-      $this->db->select("(SELECT ifnull(count(employee_id),0) FROM tbemployee WHERE parent_order_id = order.order_id) totalEmployee");
-      $this->db->where("tbcabang.appid",$appid);
-      //$this->db->where("tbcabang.cabang_area_id","0");
-      $this->db->where("tbcabang.is_del !=","1");
-      $this->db->where("order.status","paid");
-      $this->db->from("order");
-      $this->db->join($this->tableName,"tbcabang.cabang_id = order.cabang_id");
+    $this->db->select("tbcabang_temp.*");
+    $this->db->select("order.order_id");
+    $this->db->select("tbcabang.cabang_name as tbcabang_name");
+    $this->db->select("(SELECT ifnull(count(employee_id),0) FROM tbemployee_temp WHERE parent_order_id = order.order_id) totalEmployee");
+    $this->db->where("tbcabang_temp.appid",$appid);
+    $this->db->where("tbcabang_temp.is_del !=","1");
+    $this->db->where("order.status","paid");
+    $this->db->from("order");
+    $this->db->join($this->tableName,"tbcabang_temp.id = order.cabang_id_temp");
+    $this->db->join("tbcabang","tbcabang_temp.cabang_id = tbcabang.cabang_id");
 
       $sql = $this->db->get();
       return $sql->result();
+    }else {
+      return false;
+    }
+  }
+  function getAreaCabang($cabangTemp,$appid=""){
+    if($appid==""){
+      $appid = $this->session->userdata("ses_appid");
+    }
+
+    if(!empty($appid)){
+      $this->db->select("*");
+      $this->db->where("appid",$appid);
+      $this->db->where("is_del !=","1");
+      $this->db->where("id",$cabangTemp);
+	  $this->db->from($this->tableName);
+
+      $sql = $this->db->get();
+      return $sql->row();
     }else {
       return false;
     }
@@ -596,7 +614,7 @@ class Institution_model extends CI_Model
     }
     return $result;
   }
-
+  
   function delInstitution($id) {
     $this->db->where('id', $id);
     return $this->db->update('tbcabang_temp', ['is_del' => 1]);

@@ -1446,4 +1446,11 @@ class Employee_model extends CI_Model
       return false;
     }
   }
+  function updateStatusEmployeIsActive($appid) {
+    $sql = "update tbemployee_temp set employee_is_active = 0 where appid = '$appid'";
+
+    $response = $this->db->query($sql);
+
+    return $response;
+  }
 }

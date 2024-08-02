@@ -237,15 +237,14 @@ class Leave extends REST_Controller
     }
 
     function apiTest_post() {
-        $this->load->model("checkout_cart_model");
-        
-        $arrDataOrder = $this->checkout_cart_model->getDetailOrder_temp('INV77900111837');
-        print_r($arrDataOrder); return;
+        $this->load->model("schedule_model");
 
+        $data = $this->schedule_model->getDataUserUsedClass();
 
-        $response = $this->SetRespose(200, 'Success send email', $arrDataOrder);
+        $response = $this->SetRespose(200, 'Success get data', $data);
         header("Content-Type:application/json");
         echo json_encode($response); return;
+        
     }
 
 }

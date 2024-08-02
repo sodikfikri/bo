@@ -191,6 +191,27 @@ class Shift extends CI_Controller
         return $dateString;
     }
 
+    function getDateOfDayInWeek($day_number, $week_number = 1) {
+        $year = date('Y');
+        $month = date('m');
+
+        $date = new DateTime("$year-$month-01");
+    
+        // Set tanggal ke awal minggu pertama bulan ini
+        $date->modify('first day of this month');
+    
+        // Tentukan hari dalam minggu pertama bulan ini
+        $day_of_week = $date->format('N'); // N memberikan nomor hari dalam minggu (1 = Senin, 7 = Minggu)
+    
+        // Hitung hari pertama minggu kedua
+        $date->modify('+' . (7 - $day_of_week + 1 + 7 * ($week_number - 1)) . ' days');
+    
+        // Tambahkan nomor hari ke tanggal awal minggu kedua
+        $date->modify('+' . ($day_number - 1) . ' days');
+    
+        return $date->format('Y-m-d');
+    }
+
     function priviewCalendar($encId) {
         $this->load->library("encryption_org");
         $idx = $this->encryption_org->decode($encId);
@@ -200,7 +221,11 @@ class Shift extends CI_Controller
         $dateByNumber = [];
         foreach($data as $item) {
             $sdays = $item->sdays < 10 ? '0'.$item->sdays : $item->sdays;
-            $dt = $this->getDateByDayNumber($sdays);
+            if (count($data) <= 7) {
+                $dt = $this->getDateOfDayInWeek($sdays);
+            } else {
+                $dt = $this->getDateByDayNumber($sdays);
+            }
 
             $obj = [
                 'id' => $item->id,

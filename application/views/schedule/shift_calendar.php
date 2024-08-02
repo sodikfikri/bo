@@ -35,7 +35,7 @@ $(document).ready(function() {
             headerToolbar: {
                 left: 'today',
                 center: 'title',
-                right: 'dayGridMonth'  // dayGridMonth,timeGridWeek,listWeek
+                right: 'dayGridMonth,timeGridWeek'  // dayGridMonth,timeGridWeek,listWeek
             },
             initialView: 'dayGridMonth',
             // initialDate: '2017-06-01',

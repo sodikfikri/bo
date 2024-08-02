@@ -102,6 +102,12 @@ $route['schedule-shift-delete/(:any)'] = 'schedule/shift/delData/$1';
 $route['schedule-shift-detail'] = 'schedule/shift/detailData';
 
 $route['schedule-work'] = 'schedule/work_schedule';
+$route['schedule-work/employee-departement'] = 'schedule/work_schedule/getEmpDepartement';
+$route['schedule-work/employee-all'] = 'schedule/work_schedule/getAllEmp';
+$route['schedule-work/employee-detail'] = 'schedule/work_schedule/findEmployee';
+$route['schedule-work-assign'] = 'schedule/work_schedule/AssignWorkSchedule';
+$route['schedule-work/employee-in-schedule'] = 'schedule/work_schedule/employeeInSchedule';
+$route['schedule-work/delete-employee-in-schedule'] = 'schedule/work_schedule/deleteScheduleEmployee';
 
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';

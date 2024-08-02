@@ -181,6 +181,216 @@ class Schedule_model extends CI_Model
         return $response->result();
     }
 
+    //============================ Assign Shift Kerja ============================//
+
+    function getDetaprtementByAppid($appid) {
+        $sql = "SELECT * FROM tbdepartements WHERE appid = '$appid'";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function getEmpByDept($dept_id) {
+        $sql = "SELECT employee_id, employee_full_name FROM tbemployee WHERE departement_id = $dept_id";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function getAllEmp($appid, $search, $limit, $offset) {
+
+        $sql = "SELECT * FROM tbemployee where appid = '$appid' AND employee_full_name LIKE '%$search%' LIMIT $limit OFFSET $offset";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function countEmpByName($appid, $name) {
+        $sql = "SELECT count(*) total FROM tbemployee where appid = '$appid' AND employee_full_name LIKE '%$name%'";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function SaveWorkScheduled($appid, $data) {
+        $this->db->trans_begin();
+
+        $params_merge = [];
+        $batch = uniqid();
+
+        if ($data->shift) {
+            $params_scheduled = [];
+            foreach($data->employee as $val) {
+                $obj = [
+                    'appid' => $appid,
+                    'user_id' => $val,
+                    'num_of_run_id' => $data->shift,
+                    'created_at' => (new DateTime())->format('Y-m-d H:i:s')
+                ];
+                array_push($params_scheduled, $obj);
+
+                $push_merge = [
+                    'appid' => $appid,
+                    'user_id' => $val,
+                    'departement_id' => $data->departement_id,
+                    'numrun_id' => $data->shift,
+                    'schclass_id' => null,
+                    'cyle' => $data->cyle,
+                    'unit' => $data->unit,
+                    'batch' => $batch,
+                    'created_at' => (new DateTime())->format('Y-m-d H:i:s')
+                ];
+                array_push($params_merge, $push_merge);
+            }
+            $ins = $this->db->insert_batch('tbuserofrun', $params_scheduled);
+        } 
+        if(count($data->work) != 0) {
+            $params_auto = [];
+            foreach($data->work as $wrk) {
+                foreach($data->employee as $val) {
+                    $dt = [
+                        'appid' => $appid,
+                        'user_id' => $val,
+                        'schclass_id' => $wrk,
+                    ];
+                    array_push($params_auto, $dt);
+    
+                    $push_merge = [
+                        'appid' => $appid,
+                        'user_id' => $val,
+                        'departement_id' => $data->departement_id,
+                        'numrun_id' => null,
+                        'schclass_id' => $wrk,
+                        'cyle' => null,
+                        'unit' => null,
+                        'batch' => $batch,
+                        'created_at' => (new DateTime())->format('Y-m-d H:i:s')
+                    ];
+                    array_push($params_merge, $push_merge);
+                }
+            }
+            $ins = $this->db->insert_batch('tbuserusedclasses', $params_auto);
+        }
+
+        $mergedData = [];
+
+        foreach ($params_merge as $entry) {
+            $userId = $entry['user_id'];
+
+            if (!isset($mergedData[$userId])) {
+                $mergedData[$userId] = $entry;
+            } else {
+                $mergedData[$userId] = array_merge($mergedData[$userId], array_filter($entry));
+            }
+        }
+        
+        $this->db->insert_batch('tbassignsch', array_values($mergedData));
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            return false;
+        } else {
+            $this->db->trans_commit();
+            return $ins;
+        }
+    }
+
+    function getEmpById($emp_id) {
+        $sql = "SELECT * FROM tbemployee WHERE employee_id = $emp_id";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function getDataUserOfRun() {
+        $sql = "SELECT * FROM tbuserofrun";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function getDataUserUsedClass() {
+        $sql = "SELECT * FROM tbuserusedclasses";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function listAssign($appid) {
+        $sql = "SELECT 
+                    count(asg.user_id) count_user, 
+                    dpt.name as departement_name, 
+                    asg.numrun_id, 
+                    asg.schclass_id, 
+                    asg.cyle, 
+                    asg.unit,
+                    asg.batch,
+                CASE
+                    WHEN asg.numrun_id IS NOT NULL AND asg.schclass_id IS NOT NULL THEN 'Scheduled and Automatic'
+                    WHEN asg.numrun_id IS NOT NULL AND asg.schclass_id IS NULL THEN 'Scheduled'
+                    WHEN asg.numrun_id IS NULL AND asg.schclass_id IS NOT NULL THEN 'Automatic'
+                END AS type_schedule
+                FROM 
+                    db_inact.tbassignsch asg
+                LEFT JOIN 
+                    db_inact.tbdepartements dpt on asg.departement_id = dpt.id
+                WHERE asg.appid = '$appid'
+                GROUP BY asg.departement_id,asg.batch;";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function getDetailEmpOnSch($batch) {
+        $sql = "SELECT 
+                    tbassignsch.user_id, 
+                    tbassignsch.departement_id,
+                    tbassignsch.batch,
+                    tbemployee.employee_full_name,
+                    tbdepartements.name as departement_name
+                FROM 
+                    tbassignsch
+                JOIN 
+                    tbemployee ON tbassignsch.user_id = tbemployee.employee_id
+                LEFT JOIN
+                    tbdepartements ON tbassignsch.departement_id = tbdepartements.id
+                WHERE 
+                    batch = '$batch'";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function deleteScheduleEmployee($appid, $userId, $dept_id, $batch) {
+        $this->db->trans_begin();
+
+        $usr_of_sch = "delete from tbuserofrun where appid = '$appid' and user_id = $userId";
+        $this->db->query($usr_of_sch);
+
+        $usr_used_sch = "delete from tbuserusedclasses where appid = '$appid' and user_id = $userId";
+        $this->db->query($usr_used_sch);
+
+        $usr_assign = "delete from tbassignsch where appid = '$appid' and user_id = $userId and departement_id = $dept_id and batch = '$batch'";
+        $this->db->query($usr_assign);
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            return false;
+        } else {
+            $this->db->trans_commit();
+            return 'success';
+        }
+    }
+
     //============================ Hari Libur ============================//
     function SaveDataHoliday($data) {
         $ins = $this->db->insert_batch('tbholidays', $data);

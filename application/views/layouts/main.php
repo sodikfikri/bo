@@ -525,12 +525,12 @@
             <h4 class="modal-title"><?= $this->gtrans->line("Invite your branch to registrastion") ?></h4>
       </div>
       <div class="modal-body">
-          <a href="https://inact.interactiveholic.net/bo/register-intrax/<?= $this->encryption_org->encode($this->session->userdata("ses_appid")) ?>" target="_blank"><i class="fa fa-link"></i> https://inact.interactiveholic.net/bo/register-intrax/<?= $this->encryption_org->encode($this->session->userdata("ses_appid")) ?></a>
+          <a href="https://inact.azurewebsites.net/register-intrax/<?= $this->encryption_org->encode($this->session->userdata("ses_appid")) ?>" target="_blank"><i class="fa fa-link"></i> https://inact.azurewebsites.net/register-intrax/<?= $this->encryption_org->encode($this->session->userdata("ses_appid")) ?></a>
           <p><?= $this->gtrans->line("Share your link registration trough email") ?></p>
 		  <div class="row">
             <div class="col-md-8">
 				<input data-validation-engine="validate[required,maxSize[100],custom[email]]" placeholder="example@gmail.com" name="email" type="text" class="form-control" id="email_intrax" >
-				<input placeholder="" name="email" type="hidden" class="form-control" id="link_intrax" value="https://inact.interactiveholic.net/bo/register-intrax/<?= $this->encryption_org->encode($this->session->userdata("ses_appid")) ?>">
+				<input placeholder="" name="email" type="hidden" class="form-control" id="link_intrax" value="https://inact.azurewebsites.net/register-intrax/<?= $this->encryption_org->encode($this->session->userdata("ses_appid")) ?>">
 				<p id="msg-link" style="color:red;text-align:center"></p>
 			</div>
 			<div class="col-md-4">

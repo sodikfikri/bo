@@ -506,7 +506,7 @@ $(document).ready(function() {
                     });
                     return false;
                 }
-
+                
                 $('#id-hide').val(response.data.id)
                 $('#name').val(response.data.name)
                 $('#rotation_number').val(response.data.cyle)
@@ -527,6 +527,8 @@ $(document).ready(function() {
                     $('#effective_end_date').val('')
                 }
 
+                $('input[name="set_day_of_week"]').prop('checked', false)
+                $('.parent-hour').empty()
                 $.each(response.deil, function(key, val) {
                     $('.parent-hour').append(
                         '<div class="child-hour">' +
@@ -543,7 +545,7 @@ $(document).ready(function() {
                         '</div>'
                     )
                 })
-
+                
                 if (response.data.unit == 1) {
                     $.each(response.day_deil, function(key, val) {
                         $('input[name="set_day_of_week"][value="'+val.sdays+'"]').prop('checked', true)

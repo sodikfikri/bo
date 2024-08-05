@@ -15,6 +15,7 @@ class Register_intrax extends CI_Controller
 
   function index()
   {
+    $this->session->sess_destroy();
     $this->load->library("form_validation");
     $this->form_validation->set_rules("submit","submit","required");
     $this->form_validation->set_rules('password', 'Password', 'required');
@@ -258,8 +259,8 @@ class Register_intrax extends CI_Controller
       </body>
     </html>';
     $this->load->library("intermailer");
-    // $this->intermailer->initialize();
-    $this->intermailer->initialize_allin();
+    $this->intermailer->initialize();
+    // $this->intermailer->initialize_allin();
     $this->intermailer->to([$email=>$userName]);
     $this->intermailer->set_content("OTP Code for InAct Registration",$body_msg,"Alt Body tes");
     if($this->intermailer->send())

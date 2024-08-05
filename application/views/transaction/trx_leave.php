@@ -23,34 +23,45 @@
           <div class="row">
             <div class="col-md-12">
               <?= !empty($notif) ? $notif : "" ?>
-              <div class="card" style="width: 60%;">
+              <div class="card" style="width: 100%;">
                 <div class="card-body">
                   <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                       <div class="form-group">
                         <label for="f-start-date">Start Date</label>
                         <input type="date" class="form-control form-rounded" id="f-start-date" name="f-start-date" placeholder="2024-01-01">
                       </div>
                     </div>
-                    <div class="col-md-4" style="padding-left: 0;">
+                    <div class="col-md-3" style="padding-left: 0;">
                       <div class="form-group">
                         <label for="f-end-date">End Date</label>
                         <input type="date" class="form-control form-rounded" id="f-end-date" placeholder="2024-01-31">
                       </div>
                     </div>
-                    <div class="col-md-4" style="padding-left: 0;">
+                    <div class="col-md-3" style="padding-left: 0;">
                       <!-- <div class="form-group"> -->
                         
                         <span class="btn btn-primary" id="btn-arrow-down" style="margin-top: 24px; display: none;">
                           <i class="fa fa-arrow-down"></i>
                         </span>
+                        <button class="btn btn-primary" id="btn-search" style="margin-top: 24px"><i class="fa fa-search" aria-hidden="true"></i></button>
                         <button class="btn btn-primary" id="btn-reset" style="margin-top: 24px" title="Reset filter"><i class="fa fa-refresh" aria-hidden="true"></i></button>
-                        <button class="btn btn-primary" id="btn-search" style="margin-top: 24px">Search</button>
+                        <button class="btn btn-primary dropdown-toggle" style="margin-top: 24px" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                          Bulk Action
+                          <span class="caret"></span>
+                        </button>
+                          <ul class="dropdown-menu" id="dropdown-menu-bulk-act" aria-labelledby="dropdownMenu1">
+                            <li><a href="#" class="dropdown-item" data-value="0">Reset Filter</a></li>
+                            <li><a href="#" class="dropdown-item" data-value="1">Delete</a></li>
+                        </ul>
                       <!-- </div> -->
+                    </div>
+                    <div class="col-md-3">
+                      <button class="btn btn-success" style="margin-top: 24px; float: right;" id="btn-export" style="float: right">Export To Excel</button>
                     </div>
                   </div>
                   <div class="row" id="another-filter" style="display: none">
-                    <div class="col-md-2">
+                    <!-- <div class="col-md-2">
                       <div class="dropdown">
                         <button class="btn btn-primary dropdown-toggle" id="btn-f-cats" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                           <span id="fc-name">Filter Category</span>
@@ -63,19 +74,19 @@
                             <?php endforeach; ?>
                           </ul>
                       </div>
-                    </div>
+                    </div> -->
                     <div class="col-md-2">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                        <!-- <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                           Bulk Action
                           <span class="caret"></span>
                         </button>
                           <ul class="dropdown-menu" id="dropdown-menu-bulk-act" aria-labelledby="dropdownMenu1">
                             <li><a href="#" class="dropdown-item" data-value="0">Reset Filter</a></li>
                             <li><a href="#" class="dropdown-item" data-value="1">Delete</a></li>
-                        </ul>
+                        </ul> -->
                     </div>
                     <div class="col-md-2">
-                      <button class="btn btn-primary" id="btn-export" style="float: right">Export To Excel</button>
+                      <!-- <button class="btn btn-primary" id="btn-export" style="float: right">Export To Excel</button> -->
                     </div>
                   </div>
                 </div>
@@ -166,7 +177,7 @@ $(document).ready(function() {
   } 
 
   $('#btn-export').on('click', function() {
-    let cats = $('input[name="category"]').val()
+    // let cats = $('input[name="category"]').val()
     // return console.log(cats);
     Swal.fire({
       title: 'Are you sure?',
@@ -183,10 +194,14 @@ $(document).ready(function() {
           method: 'GET',
           success: function(res) {
             let response = JSON.parse(res)
-
+            
             let data = [];
 
             $.each(response, function(key, val) {
+              const startDate = moment(val.start_date);
+              const endDate = moment(val.end_date);
+              const differenceInDays = endDate.diff(startDate, 'days');
+
               let start_time = val.category_id == 1 || val.category_id == 3 ? val.start_date : `${moment(val.start_date).format('YYYY-MM-DD')} ${val.start_time}`
               let end_time = val.category_id == 1 || val.category_id == 3 ? val.end_date : `${moment(val.end_date).format('YYYY-MM-DD')} ${val.end_time}`
               let obj = {
@@ -194,11 +209,12 @@ $(document).ready(function() {
                 'Category': val.category_name,
                 'Start Time': start_time,
                 'End Time': end_time,
+                'Day Interval': differenceInDays + ' Hari',
                 'Reason': val.reason
               }
               data.push(obj)
             })
-
+            
             let ws = XLSX.utils.json_to_sheet(
                 data
             , {
@@ -206,7 +222,7 @@ $(document).ready(function() {
             });
             let wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Rekap');
-            XLSX.writeFile(wb, 'Vacation Recap.xlsx');
+            XLSX.writeFile(wb, 'Vacation Recap '+moment().format('YYYY-MM-DD')+'.xlsx');
           }
         })
       }
@@ -372,7 +388,7 @@ $(document).ready(function() {
     event.preventDefault();
     var selectedText = $(this).text();
     var selectedValue = $(this).data('value');
-    
+    // return alert(selectedValue)
     if (selectedValue == 0) {
       $('#filter-form').append(
         '<input name="category" value="0">' +
@@ -388,7 +404,28 @@ $(document).ready(function() {
         }
       });
 
-      delete_data(idx)
+      if (idx.length == 0) {
+        Swal.fire({
+          title: 'Warning',
+          text: 'No data selected!',
+          type: 'warning'
+        });
+      } else {
+        // delete_data(idx)
+        Swal.fire({
+          title: 'Are you sure?',
+          text: "You won't be able to revert this!",
+          type: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+          if (result.value) {
+            delete_data(idx)
+          }
+        })
+      }
     } 
 
   });

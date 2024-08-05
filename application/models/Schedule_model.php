@@ -201,7 +201,7 @@ class Schedule_model extends CI_Model
 
     function getAllEmp($appid, $search, $limit, $offset) {
 
-        $sql = "SELECT * FROM tbemployee where appid = '$appid' AND employee_full_name LIKE '%$search%' LIMIT $limit OFFSET $offset";
+        $sql = "SELECT * FROM tbemployee WHERE appid = '$appid' AND departement_id IS NOT NULL AND employee_full_name LIKE '%$search%' LIMIT $limit OFFSET $offset";
 
         $response = $this->db->query($sql);
 
@@ -209,7 +209,7 @@ class Schedule_model extends CI_Model
     }
 
     function countEmpByName($appid, $name) {
-        $sql = "SELECT count(*) total FROM tbemployee where appid = '$appid' AND employee_full_name LIKE '%$name%'";
+        $sql = "SELECT count(*) total FROM tbemployee where appid = '$appid' AND departement_id IS NOT NULL AND employee_full_name LIKE '%$name%'";
 
         $response = $this->db->query($sql);
 
@@ -338,11 +338,11 @@ class Schedule_model extends CI_Model
                     WHEN asg.numrun_id IS NULL AND asg.schclass_id IS NOT NULL THEN 'Automatic'
                 END AS type_schedule
                 FROM 
-                    db_inact.tbassignsch asg
+                    tbassignsch asg
                 LEFT JOIN 
-                    db_inact.tbdepartements dpt on asg.departement_id = dpt.id
+                    tbdepartements dpt on asg.departement_id = dpt.id
                 WHERE asg.appid = '$appid'
-                GROUP BY asg.departement_id,asg.batch;";
+                GROUP BY asg.departement_id,asg.batch";
 
         $response = $this->db->query($sql);
 

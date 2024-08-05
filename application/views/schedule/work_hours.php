@@ -71,11 +71,11 @@
                                           <div class="col-md-6">
                                             <input type="hidden" id="id_hidden" name="id_hidden" value="0">
                                               <label for="name" class="form-label" style="color: grey; font-weight: 500;">Name</label>
-                                              <input type="text" class="form-control form-rounded" name="name" id="name" >
+                                              <input type="text" class="form-control form-rounded" name="name" id="name" required>
                                           </div>
                                           <div class="col-md-6">
                                               <label for="location" class="form-label" style="color: grey; font-weight: 500;">Location</label>
-                                              <select class="form-control form-rounded" multiple="multiple" name="location[]" id="location" style="width: 100%;">
+                                              <select class="form-control form-rounded" multiple="multiple" name="location[]" id="location" style="width: 100%;" required>
                                                   <?php foreach($branchData as $branch): ?>
                                                     <option value="<?= $branch->cabang_id ?>"><?= $branch->cabang_name ?></option>
                                                   <?php endforeach; ?>
@@ -87,27 +87,27 @@
                                       <div class="row">
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="start_work" class="form-label" style="color: grey; font-weight: 500;">Start Work Time</label>
-                                              <input type="time" class="form-control form-rounded" name="start_work" id="start_work" >
+                                              <input type="time" class="form-control form-rounded" name="start_work" id="start_work" required>
                                           </div>
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="end_work" class="form-label" style="color: grey; font-weight: 500;">End Work Time</label>
-                                              <input type="time" class="form-control form-rounded" name="end_work" id="end_work" >
+                                              <input type="time" class="form-control form-rounded" name="end_work" id="end_work" required>
                                           </div>
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="start_checkin_time" class="form-label" style="color: grey; font-weight: 500;">Earliest Start Work Time</label>
-                                              <input type="time" class="form-control form-rounded" name="start_checkin_time" id="start_checkin_time" >
+                                              <input type="time" class="form-control form-rounded" name="start_checkin_time" id="start_checkin_time" required>
                                           </div>
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="end_checkin_time" class="form-label" style="color: grey; font-weight: 500;">Latest Start Work Time</label>
-                                              <input type="time" class="form-control form-rounded" name="end_checkin_time" id="end_checkin_time" >
+                                              <input type="time" class="form-control form-rounded" name="end_checkin_time" id="end_checkin_time" required>
                                           </div>
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="start_checkout_time" class="form-label" style="color: grey; font-weight: 500;">Earliest End Work Time</label>
-                                              <input type="time" class="form-control form-rounded" name="start_checkout_time" id="start_checkout_time" >
+                                              <input type="time" class="form-control form-rounded" name="start_checkout_time" id="start_checkout_time" required>
                                           </div>
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="end_checkout_time" class="form-label" style="color: grey; font-weight: 500;">Latest End Work Time</label>
-                                              <input type="time" class="form-control form-rounded" name="end_checkout_time" id="end_checkout_time" >
+                                              <input type="time" class="form-control form-rounded" name="end_checkout_time" id="end_checkout_time" required>
                                           </div>
                                       </div>
                                       <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
@@ -115,11 +115,11 @@
                                       <div class="row">
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="late_tolerance" class="form-label" style="color: grey; font-weight: 500;">Late Tolerance (minutes)</label>
-                                              <input type="number" class="form-control form-rounded" name="late_tolerance" id="late_tolerance" >
+                                              <input type="number" class="form-control form-rounded" name="late_tolerance" id="late_tolerance" required>
                                           </div>
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="early_leave_tolerance" class="form-label" style="color: grey; font-weight: 500;">Early Leave Tolerance (minutes)</label>
-                                              <input type="number" class="form-control form-rounded" name="early_leave_tolerance" id="early_leave_tolerance" >
+                                              <input type="number" class="form-control form-rounded" name="early_leave_tolerance" id="early_leave_tolerance" required>
                                           </div>
                                       </div>
                                       <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
@@ -127,7 +127,7 @@
                                       <div class="row">
                                           <div class="col-md-12" style="margin-top: 10px;">
                                               <label for="workday" class="form-label" style="color: grey; font-weight: 500;">Count</label>
-                                              <input type="number" class="form-control form-rounded" step="0.5" min="0" max="100" name="workday" id="workday" >
+                                              <input type="number" class="form-control form-rounded" step="0.5" min="0" max="100" name="workday" id="workday" required>
                                           </div>
                                       </div>
                                       <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
@@ -179,7 +179,7 @@
                                       <div class="row">
                                           <div class="col-md-6" style="margin-top: 10px;">
                                               <label for="colour" class="form-label" style="color: grey; font-weight: 500;">Work schedule background color</label>
-                                              <input type="text" class="form-control form-rounded" name="colour" id="colour" >
+                                              <input type="text" class="form-control form-rounded" name="colour" id="colour" required>
                                           </div>
                                       </div>
                                       <button type="submit" class="btn btn-primary" style="float: right; margin-left: 8px; margin-top: 10px;" id="btn-submit-data">Save</button>

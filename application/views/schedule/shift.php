@@ -387,8 +387,42 @@ $(document).ready(function() {
         $(this).closest('.child-hour').remove()
     })
 
+    function showAlertWarning() {
+        Swal.fire({
+            title: 'Warning',
+            text: 'Please complete the data!',
+            type: 'warning'
+        });
+    }
+
     $(document).on('click', '#btn-submit-data', function(e) {
         e.preventDefault()
+
+        let schid = $('.schid').map(function() {
+                    return $(this).val();
+                }).get();
+
+        if($.trim($('input[name="name"]').val()) == '') {
+            showAlertWarning()
+            return;
+        }
+        if($.trim($('input[name="rotation_number"]').val()) == '' || $.trim($('input[name="rotation_number"]').val()) == 0) {
+            showAlertWarning()
+            return;
+        }
+        if($('#rotation_unit').val() == '' || $('#rotation_unit').val() == 0) {
+            showAlertWarning()
+            return;
+        }
+        if(!schid || schid.length == 0) {
+            showAlertWarning()
+            return;
+        }
+        if($.trim($('input[name="effective_start_date"]').val()) == '') {
+            showAlertWarning()
+            return;
+        }
+
         let national_holiday = $('#national_holiday').is(':checked') ? 1 : 0
         let data = {
             name: $('#name').val(),
@@ -419,10 +453,6 @@ $(document).ready(function() {
                 if ($(this).is(':checked')) return [$(this).val()]
             }).get()
         }
-
-        var schid = $('.schid').map(function() {
-                    return $(this).val();
-                }).get();
 
         let detail = {
             schclass: schid,
@@ -568,6 +598,31 @@ $(document).ready(function() {
     $(document).on('click', '#btn-update-data', function(e) {
         e.preventDefault()
 
+        let schid = $('.schid').map(function() {
+                    return $(this).val();
+                }).get();
+
+        if($.trim($('input[name="name"]').val()) == '') {
+            showAlertWarning()
+            return;
+        }
+        if($.trim($('input[name="rotation_number"]').val()) == '' || $.trim($('input[name="rotation_number"]').val()) == 0) {
+            showAlertWarning()
+            return;
+        }
+        if($('#rotation_unit').val() == '' || $('#rotation_unit').val() == 0) {
+            showAlertWarning()
+            return;
+        }
+        if(!schid || schid.length == 0) {
+            showAlertWarning()
+            return;
+        }
+        if($.trim($('input[name="effective_start_date"]').val()) == '') {
+            showAlertWarning()
+            return;
+        }
+
         let national_holiday = $('#national_holiday').is(':checked') ? 1 : 0
         let data = {
             id: $('#id-hide').val(),
@@ -621,10 +676,6 @@ $(document).ready(function() {
                 if ($(this).is(':checked')) return [$(this).val()]
             }).get()
         }
-
-        var schid = $('.schid').map(function() {
-                    return $(this).val();
-                }).get();
 
         let detail = {
             schclass: schid,

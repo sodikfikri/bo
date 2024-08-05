@@ -37,11 +37,11 @@ class Trx_leave extends CI_Controller
         $is_filter = false;
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
-            // ["data"=> '<div class="form-check">
-            //                 <input class="form-check-input" type="checkbox" value="" id="head-check">
-            //                 <label class="form-check-label" for="head-check"></label>
-            //             </div>', "class"=>"text-center"],
-            ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
+            ["data"=> '<div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="head-check">
+                            <label class="form-check-label" for="head-check"></label>
+                        </div>', "class"=>"text-center"],
+            // ["data"=> $this->gtrans->line("No"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Employee Name"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Category"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Start Time"), "class"=>"text-center"],
@@ -71,11 +71,11 @@ class Trx_leave extends CI_Controller
             $encId = $this->encryption_org->encode($items->id);
             $this->table->add_row(
                 [
-                    // 'data' => '<div class="form-check">
-                    //                 <input class="form-check-input checkid" type="checkbox" name="checkid" id="checkid" value="'.$encId.'">
-                    //                 <label class="form-check-label" for="checkid"></label>
-                    //             </div>',
-                    'data' => $key+1,
+                    'data' => '<div class="form-check">
+                                    <input class="form-check-input checkid" type="checkbox" name="checkid" id="checkid" value="'.$encId.'">
+                                    <label class="form-check-label" for="checkid"></label>
+                                </div>',
+                    // 'data' => $key+1,
                     'style' => 'text-align: center;'
                 ],
                 $items->employee_full_name,

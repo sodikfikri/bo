@@ -179,8 +179,8 @@ class Forgot_password extends CI_Controller
       </body>
     </html>';
     $this->load->library("intermailer");
-    // $this->intermailer->initialize();
-    $this->intermailer->initialize_allin();
+    $this->intermailer->initialize();
+    // $this->intermailer->initialize_allin();
     $this->intermailer->to([$email=>$userName]);
     $this->intermailer->set_content("OTP Code For InAct Reset Password",$body_msg,"Alt Body tes");
     if($this->intermailer->send())

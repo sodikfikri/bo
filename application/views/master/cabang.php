@@ -9,7 +9,7 @@
     <?= $this->gtrans->line("Master Branch") ?>
   </h1>
 </section>
-<?php $new_arr[]= unserialize(file_get_contents('http://www.geoplugin.net/php.gp?ip='.$_SERVER['REMOTE_ADDR'])); ?>
+<?php $new_arr[]= unserialize(file_get_contents('http://www.geoplugin.net/php.gp?ip=182.253.50.128')); ?>
 <!-- Main content -->
 <section class="content">
 <!-- Info boxes -->
@@ -202,6 +202,7 @@
     </div>
   <!-- /.modal-dialog -->
   </div>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkLKNQj9zEMKoCDj9lZKmG2CDi9ZVp8p0&libraries=places&callback=initialize"></script>
 <script type="text/javascript">
   var url = "<?= base_url() ?>";
   var existingTimezone = '';
@@ -507,4 +508,3 @@
 	  });
 	});
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkLKNQj9zEMKoCDj9lZKmG2CDi9ZVp8p0&libraries=places&callback=initialize"></script>

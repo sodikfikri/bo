@@ -278,8 +278,8 @@ class Setting extends CI_Controller
       </body>
     </html>';
     $this->load->library("intermailer");
-    // $this->intermailer->initialize();
-    $this->intermailer->initialize_allin();
+    $this->intermailer->initialize();
+    // $this->intermailer->initialize_allin();
     $this->intermailer->to([$email=>$email]);
     $this->intermailer->set_content("Link for InAct Registration",$body_msg,"Alt Body tes");
     if($this->intermailer->send())

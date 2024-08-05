@@ -127,7 +127,7 @@
                 </div>
 
                 <hr style="margin: 15px 0px 10px 0px; border: 0.5px solid #DCDCDC;">
-                <span style="font-size: 16px; font-weight: bold;"><?= $this->gtrans->line('Select department or employee') ?></span>
+                <span style="font-size: 16px; font-weight: bold;"><?= $this->gtrans->line('Select schedule') ?></span>
                 <div class="row schedule-shift">
                   <div class="col-md-12">
                     <label for="" class="form-label" style="color: grey; font-weight: 500;"><?= $this->gtrans->line('select the work shift to be assigned to this schedule') ?></label><br>

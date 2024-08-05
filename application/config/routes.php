@@ -109,6 +109,8 @@ $route['schedule-work-assign'] = 'schedule/work_schedule/AssignWorkSchedule';
 $route['schedule-work/employee-in-schedule'] = 'schedule/work_schedule/employeeInSchedule';
 $route['schedule-work/delete-employee-in-schedule'] = 'schedule/work_schedule/deleteScheduleEmployee';
 
+$route['schedule-temp'] = 'schedule/schedule_temp';
+
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';
 $route['schedule-holidays/delete'] = 'schedule/holidays/deldata';

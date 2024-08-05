@@ -859,142 +859,150 @@ class Prospective_employees extends CI_Controller
           foreach ($arrEmployee as $index => $row) {
             // filter 1
             $line = $index + 4;
+            if (!$row['phoneNumber']) {
+              $error[] = 'Phone number not found on line '.$line;
+              continue;
+            }
+            if (!$row['email']) {
+              $error[] = 'Email not found on line '.$line;
+              continue;
+            }
 			// pengecekan subscription
-			if($dataSubscription[0]!=0){
-				$dataPin	= $row["pinIntrax"]=="";
-				$pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
-				$identify	= 6;
-			} else {
-				if($row["pinIntrax"]!=0 OR $row["pinIntrax"]!=""){
-					$dataPin	= $row["pinIntrax"]=="";
-					$pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
-					$identify	= 6;
-				} else {
-					$pinIntrax	= 0;
-				}
-			}
+            if($dataSubscription[0]!=0){
+              $dataPin	= $row["pinIntrax"]=="";
+              $pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
+              $identify	= 6;
+            } else {
+              if($row["pinIntrax"]!=0 OR $row["pinIntrax"]!=""){
+                $dataPin	= $row["pinIntrax"]=="";
+                $pinIntrax	= (int) filter_var($row["pinIntrax"], FILTER_SANITIZE_NUMBER_INT);
+                $identify	= 6;
+              } else {
+                $pinIntrax	= 0;
+              }
+            }
             if($row["employeeCode"]=="" || $row["employeeName"]=="" || $row["position"]=="" || $row["gender"]=="" || $row["phoneNumber"]=="" || $row["email"]=="" || $dataPin){
               $error[] = 'There is empty required field on line '.$line;
             }else{
-			  /*
-			  if(!in_array($row["employeeCode"],$listEmployeeCode)){
+              /*
+              if(!in_array($row["employeeCode"],$listEmployeeCode)){
 
-			  }else{
+              }else{
 
-			  }*/
-			  // ok
-			  // $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
-			  // $getEmail = $this->employee_model->getEmailAvailable_temp($appid,$row["email"]);
-			  // pengecekan format email
-			  if(filter_var($row["email"], FILTER_VALIDATE_EMAIL)){
-				  // cek available email
-				  // if($getEmail==0) {
-					  // pengecekan karakter spesial
-					  $spCharCode     = isSpecialCharExists($row["employeeCode"],["-","."]);
-					  $spCharName     = isSpecialCharExists($row["employeeName"],["-","`",".","(",")"]);
-					  if($spCharCode==false && $spCharName==false){
-						// insert data employee
-						$joinDate = date("Y-m-d");
-						$dataInsert = [
-						  "appid"               => $appid,
-						  "employee_account_no" => $row["employeeCode"],
-						  "employee_full_name"  => $row["employeeName"],
-						  "email"  				=> $row["email"],
-						  "gender"  			=> $row["gender"],
-						  "phone_number"  		=> $row["phoneNumber"],
-						  "employee_user_add"   => $userID,
-						  "employee_join_date"	=> $this->timestamp,
-						  "employee_date_create"=> $this->timestamp,
-						  "employee_license"    => "active",
-						  "employee_is_active"  => "0",
-						  "is_del"              => "0",
-						  "intrax_pin"          => $pinIntrax,
-						  "employee_position"   => $row["position"],
-						  "status_added"  		=> "notactive"
-						];
-						
-						// pengecekan subscription
-						  if($dataSubscription[0]!=0){
-							  //cek pin intrax 123456
-							  if($pinIntrax!=123456){
-								 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
-									// add employee
-									// $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
-									$insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
-								} else {
-									$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
-								}
-							  } else {
-								  $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
-							  }
-							} else {
-							  //cek pin intrax 123456
-							  if($pinIntrax!=123456){
-								  if($pinIntrax==0){
-									 // add employee
-									// $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
-									$insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
-								  } else {
-									 if(strlen($pinIntrax)==6 AND $pinIntrax>0){
-										// add employee
-										// $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
-										$insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
-									} else {
-										$error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
-									}
-								  }
-							  } else {
-								  $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
-							  }
-								
-							}
-						
+              }*/
+              // ok
+              // $getEmail = $this->employee_model->getEmailAvailable($appid,$row["email"]);
+              // $getEmail = $this->employee_model->getEmailAvailable_temp($appid,$row["email"]);
+              // pengecekan format email
+              if(filter_var($row["email"], FILTER_VALIDATE_EMAIL)){
+                // cek available email
+                // if($getEmail==0) {
+                  // pengecekan karakter spesial
+                  $spCharCode     = isSpecialCharExists($row["employeeCode"],["-","."]);
+                  $spCharName     = isSpecialCharExists($row["employeeName"],["-","`",".","(",")"]);
+                  if($spCharCode==false && $spCharName==false){
+                  // insert data employee
+                  $joinDate = date("Y-m-d");
+                  $dataInsert = [
+                    "appid"               => $appid,
+                    "employee_account_no" => $row["employeeCode"],
+                    "employee_full_name"  => $row["employeeName"],
+                    "email"  				=> $row["email"],
+                    "gender"  			=> $row["gender"],
+                    "phone_number"  		=> $row["phoneNumber"],
+                    "employee_user_add"   => $userID,
+                    "employee_join_date"	=> $this->timestamp,
+                    "employee_date_create"=> $this->timestamp,
+                    "employee_license"    => "active",
+                    "employee_is_active"  => "0",
+                    "is_del"              => "0",
+                    "intrax_pin"          => $pinIntrax,
+                    "employee_position"   => $row["position"],
+                    "status_added"  		=> "notactive"
+                  ];
+                  
+                  // pengecekan subscription
+                    if($dataSubscription[0]!=0){
+                      //cek pin intrax 123456
+                      if($pinIntrax!=123456){
+                      if(strlen($pinIntrax)==6 AND $pinIntrax>0){
+                        // add employee
+                        // $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+                        $insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
+                      } else {
+                        $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+                      }
+                      } else {
+                        $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+                      }
+                    } else {
+                      //cek pin intrax 123456
+                      if($pinIntrax!=123456){
+                        if($pinIntrax==0){
+                        // add employee
+                        // $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+                        $insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
+                        } else {
+                          if(strlen($pinIntrax)==6 AND $pinIntrax>0){
+                            // add employee
+                            // $insertResult = $this->employee_model->saveIgnoreDuplicate($dataInsert,$listEmployeeCode);
+                            $insertResult = $this->employee_model->saveIgnoreDuplicate_temp($dataInsert,$listEmployeeCode);
+                          } else {
+                            $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+                          }
+                        }
+                      } else {
+                        $error[] = 'There is error value pin intrax ('.$row["pinIntrax"].') on line '.$line;
+                      }
+                      
+                    }
+                  
 
-						if($insertResult["insertStatus"]=="inserted"){
-						  $employeeID = $insertResult["employee_id"];
-						  // add location
-						  $dataInsertLocation = [
-							"appid" => $appid,
-							"employeeareacabang_employee_id" => $employeeID,
-							"employee_area_id" => 0,
-							"employee_cabang_id" => $this->encryption_org->decode($dataUrl),
-							"employeeareacabang_effdt" => $this->timestamp,
-							"employeeareacabang_date_create" => $this->timestamp,
-							"employeeareacabang_user_add" => $userID,
-							"status" => "pending"
-						  ];
-						  // $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
-						  $this->employeeareacabang_model->saveIgnoreDuplicate_temp($dataInsertLocation);
-						  $inserted++;
-						}elseif ($insertResult["insertStatus"]=="skipped") {
-						  $skipped++;
-						}elseif ($insertResult["insertStatus"]=="duplicated_code") {
-						  $error[] = 'There is duplicate "NO AKUN/ BARCODE" on line '.$line;
-						}elseif ($insertResult["insertStatus"]=="updated") {
-						  $employeeID = $insertResult["employee_id"];
-						  $updated++;
-						}
-						// open gate
-						if($insertResult["insertStatus"]=="inserted"||$insertResult["insertStatus"]=="updated"){
-						  $this->firewall_model->openGate($employeeID,$joinDate);
-						}
+                  if($insertResult["insertStatus"]=="inserted"){
+                    $employeeID = $insertResult["employee_id"];
+                    // add location
+                    $dataInsertLocation = [
+                    "appid" => $appid,
+                    "employeeareacabang_employee_id" => $employeeID,
+                    "employee_area_id" => 0,
+                    "employee_cabang_id" => $this->encryption_org->decode($dataUrl),
+                    "employeeareacabang_effdt" => $this->timestamp,
+                    "employeeareacabang_date_create" => $this->timestamp,
+                    "employeeareacabang_user_add" => $userID,
+                    "status" => "pending"
+                    ];
+                    // $this->employeeareacabang_model->saveIgnoreDuplicate($dataInsertLocation);
+                    $this->employeeareacabang_model->saveIgnoreDuplicate_temp($dataInsertLocation);
+                    $inserted++;
+                  }elseif ($insertResult["insertStatus"]=="skipped") {
+                    $skipped++;
+                  }elseif ($insertResult["insertStatus"]=="duplicated_code") {
+                    $error[] = 'There is duplicate "NO AKUN/ BARCODE" on line '.$line;
+                  }elseif ($insertResult["insertStatus"]=="updated") {
+                    $employeeID = $insertResult["employee_id"];
+                    $updated++;
+                  }
+                  // open gate
+                  if($insertResult["insertStatus"]=="inserted"||$insertResult["insertStatus"]=="updated"){
+                    $this->firewall_model->openGate($employeeID,$joinDate);
+                  }
 
-						// 
-					  }else{
-						if($spCharCode!=false){
-						  $error[] = 'Special Character "'.$spCharCode.'" found on field "BARCODE" line '.$line;
-						}
+                  // 
+                  }else{
+                  if($spCharCode!=false){
+                    $error[] = 'Special Character "'.$spCharCode.'" found on field "BARCODE" line '.$line;
+                  }
 
-						if($spCharName!=false){
-						  $error[] = 'Special Character "'.$spCharName.'" found on field "NAMA KARYAWAN" line '.$line;
-						}
-					  }
-				  // } else {
-					// $error[] = 'There is error email unavailable on line '.$line;
-				  // }
-			  }else{
-				 $error[] = 'There is error format email on line '.$line;
-			  }
+                  if($spCharName!=false){
+                    $error[] = 'Special Character "'.$spCharName.'" found on field "NAMA KARYAWAN" line '.$line;
+                  }
+                  }
+                // } else {
+                // $error[] = 'There is error email unavailable on line '.$line;
+                // }
+              }else{
+              $error[] = 'There is error format email on line '.$line;
+              }
             }
           }
         }

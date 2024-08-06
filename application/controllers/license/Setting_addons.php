@@ -30,6 +30,10 @@ class Setting_addons extends CI_Controller
     $this->load->model("external_model");
     $this->load->library("encryption_org");
 
+    if (!$subscription_id) {
+      return redirect("addons");
+    }
+
     $systemAddonsCode = $this->encryption_org->decode($encSystemAddonsCode);
 	$subscription_id = $this->encryption_org->decode($subscription_id);
     if($systemAddonsCode=="machinelicense" || $systemAddonsCode=="machinelicenseflash"){

@@ -105,13 +105,13 @@
                                     <div class="col-md-12">
                                         <label for="" class="form-label" style="color: grey; font-weight: 500;"><?= $this->gtrans->line('select the work shift to be assigned to this schedule') ?></label><br>
                                         <div class="form-check">
-                                        <?php foreach($hour as $keyhr => $hr): ?>
-                                            <input class="form-check-input" type="checkbox" name="work_schedule" id="exampleRHour<?= $keyhr ?>" value="<?= $hr->id ?>">
-                                            <label class="form-check-label" for="exampleRHour<?= $keyhr ?>" style="color: grey; font-weight: 400; margin-right: 10px;">
-                                            <?= "$hr->name ($hr->start_time - $hr->end_time)" ?>
-                                            </label>
-                                            <br>
-                                        <?php endforeach; ?>
+                                            <?php foreach($hour as $keyhr => $hr): ?>
+                                                <input class="form-check-input" type="checkbox" name="work_schedule" id="exampleRHour<?= $keyhr ?>" value="<?= $hr->id ?>">
+                                                <label class="form-check-label" for="exampleRHour<?= $keyhr ?>" style="color: grey; font-weight: 400; margin-right: 10px;">
+                                                    <?= "$hr->name ($hr->start_time - $hr->end_time)" ?>
+                                                </label>
+                                                <br>
+                                            <?php endforeach; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -146,6 +146,10 @@ $(document).ready(function() {
     const BASE_URL = "<?= base_url() ?>";
     let notif = '<?php echo json_encode($notif); ?>';
 
+    let State = {
+        employee_departement: null
+    }
+
     $("#datatable").DataTable();
 
     $('#show_modal_add').on('click', function() {
@@ -176,6 +180,23 @@ $(document).ready(function() {
             },
             cache: true
         },
+    })
+
+    $('#employee_scheduled').on('change', function() {
+        let idx = $(this).val()
+
+        $.ajax({
+        url: BASE_URL + 'schedule-work/employee-detail',
+        method: 'POST',
+        data: {
+            id: idx
+        },
+        success: function(res) {
+            const response = JSON.parse(res)
+
+            State.employee_departement = response.data[0].departement_id
+        }
+        })
     })
 
     $('#departement_automatic').select2({
@@ -244,5 +265,76 @@ $(document).ready(function() {
             }
         })
     })
+
+    $('#all_employee').on('click', function() {
+        if ($(this).is(':checked')) {
+            $('input[name="employee_autimatic"]').prop('checked', true)
+        } else {
+            $('input[name="employee_autimatic"]').prop('checked', false)
+        }
+    })
+
+    $('#btn-submit-data').on('click', function(e) {
+        e.preventDefault()
+
+        let type = null;
+        let employee = [];
+
+        let emp_auto = $('input[name="employee_autimatic"]').map(function() {
+            if ($(this).is(':checked')) return [$(this).val()]
+        }).get()
+
+        if (emp_auto.length != 0) {
+            employee = emp_auto
+        }
+
+        if ($('#employee_scheduled').val()) {
+            employee.push($('#employee_scheduled').val())
+        }
+
+        let work_batch = $('input[name="work_schedule"]').map(function() {
+            if ($(this).is(':checked')) return [$(this).val()]
+        }).get()
+
+        let start_date = $('#effective_start_date').val()
+        let end_date = $('#effective_end_date').val()
+
+        const dpt_idx = $('input[name="assign_type"]:checked').val() == '1' ? State.employee_departement : $('#departement_automatic').val()
+
+        let params = {
+            employee,
+            schclass_id: work_batch,
+            start_date,
+            end_date,
+            departement_id: dpt_idx
+        }
+        
+        let thisX = $(this)
+        $.ajax({
+            url: BASE_URL + 'schedule-temp-submit',
+            method: 'POST',
+            data: {
+                data: JSON.stringify(params)
+            },
+            beforeSend: function() {
+                thisX.html('<i class="fa fa-circle-o-notch fa-spin"></i>')
+            },
+            success: function(res) {
+                let response = JSON.parse(res)
+
+                location.reload()
+            }
+        })
+        
+    })
+
+    if (notif != 'null') {
+      let data_notif = JSON.parse(notif)
+      Swal.fire({
+        title: data_notif.title,
+        text: data_notif.msg,
+        type: data_notif.type
+      });
+    }
 })
 </script>

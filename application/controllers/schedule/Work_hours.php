@@ -155,7 +155,7 @@ class Work_hours extends CI_Controller
             
             if ($upt) {
                 $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Update data has success full')]);
-                setActivity("schedule working hours","update");
+                setActivity("schedule working hours","edit");
             } 
         }
 

@@ -213,7 +213,7 @@ class Holidays extends CI_Controller
 
             if ($upt) {
                 $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Update data has success full')]);
-                setActivity("master holiday","update");
+                setActivity("master holiday","edit");
             } else {
                 $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Fail to update data')]);
             }

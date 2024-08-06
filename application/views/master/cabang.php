@@ -202,7 +202,6 @@
     </div>
   <!-- /.modal-dialog -->
   </div>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkLKNQj9zEMKoCDj9lZKmG2CDi9ZVp8p0&libraries=places&callback=initialize"></script>
 <script type="text/javascript">
   var url = "<?= base_url() ?>";
   var existingTimezone = '';
@@ -403,7 +402,7 @@
 
 		mapOptions = {
 			zoom: 12,
-			center: new google.maps.LatLng( <?php echo $new_arr[0]['geoplugin_latitude']; ?>, <?php echo $new_arr[0]['geoplugin_longitude']; ?> ),
+			center: new google.maps.LatLng( 0,2 ),
 			disableDefaultUI: false, 
 			scrollWheel: true, 
 			draggable: true,
@@ -414,7 +413,7 @@
 		marker = new google.maps.Marker({
 			position: mapOptions.center,
 			map: map,
-			// icon: 'http://pngimages.net/sites/default/files/google-maps-png-image-70164.png',
+			icon: 'http://pngimages.net/sites/default/files/google-maps-png-image-70164.png',
 			draggable: true
 		});
 
@@ -508,3 +507,5 @@
 	  });
 	});
 </script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkLKNQj9zEMKoCDj9lZKmG2CDi9ZVp8p0&libraries=places&callback=initialize"></script>

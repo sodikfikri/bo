@@ -49,7 +49,18 @@ class Schedule_temp extends CI_Controller
         $data['departement'] = $this->schedule_model->getDetaprtementByAppid($this->appid);
         $data['hour'] = $this->schedule_model->listHour($this->appid);
 
+        $list = $this->schedule_model->getListSchTemp($this->appid);
+        foreach($list as $key => $items) {
+
+        }
+
         $data['dataTable'] = $this->table->generate();
+
+        if(!empty($this->session->userdata("ses_notif"))){
+            $notif    = $this->session->userdata("ses_notif");
+            $data['notif'] = $notif;
+            $this->session->unset_userdata("ses_notif");
+        }
 
         $parentViewData = [
             "title"   => "Shift Schedule",  // title page
@@ -73,5 +84,46 @@ class Schedule_temp extends CI_Controller
         ];
         $this->load->view("layouts/main",$parentViewData);
         $this->gtrans->saveNewWords();
+    }
+
+    function submitData() {
+        $data = $this->input->post('data');
+        $data_decode = json_decode($data);
+
+        $params = [];
+        $batch = uniqid();
+
+        foreach($data_decode->employee as $items) {
+            foreach($data_decode->schclass_id as $sch) {
+                $obj = [
+                    'appid' => $this->appid,
+                    'user_id' => $items,
+                    'start_date' => $data_decode->start_date,
+                    'end_date' => $data_decode->end_date,
+                    'departement_id' => $data_decode->departement_id,
+                    'schclass_id' => $sch,
+                    'batch' => $batch,
+                    'created_at' => (new DateTime())->format('Y-m-d H:i:s')
+                ];
+
+                array_push($params, $obj);
+            }
+        }
+
+        $ins = $this->schedule_model->insBatchSchTemp($params);
+
+        if ($ins) {
+            $this->session->set_userdata('ses_notif',['type' => 'success', 'title' => 'Success', 'msg'=> $this->gtrans->line('Add data has success full')]);
+            setActivity("schedule temporary schedule","add");
+        } else {
+            $this->session->set_userdata('ses_notif',['type' => 'error', 'title' => 'Failed', 'msg'=> $this->gtrans->line('Fail to add data')]);
+        }
+
+        echo json_encode([
+            'meta' => [
+                'code' => 200,
+                'message' => 'Success'
+            ],
+        ]); return;
     }
 }

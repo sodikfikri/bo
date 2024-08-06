@@ -80,8 +80,8 @@ class Login_intrax extends CI_Controller
               $imageProfile = "";
             }
             $encPassword = $this->encryption_org->encode($password);
-			$user_access = "100|101";
-			$iauser_area_id = $result->iauser_area_id;
+            $user_access = "100|101|20";
+            $iauser_area_id = $result->iauser_area_id;
             $dataUser = [
               "ses_userid" => $result->userid,
               "ses_appid" => $result->appid,

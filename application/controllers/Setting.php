@@ -293,13 +293,37 @@ class Setting extends CI_Controller
   function importPhotocompany(){
     $this->load->library("encryption_org");
     $this->load->model("subscription_model");
-    $upload   = $this->do_upload();
-    $fileName = $upload["filename"];
-    $appid = $this->session->userdata("ses_appid");
+    
+    $config['upload_path']="./sys_upload/company_profile";
+    $config['allowed_types']='jpeg|jpg|png|JPEG|JPG|PNG';
+    $config['encrypt_name'] = TRUE;
+    // $config['max_size']    = 2048; // 2mb
+    $this->load->library('upload',$config);
+    
+    $fileName = "";
+    if(!$this->upload->do_upload("photocompany")){
+      $data = array('upload_data' => $this->upload->data());
 
+      $judul= $this->input->post('judul');
+      $fileName = $data['upload_data']['file_name'];
+      $output = [
+				"response" => "error",
+				"code" => "500",
+				"msg" => $this->upload->display_errors()
+			];
+      echo json_encode($output);
+      return;
+    }
+    $data_upload = array('upload_data' => $this->upload->data());
+
+    $fileName = $data_upload['upload_data']['file_name'];
+    // $fileName = $upload["filename"];
+    $appid = $this->session->userdata("ses_appid");
+    
     if($fileName!=""){
-		$obj = json_decode($upload);
-		if($obj->error==""){
+      $error = "";
+
+		if($error==""){
 			$dataUpdate= [
 				"company_photo"=> $fileName
 			];

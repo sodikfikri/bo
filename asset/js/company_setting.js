@@ -4,7 +4,6 @@ $(document).ready(function(){
     loadProvince(countryID);
   });
   $("#province").change(function(){
-    alert("lol");
     var inputprovinceID = $(this).val();
     loadCity(inputprovinceID);
 

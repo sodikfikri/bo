@@ -391,6 +391,34 @@ class Schedule_model extends CI_Model
         }
     }
 
+    //============================ Jadwal sementara ============================//
+
+    function getListSchTemp($appid) {
+        $sql = "SELECT 
+                    temp.id, COUNT(temp.user_id) count_user, temp.start_date, 
+                    temp.end_date, temp.batch, temp.departement_id, dpt.name AS departement_name,
+                    sch.name, sch.start_time, sch.end_time
+                FROM 
+                    tbusertempsch AS temp
+                JOIN 
+                    tbdepartements AS dpt ON temp.departement_id = dpt.id
+                JOIN 
+                    tbschclass AS sch ON temp.schclass_id = sch.id
+                WHERE 
+                    temp.appid = '$appid'
+                GROUP BY temp.batch ORDER BY temp.id";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
+    function insBatchSchTemp($data) {
+        $ins = $this->db->insert_batch('tbusertempsch', $data);
+
+        return $ins;
+    }
+
     //============================ Hari Libur ============================//
     function SaveDataHoliday($data) {
         $ins = $this->db->insert_batch('tbholidays', $data);

@@ -91,6 +91,7 @@
         </div>
         <?= form_open("",["id"=>"form-validation"]); ?>
         <div class="form-group has-feedback">
+        <?= !empty($msg) ? $msg : '' ?>
 		  <label>Email</label>
           <input id="email" onchange="" data-validation-engine="validate[required,custom[email]]" name="username" type="email" class="form-control" placeholder="Email">
         </div>

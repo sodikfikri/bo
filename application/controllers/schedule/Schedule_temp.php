@@ -38,10 +38,10 @@ class Schedule_temp extends CI_Controller
         $this->table->set_template($this->tabel_template);
         $this->table->set_heading(
             ["data"=> $this->gtrans->line("#"), "class"=>"text-center"],
-            ["data"=> $this->gtrans->line("Shift Name"), "class"=>"text-left"],
-            ["data"=> $this->gtrans->line("Effective Date"), "class"=>"text-left"],
-            ["data"=> $this->gtrans->line("Number Of Rounds"), "class"=>"text-center"],
-            ["data"=> $this->gtrans->line("Unit"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Employee"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Departement"), "class"=>"text-left"],
+            ["data"=> $this->gtrans->line("Effective Date"), "class"=>"text-center"],
+            ["data"=> $this->gtrans->line("Schedule Type"), "class"=>"text-left"],
             ["data"=> $this->gtrans->line("Preview"), "class"=>"text-center"],
             ["data"=> $this->gtrans->line("Action"), "class"=>"text-center"]
         );
@@ -51,7 +51,36 @@ class Schedule_temp extends CI_Controller
 
         $list = $this->schedule_model->getListSchTemp($this->appid);
         foreach($list as $key => $items) {
-
+            $this->table->add_row(
+                [
+                    'data' => $key+1,
+                    'style' => 'text-align:center;'
+                ],
+                [
+                    'data' => $items->count_user . ' Employee',
+                    'style' => 'text-align:left;'
+                ],
+                [
+                    'data' => $items->departement_name,
+                    'style' => 'text-align:left;'
+                ],
+                [
+                    'data' => "$items->start_date - $items->end_date",
+                    'style' => 'text-align:center;'
+                ],
+                [
+                    'data' =>  $this->gtrans->line("Temporary"),
+                    'style' => 'text-align:left;'
+                ],
+                [
+                    'data' => '<span class="priview-calendar" data-id="'.$this->encryption_org->encode($items->numrun_id).'" style="color: #039be6; cursor: pointer;"><i class="fa fa-calendar"></i> Preview Calendar</span>',
+                    'style' => 'text-align:center'
+                ],
+                [
+                    'data' => '<span style="cursor:pointer" data-batch="'.$items->batch.'" class="text-blue btn-detail"><i  class="fa fa-list"></i></span>',
+                    'style' => 'text-align:center;'
+                ]
+            );
         }
 
         $data['dataTable'] = $this->table->generate();
@@ -125,5 +154,57 @@ class Schedule_temp extends CI_Controller
                 'message' => 'Success'
             ],
         ]); return;
+    }
+
+    function detailEmpSch() {
+        $btach = $this->input->get('batch');
+
+        $data = $this->schedule_model->getDetailEmpSch($this->appid, $btach);
+
+        foreach($data as $item) {
+            $item->user_id = $this->encryption_org->encode($item->user_id);
+            $item->departement_id = $this->encryption_org->encode($item->departement_id);
+        }
+
+        $response = [
+            'meta' => [
+                'code' => '200',
+                'message' => 'Success get data'
+            ],
+            'data' => $data
+        ];
+
+        echo json_encode($response);
+        return;
+    }
+
+    function delDetailEmpSch() {
+        $user_id = $this->encryption_org->decode($this->input->post('user_id'));
+        $departement_id = $this->encryption_org->decode($this->input->post('departement_id'));
+        $batch = $this->input->post('batch');
+
+        $del = $this->schedule_model->delSchTempEmp($this->appid, $user_id, $departement_id, $batch);
+        
+        if ($del != 'success') {
+            $response = [
+                'meta' => [
+                    'code' => '400',
+                    'message' => 'Failed to delete data'
+                ],
+            ];
+    
+            echo json_encode($response);
+            return;
+        }
+
+        $response = [
+            'meta' => [
+                'code' => '200',
+                'message' => 'Success to delete data'
+            ],
+        ];
+
+        echo json_encode($response);
+        return;
     }
 }

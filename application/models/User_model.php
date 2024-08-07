@@ -50,10 +50,26 @@ class User_model extends CI_Model
   function getDataUser($username,$password){
     $this->db->where("user_emailaddr",$username);
     $this->db->where("user_passw",$password);
+    $this->db->where("userStat","1");
     $this->db->order_by("userid","DESC");
     $this->db->limit(1);
     $sql = $this->db->get($this->tableName);
 
+    if($sql->num_rows()>0){
+      return $sql->row();
+    }else{
+      return false;
+    }
+  }
+
+  function getDataUserIntrax($username,$password){
+    $this->db->where("user_emailaddr",$username);
+    $this->db->where("user_passw",$password);
+    $this->db->where("userStat","2");
+    $this->db->order_by("userid","DESC");
+    $this->db->limit(1);
+    $sql = $this->db->get($this->tableName);
+    return $sql->num_rows();
     if($sql->num_rows()>0){
       return $sql->row();
     }else{

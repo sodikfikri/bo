@@ -94,6 +94,10 @@ class Login extends CI_Controller
 			} else {
 				$user_access = $result->user_access;
 				$iauser_area_id = $result->iauser_area_id;
+        
+        if ($this->session->userdata("ses_appid") == 'IA01M82337F20230627732') {
+          $user_access = '1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|18|19|20|21|22|23|24|25|26';
+        }
 			}
             $dataUser = [
               "ses_userid" => $result->userid,

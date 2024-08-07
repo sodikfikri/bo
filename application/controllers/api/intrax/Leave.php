@@ -39,6 +39,9 @@ class Leave extends REST_Controller
     }
 
     function List_category_get() {
+        $response = $this->SetRespose(200, 'Success get data',[]);
+        header("Content-Type:application/json");
+        echo json_encode($response); return;
         $headers = getRequestHeaders();
         // $data = json_decode(file_get_contents('php://input'), true);
         $apikey  = !empty($headers["Apikey"]) ? $headers["Apikey"] : null;

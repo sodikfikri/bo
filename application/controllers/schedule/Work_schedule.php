@@ -231,7 +231,7 @@ class Work_schedule extends CI_Controller
     function employeeInSchedule() {
         $btach = $this->input->get('batch');
 
-        $data = $this->schedule_model->getDetailEmpOnSch($btach);
+        $data = $this->schedule_model->getDetailEmpOnSch($this->appid, $btach);
 
         foreach($data as $item) {
             $item->user_id = $this->encryption_org->encode($item->user_id);

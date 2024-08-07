@@ -275,9 +275,14 @@
 
       <ul class="sidebar-menu" data-widget="tree">
         <?= !empty($listMenu) ? $listMenu : "" ?>
-		<?php if($this->session->userdata('ses_appid')=='IA01M6858F20210906256'){ ?>
-		<li><a href="<?= base_url("master-institution") ?>"  ><i class="fa fa-building"></i><span> <?= $this->gtrans->line('Master Institution') ?></span></a></li>
-		<?php } ?>
+        <?php if($this->session->userdata('ses_appid')=='IA01M6858F20210906256'){ ?>
+          <li>
+            <a href="<?= base_url("master-institution") ?>"  >
+              <i class="fa fa-building"></i>
+              <span> <?= $this->gtrans->line('Master Institution') ?></span>
+            </a>
+          </li>
+        <?php } ?>
         <li><a href="<?= base_url("help?im=sax") ?>"  ><i class="fa fa-comments"></i><span> <?= $this->gtrans->line('Help') ?></span></a></li>
         <li><a href="<?= base_url("about-us?im=sa") ?>"  ><i class="fa fa-info"></i><span> <?= $this->gtrans->line('About Us') ?></span></a></li>
         <li><a href="<?= base_url("logout") ?>"  ><i class="fa fa-sign-out"></i><span> <?= $this->gtrans->line('Sign Out') ?></span></a></li>

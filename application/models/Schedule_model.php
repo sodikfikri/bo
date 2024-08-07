@@ -349,7 +349,7 @@ class Schedule_model extends CI_Model
         return $response->result();
     }
 
-    function getDetailEmpOnSch($batch) {
+    function getDetailEmpOnSch($appid,$batch) {
         $sql = "SELECT 
                     tbassignsch.user_id, 
                     tbassignsch.departement_id,
@@ -363,7 +363,7 @@ class Schedule_model extends CI_Model
                 LEFT JOIN
                     tbdepartements ON tbassignsch.departement_id = tbdepartements.id
                 WHERE 
-                    batch = '$batch'";
+                    tbassignsch.appid = '$appid' AND tbassignsch.batch = '$batch'";
 
         $response = $this->db->query($sql);
 
@@ -417,6 +417,32 @@ class Schedule_model extends CI_Model
         $ins = $this->db->insert_batch('tbusertempsch', $data);
 
         return $ins;
+    }
+
+    function getDetailEmpSch($appid, $batch) {
+        $sql = "SELECT 
+                    sch.user_id, 
+                    sch.departement_id, 
+                    sch.batch, 
+                    emp.employee_full_name, 
+                    dept.name as departement_name 
+                FROM 
+                    tbusertempsch as sch
+                JOIN 
+                    tbemployee as emp on sch.user_id = emp.employee_id
+                JOIN 
+                    tbdepartements as dept on sch.departement_id = dept.id
+                WHERE 
+                    sch.appid = '$appid' AND sch.batch = '$batch'";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();      
+    }
+
+    function delSchTempEmp($appid, $userId, $dept_id, $batch) {
+        $sql = "delete from tbusertempsch where appid = '$appid' and user_id = $userId and departement_id = $dept_id and batch = '$batch'";
+        return $this->db->query($sql);
     }
 
     //============================ Hari Libur ============================//

@@ -27,7 +27,7 @@ class Login_intrax extends CI_Controller
       $password = $this->input->post('password');
 
       $passwordHashed = $this->string_manipulation->hash_password($password);
-      $result = $this->user_model->getDataUser($username,$passwordHashed);
+      $result = $this->user_model->getDataUserIntrax($username,$passwordHashed);
 
       if($result!=false){
         if($result->user_isdel=="0" && $result->user_isactive=="1"){
@@ -126,6 +126,7 @@ class Login_intrax extends CI_Controller
         $msg = 'Unknown Username or Password!';
       }
     }
+
     if(!empty($msg)){
       $dataToView['msg'] = '<div class="callout callout-danger">
                               <h4>'.$msg.'</h4>
@@ -133,6 +134,7 @@ class Login_intrax extends CI_Controller
     }else{
       $dataToView['msg'] = '';
     }
+
     if(!empty($this->session->userdata("ses_cloudmsg"))){
       $dataToView['msg'] = $this->session->userdata("ses_cloudmsg");
       $this->session->unset_userdata("ses_cloudmsg");

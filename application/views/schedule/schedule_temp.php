@@ -139,6 +139,39 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalEmp" tabindex="-1" aria-labelledby="modalEmpLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" style="border-radius: 10px;">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-12">
+              <span style="font-size: 20px; color: black"><?= $this->gtrans->line('Employee List') ?> <i class="fa fa-info-circle" aria-hidden="true" style="color: #039BE5; font-size: 16px;"></i></span><br>
+              <small><?= $this->gtrans->line('Employees listed on this schedule') ?> </small>
+    
+              <hr style="margin: 10px 0px 0px 0px; border: 0.5px solid #DCDCDC;">
+
+              <div class="table-responsive" style="margin-top: 20px;">
+                <table class="table" id="table-employee">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th><?= $this->gtrans->line('Employee') ?></th>
+                      <th><?= $this->gtrans->line('Departement') ?></th>
+                      <th class="text-center"><?= $this->gtrans->line('Action') ?></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <script>
@@ -326,6 +359,90 @@ $(document).ready(function() {
             }
         })
         
+    })
+
+    $('#datatable tbody').on('click', '.btn-detail', function() {
+        let params = $(this).data('batch')
+        let thisX = $(this)
+
+        $.ajax({
+        url: BASE_URL + 'schedule-temp/employee-in-schedule',
+        method: 'GET',
+        data: {
+            batch: params
+        },
+        beforeSend: function() {
+            thisX.html('<i class="fa fa-circle-o-notch fa-spin"></i>')
+        },
+        success: function(res) {
+            let response = JSON.parse(res)
+            $("#table-employee tbody").empty()
+            $.each(response.data, function(key, val) {
+                let number = parseInt(key) + parseInt(1)
+                $("#table-employee tbody").append(
+                    '<tr>' +
+                    '<td>'+number+'</td>' +
+                    '<td>'+val.employee_full_name+'</td>' +
+                    '<td>'+val.departement_name+'</td>' +
+                    '<td class="text-center">' +
+                        '<span style="cursor:pointer" data-empid="'+val.user_id+'" data-dpt="'+val.departement_id+'" data-batch="'+val.batch+'" class="text-danger btn-del-emp-sch"><i class="fa fa-trash"></i></span>' +
+                    '</td>' +
+                    '</tr>'
+                )
+            })
+        },
+        complete: function() {
+            thisX.html('<i class="fa fa-list"></i>')
+            $("#table-employee").DataTable();
+            $('#modalEmp').modal('show')
+        }
+        })
+    })
+
+    $('#table-employee tbody').on('click', '.btn-del-emp-sch', function() {
+        let datauser = $(this).data('empid')
+        let datadpt = $(this).data('dpt')
+        let databatch = $(this).data('batch')
+        let thisX = $(this)
+        
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.value) {
+                $.ajax({
+                    url: BASE_URL + 'schedule-temp/delete-employee-in-schedule',
+                    method: 'POST',
+                    data: {
+                        user_id: datauser,
+                        departement_id: datadpt,
+                        batch: databatch
+                    },
+                    beforeSend: function() {
+                        thisX.html('<i class="fa fa-circle-o-notch fa-spin"></i>')
+                    },
+                    success: function(res) {
+                        let response = JSON.parse(res)
+                        if (response.meta.code == '200') {
+                        Swal.fire({
+                            title: 'Success',
+                            text: 'Success delete data',
+                            type: 'success'
+                        });
+                        thisX.html('<i class="fa fa-trash"></i>')
+                        setTimeout(() => {
+                            location.reload()
+                        }, 1000);
+                        }
+                    }
+                })
+            }
+        })
     })
 
     if (notif != 'null') {

@@ -445,6 +445,11 @@ $(document).ready(function() {
         })
     })
 
+    $('#datatable tbody').on('click', '.priview-calendar', function() {
+        let idx = $(this).data('batch')
+        window.open(BASE_URL + 'schedule-temp-priview/' + idx,'_self');
+    })
+
     if (notif != 'null') {
       let data_notif = JSON.parse(notif)
       Swal.fire({

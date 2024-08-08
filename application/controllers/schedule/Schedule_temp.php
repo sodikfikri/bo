@@ -73,7 +73,7 @@ class Schedule_temp extends CI_Controller
                     'style' => 'text-align:left;'
                 ],
                 [
-                    'data' => '<span class="priview-calendar" data-id="'.$this->encryption_org->encode($items->numrun_id).'" style="color: #039be6; cursor: pointer;"><i class="fa fa-calendar"></i> Preview Calendar</span>',
+                    'data' => '<span class="priview-calendar" data-batch="'.$this->encryption_org->encode($items->batch).'" style="color: #039be6; cursor: pointer;"><i class="fa fa-calendar"></i> Preview Calendar</span>',
                     'style' => 'text-align:center'
                 ],
                 [
@@ -206,5 +206,47 @@ class Schedule_temp extends CI_Controller
 
         echo json_encode($response);
         return;
+    }
+
+    function previewCalendar($encId) {
+        $this->load->library("encryption_org");
+        $batch = $this->encryption_org->decode($encId);
+
+        $data = $this->schedule_model->priviewCalendarTemp($batch);
+
+        $dateByNumber = [
+            [
+                'id' => $data[0]->id,
+                'title' => 'Temporary',
+                'start' => $data[0]->start_date,
+                'end' => (new DateTime($data[0]->end_date))->modify('+1 day')->format('Y-m-d'),
+                'color' => '#DC143C'
+            ]
+        ];
+
+        $parentViewData = [
+            "title"   => "Shift Schedule",  // title page
+            "content" => "schedule/shift_calendar",  // content view
+            "viewData"=> [],
+            "dataCalendar"=> json_encode($dateByNumber),
+            "listMenu"=> $this->listMenu,
+            "varJS" => ["url" => base_url()],
+            "externalCSS" => [
+                base_url("asset/template/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css"),
+                base_url("asset/template/bower_components/select2/dist/css/select2.min.css"),
+            ],
+            "externalJS" => [
+                base_url("asset/template/bower_components/datatables.net/js/jquery.dataTables.min.js"),
+                base_url("asset/template/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"),
+                "https://cdn.jsdelivr.net/npm/sweetalert2@8",
+                base_url("asset/template/bower_components/select2/dist/js/select2.full.min.js"),
+                base_url("asset/js/checkCode.js"),
+                base_url("asset/js/user.js")
+        
+            ]
+        ];
+        $this->load->view("layouts/main",$parentViewData);
+        $this->gtrans->saveNewWords();
+
     }
 }

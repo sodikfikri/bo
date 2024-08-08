@@ -1404,12 +1404,28 @@ class Employee extends REST_Controller
 	"subscription_model",
 	"employeeareacabang_model"
 	]);
+
+	
     if($apikey!=""){
 		if($apikey==$this->apikey){
 			if($employee_id!=""){
 				$dataEmployee = $this->employee_model->getEmployeeById($employee_id);
 				if($dataEmployee){
-					if (!empty($dataEmployee->employee_photo)){$photo = "https://inact.azurewebsites.net/sys_upload/user_profile/".$dataEmployee->employee_photo;} else { if ($dataEmployee->gender=='male'){$photo = "https://inact.azurewebsites.net/sys_upload/img_employee/img_avatar_boy.png";} else {$photo = "https://inact.azurewebsites.net/sys_upload/img_employee/img_avatar_girl.png";}}
+					if (!empty($dataEmployee->employee_photo)){
+						$file = './sys_upload/user_profile/'.$dataEmployee->employee_photo;
+
+						if (file_exists($file)) {
+							$photo = "https://inact.azurewebsites.net/sys_upload/user_profile/".$dataEmployee->employee_photo;
+						} else {
+							$photo = "https://inact.azurewebsites.net/img_employee/img_avatar_boy.png";
+						}
+					} else { 
+						if ($dataEmployee->gender=='male'){
+							$photo = "https://inact.azurewebsites.net/img_employee/img_avatar_boy.png";
+						} else {
+							$photo = "https://inact.azurewebsites.net/img_employee/img_avatar_girl.png";
+						}
+					}
 					$pin = '0';
 					$finger = '0';
 					$face = '0';

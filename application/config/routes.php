@@ -113,6 +113,7 @@ $route['schedule-temp'] = 'schedule/schedule_temp';
 $route['schedule-temp-submit'] = 'schedule/schedule_temp/submitData';
 $route['schedule-temp/employee-in-schedule'] = 'schedule/schedule_temp/detailEmpSch';
 $route['schedule-temp/delete-employee-in-schedule'] = 'schedule/schedule_temp/delDetailEmpSch';
+$route['schedule-temp-priview/(:any)'] = 'schedule/schedule_temp/previewCalendar/$1';
 
 $route['schedule-holidays'] = 'schedule/holidays';
 $route['schedule-holidays/submit'] = 'schedule/holidays/savedata';

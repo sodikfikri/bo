@@ -445,6 +445,14 @@ class Schedule_model extends CI_Model
         return $this->db->query($sql);
     }
 
+    function priviewCalendarTemp($batch) {
+        $sql = "select * from tbusertempsch where batch = '$batch' group by batch";
+
+        $response = $this->db->query($sql);
+
+        return $response->result();
+    }
+
     //============================ Hari Libur ============================//
     function SaveDataHoliday($data) {
         $ins = $this->db->insert_batch('tbholidays', $data);
